@@ -18,6 +18,7 @@ const descInput   = document.getElementById('productDescription');
 const priceInput  = document.getElementById('productPrice');
 
 const API_BASE = window.location.protocol === 'file:' ? 'http://127.0.0.1:5000' : window.location.origin;
+const MAX_FILE_SIZE = 25 * 1024 * 1024; // 25MB
 
 /* ── File drop zone ── */
 fileDrop.addEventListener('dragover',  e => { e.preventDefault(); fileDrop.classList.add('dragover'); });
@@ -30,7 +31,20 @@ fileDrop.addEventListener('drop', e => {
 });
 fileInput.addEventListener('change', () => {
   const f = fileInput.files[0];
-  fileLabel.textContent = f ? `${f.name} · đã nhận` : 'Chọn hoặc kéo thả file code vào đây';
+  if (f) {
+    if (f.size > MAX_FILE_SIZE) {
+      statusEl.textContent = 'Dung lượng file vượt quá giới hạn 25MB. Vui lòng chọn file nhỏ hơn.';
+      statusEl.className = 'form-status err';
+      fileInput.value = '';
+      fileLabel.textContent = 'Chọn hoặc kéo thả file code vào đây';
+      return;
+    }
+    const sizeMb = (f.size / (1024 * 1024)).toFixed(1);
+    fileLabel.textContent = `${f.name} · đã nhận (${sizeMb}MB)`;
+    statusEl.textContent = '';
+  } else {
+    fileLabel.textContent = 'Chọn hoặc kéo thả file code vào đây';
+  }
 });
 
 /* ── Live preview ── */
@@ -43,6 +57,11 @@ form.addEventListener('submit', async e => {
   e.preventDefault();
   const file = fileInput.files[0];
   if (!file) { statusEl.textContent = 'Hãy chọn file muốn đăng.'; statusEl.className = 'form-status err'; return; }
+  if (file.size > MAX_FILE_SIZE) {
+    statusEl.textContent = 'Dung lượng file vượt quá giới hạn 25MB. Vui lòng chọn file nhỏ hơn.';
+    statusEl.className = 'form-status err';
+    return;
+  }
 
   const product = {
     id:          `${Date.now()}-${Math.random().toString(36).slice(2)}`,

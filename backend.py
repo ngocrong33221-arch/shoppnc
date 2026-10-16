@@ -27,7 +27,14 @@ app.config.update(
     SESSION_COOKIE_HTTPONLY=True,
     SESSION_COOKIE_SAMESITE='Lax',
     SESSION_COOKIE_SECURE=os.getenv('SESSION_COOKIE_SECURE', '').lower() == 'true',
+    MAX_CONTENT_LENGTH=25 * 1024 * 1024,  # 25 MB max upload
 )
+
+
+@app.errorhandler(413)
+def request_entity_too_large(error):
+    return jsonify({'error': 'Dung lượng file vượt quá giới hạn 25MB.'}), 413
+
 WEB_ROOT = os.path.dirname(os.path.abspath(__file__))
 UPLOADS_ROOT = os.path.join(WEB_ROOT, 'uploads')
 DATABASE_PATH = os.getenv('DATABASE_PATH', 'codenest.sqlite3')
@@ -985,6 +992,10 @@ def create_product():
     stored_path = os.path.join(UPLOADS_ROOT, stored_name)
     uploaded.save(stored_path)
     file_size = os.path.getsize(stored_path)
+    if file_size > 25 * 1024 * 1024:
+        if os.path.exists(stored_path):
+            os.remove(stored_path)
+        return jsonify({'error': 'Dung lượng file vượt quá giới hạn 25MB.'}), 400
 
     try:
         with db() as connection:
