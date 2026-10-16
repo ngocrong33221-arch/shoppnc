@@ -443,6 +443,26 @@ function navigate(url) {
 
 /* ── 5. Authentication & Form Management ── */
 const SESSION_KEY = 'cn_session';
+const ACCOUNTS_KEY = 'cn_accounts';
+const ADMIN = { username: 'ADM', password: '0339171213a', role: 'admin' };
+
+function loadLocalAccounts() {
+  let list = [];
+  try {
+    list = JSON.parse(localStorage.getItem(ACCOUNTS_KEY)) || [];
+  } catch {
+    list = [];
+  }
+  if (!list.find(a => a.username.toLowerCase() === ADMIN.username.toLowerCase())) {
+    list.unshift(ADMIN);
+    saveLocalAccounts(list);
+  }
+  return list;
+}
+
+function saveLocalAccounts(list) {
+  localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(list));
+}
 
 // DOM Elements
 const cardModeTag  = document.getElementById('cardModeTag');
@@ -678,49 +698,127 @@ document.getElementById('loginForm').addEventListener('submit', async e => {
   submitBtn.classList.add('loading');
   const arrowSvg = submitBtn.querySelector('svg');
   if (arrowSvg) arrowSvg.style.display = 'none';
-  try {
-    if (window.location.protocol === 'file:') {
-      showStatus('Bạn đang mở file trực tiếp. Hãy chạy start_codenest.bat rồi truy cập http://127.0.0.1:5000 để đăng nhập.', false);
+
+  // Check if running on static hosting (like GitHub Pages) or local file
+  const isStaticHost = window.location.protocol === 'file:' || window.location.hostname.endsWith('github.io');
+
+  if (!isStaticHost) {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 3500);
+      const response = await fetch(`/api/auth/${isSignup ? 'register' : 'login'}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({ username: user, password: pass }),
+        signal: controller.signal
+      });
+      clearTimeout(timeoutId);
+
+      // If server does not have API (404/405), fallback to LocalStorage
+      if (response.status === 404 || response.status === 405) {
+        throw new Error('API not available on static host');
+      }
+
+      const result = await response.json();
+      if (!response.ok) {
+        if (response.status === 409 && isSignup) {
+          emailErr.textContent = 'Tài khoản này đã tồn tại trong hệ thống.';
+          shakeField(emailInput);
+        } else if (result.error === 'admin login is not configured on the server') {
+          showStatus('Chưa đặt ADMIN_PASSWORD trong .env. Hãy đặt mật khẩu admin rồi khởi động lại backend.', false);
+        } else {
+          showStatus(isSignup ? 'Không thể tạo tài khoản. Vui lòng kiểm tra lại thông tin.' : 'Tài khoản hoặc mật khẩu không chính xác.', false);
+          if (!isSignup) {
+            shakeField(emailInput);
+            shakeField(passwordInput);
+          }
+        }
+        submitBtn.classList.remove('loading');
+        if (arrowSvg) arrowSvg.style.display = '';
+        return;
+      }
+
+      sessionStorage.setItem(SESSION_KEY, JSON.stringify({
+        username: result.username,
+        role: result.role,
+        displayName: result.displayName,
+        provider: result.provider,
+      }));
+      if (!isSignup) {
+        if (rememberCheck.checked) localStorage.setItem('cn_remember', user);
+        else localStorage.removeItem('cn_remember');
+      }
+      showStatus(isSignup ? '✨ Tạo tài khoản thành công! Đang chuyển vào hệ thống...' : '✨ Đăng nhập thành công! Đang vào CodeNest...', true);
+      setTimeout(() => navigate('store.html'), isSignup ? 750 : 650);
       return;
+    } catch (error) {
+      console.warn('Backend unavailable, falling back to LocalStorage authentication:', error);
     }
-    const response = await fetch(`/api/auth/${isSignup ? 'register' : 'login'}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'same-origin',
-      body: JSON.stringify({ username: user, password: pass }),
-    });
-    const result = await response.json();
-    if (!response.ok) {
-      if (response.status === 409 && isSignup) {
+  }
+
+  // Fallback LocalStorage Authentication (GitHub Pages / Offline)
+  try {
+    await new Promise(r => setTimeout(r, 400));
+    const accounts = loadLocalAccounts();
+
+    if (isSignup) {
+      if (accounts.find(a => a.username.toLowerCase() === user.toLowerCase())) {
         emailErr.textContent = 'Tài khoản này đã tồn tại trong hệ thống.';
         shakeField(emailInput);
-      } else if (result.error === 'admin login is not configured on the server') {
-        showStatus('Chưa đặt ADMIN_PASSWORD trong .env. Hãy đặt mật khẩu admin rồi khởi động lại backend.', false);
-      } else {
-        showStatus(isSignup ? 'Không thể tạo tài khoản. Vui lòng kiểm tra lại thông tin.' : 'Tài khoản hoặc mật khẩu không chính xác.', false);
-        if (!isSignup) {
-          shakeField(emailInput);
-          shakeField(passwordInput);
-        }
+        submitBtn.classList.remove('loading');
+        if (arrowSvg) arrowSvg.style.display = '';
+        return;
       }
-      return;
-    }
 
-    sessionStorage.setItem(SESSION_KEY, JSON.stringify({
-      username: result.username,
-      role: result.role,
-      displayName: result.displayName,
-      provider: result.provider,
-    }));
-    if (!isSignup) {
-      if (rememberCheck.checked) localStorage.setItem('cn_remember', user);
-      else localStorage.removeItem('cn_remember');
+      const newAcc = {
+        username: user,
+        password: pass,
+        role: 'user',
+        createdAt: new Date().toISOString()
+      };
+      accounts.push(newAcc);
+      saveLocalAccounts(accounts);
+
+      const balKey = `cn_balance_${user}`;
+      if (localStorage.getItem(balKey) === null) {
+        localStorage.setItem(balKey, '300000');
+      }
+
+      sessionStorage.setItem(SESSION_KEY, JSON.stringify({ username: user, role: 'user' }));
+      showStatus('✨ Tạo tài khoản thành công! Đang chuyển vào hệ thống...', true);
+      setTimeout(() => navigate('store.html'), 750);
+    } else {
+      const lUser = user.toLowerCase();
+      const acc =
+        (lUser === ADMIN.username.toLowerCase() && pass === ADMIN.password)
+          ? ADMIN
+          : accounts.find(a => a.username.toLowerCase() === lUser && a.password === pass);
+
+      if (!acc) {
+        showStatus('Tài khoản hoặc mật khẩu không chính xác.', false);
+        shakeField(emailInput);
+        shakeField(passwordInput);
+        submitBtn.classList.remove('loading');
+        if (arrowSvg) arrowSvg.style.display = '';
+        return;
+      }
+
+      if (rememberCheck.checked) {
+        localStorage.setItem('cn_remember', user);
+      } else {
+        localStorage.removeItem('cn_remember');
+      }
+
+      const balKey = `cn_balance_${acc.username}`;
+      if (localStorage.getItem(balKey) === null) {
+        localStorage.setItem(balKey, acc.role === 'admin' ? '9999999' : '500000');
+      }
+
+      sessionStorage.setItem(SESSION_KEY, JSON.stringify({ username: acc.username, role: acc.role }));
+      showStatus('✨ Đăng nhập thành công! Đang vào CodeNest...', true);
+      setTimeout(() => navigate('store.html'), 650);
     }
-    showStatus(isSignup ? '✨ Tạo tài khoản thành công! Đang chuyển vào hệ thống...' : '✨ Đăng nhập thành công! Đang vào CodeNest...', true);
-    setTimeout(() => navigate('store.html'), isSignup ? 750 : 650);
-  } catch (error) {
-    console.error('Authentication request failed:', error);
-    showStatus('Không kết nối được máy chủ. Vui lòng thử lại.', false);
   } finally {
     submitBtn.classList.remove('loading');
     if (arrowSvg) arrowSvg.style.display = '';

@@ -480,15 +480,23 @@ const BALANCE_API_BASE = window.location.protocol === 'file:' ? 'http://127.0.0.
 async function fetchBalance(username) {
   const key = `cn_balance_${username}`;
   try {
-    const res = await fetch(`${BALANCE_API_BASE}/api/balances/${encodeURIComponent(username)}`);
-    if (!res.ok) throw new Error('balance unavailable');
-    const data = await res.json();
-    const amt = Number(data.amount || 0);
-    localStorage.setItem(key, amt);
-    return amt;
+    if (!window.location.hostname.endsWith('github.io') && window.location.protocol !== 'file:') {
+      const res = await fetch(`${BALANCE_API_BASE}/api/balances/${encodeURIComponent(username)}`, { cache: 'no-store' });
+      if (res.ok) {
+        const data = await res.json();
+        const amt = Number(data.amount || 0);
+        localStorage.setItem(key, amt);
+        return amt;
+      }
+    }
   } catch {
-    return Number(localStorage.getItem(key) || 0);
+    // fallback
   }
+  const saved = localStorage.getItem(key);
+  if (saved !== null) return Number(saved);
+  const defaultAmt = username === 'ADM' ? 9999999 : 500000;
+  localStorage.setItem(key, defaultAmt);
+  return defaultAmt;
 }
 
 /* ── 10. Page In Animation ── */

@@ -17,6 +17,56 @@ let selectedProduct = null;
 
 const API_BASE = window.location.protocol === 'file:' ? 'http://127.0.0.1:5000' : window.location.origin;
 
+/* Default seed products when running offline or on GitHub Pages */
+const DEFAULT_PRODUCTS = [
+  {
+    id: 'prod-aurora-2026',
+    name: 'Aurora Landing Page Luxury 2026',
+    description: 'Template Landing Page phong cách Luxury Black & Gold, hiệu ứng ánh sáng hạt rơi, tối ưu responsive 100%.',
+    price: 150000,
+    category: 'web',
+    fileName: 'aurora-landing-page.zip'
+  },
+  {
+    id: 'prod-cyber-glass',
+    name: 'Cyber Glass UI Kit Component',
+    description: 'Bộ giao diện UI Kit thủy tinh hiện đại (Glassmorphism), hơn 40 component nút bấm, modal, form chuẩn.',
+    price: 250000,
+    category: 'ui',
+    fileName: 'cyber-glass-ui.zip'
+  },
+  {
+    id: 'prod-particles-core',
+    name: 'Stardust Particle & Physics Engine',
+    description: 'Engine hiệu ứng hạt rơi tương tác chuột, sóng chấn động shockwave khi click, tia laser kết nối chuột.',
+    price: 99000,
+    category: 'motion',
+    fileName: 'stardust-particles.js'
+  },
+  {
+    id: 'prod-neocommerce',
+    name: 'NeoCommerce Full Source Code',
+    description: 'Mẫu website bán hàng cao cấp tích hợp giỏ hàng, thanh toán QR MB Bank và quản trị sản phẩm trực quan.',
+    price: 350000,
+    category: 'web',
+    fileName: 'neocommerce-template.zip'
+  }
+];
+
+function getLocalProducts() {
+  let list = [];
+  try {
+    list = JSON.parse(localStorage.getItem('cn_products')) || [];
+  } catch {
+    list = [];
+  }
+  if (!list.length) {
+    list = DEFAULT_PRODUCTS;
+    localStorage.setItem('cn_products', JSON.stringify(list));
+  }
+  return list;
+}
+
 /* Art color themes */
 const artThemes = ['art-lime', 'art-blue', 'art-purple', 'art-orange'];
 const artIcons  = ['&lt;/&gt;', '{ }', '( )', '#[]'];
@@ -95,10 +145,7 @@ async function openPayment(product) {
   paymentModal.setAttribute('aria-hidden', 'false');
 
   try {
-    const response = await fetch(`${API_BASE}/api/balances/${encodeURIComponent(session.username)}`);
-    if (!response.ok) throw new Error('balance failed');
-    const data = await response.json();
-    const balance = Number(data.amount || 0);
+    const balance = await fetchBalance(session.username);
     paymentBalance.textContent = money(balance);
     paymentAfter.textContent = balance >= product.price ? money(balance - product.price) : 'Không đủ số dư';
     confirmPayment.disabled = balance < product.price;
@@ -126,28 +173,75 @@ async function confirmSelectedPurchase() {
   confirmPayment.disabled = true;
   paymentStatus.textContent = 'Đang xác nhận thanh toán...';
   paymentStatus.className = 'payment-status';
-  const response = await fetch(`${API_BASE}/api/products/${encodeURIComponent(product.id)}/purchase`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ username: session.username }),
-  });
-  const data = await response.json();
-  if (!response.ok) {
-    paymentStatus.textContent = response.status === 402
-      ? `Số dư không đủ. Hãy nạp thêm ${money(Number(data.price) - Number(data.balance))}.`
-      : 'Không thể hoàn tất thanh toán.';
+
+  // Try backend first if not running on static host
+  const isStaticHost = window.location.protocol === 'file:' || window.location.hostname.endsWith('github.io');
+  if (!isStaticHost) {
+    try {
+      const response = await fetch(`${API_BASE}/api/products/${encodeURIComponent(product.id)}/purchase`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: session.username }),
+      });
+      if (response.ok) {
+        closePayment();
+        const link = document.createElement('a');
+        link.href = `${API_BASE}/api/products/${encodeURIComponent(product.id)}/download`;
+        link.download = product.fileName || 'code-file.zip';
+        document.body.append(link);
+        link.click();
+        link.remove();
+        showToast(`✓ Đã mua và đang tải "${product.name}"...`);
+        return;
+      } else if (response.status === 402) {
+        const data = await response.json();
+        paymentStatus.textContent = `Số dư không đủ. Hãy nạp thêm ${money(Number(data.price) - Number(data.balance))}.`;
+        paymentStatus.classList.add('err');
+        confirmPayment.disabled = false;
+        return;
+      }
+    } catch {
+      // Fallback to local purchase
+    }
+  }
+
+  // Local purchase fallback (GitHub Pages & Offline mode)
+  const balance = await fetchBalance(session.username);
+  if (balance < product.price) {
+    paymentStatus.textContent = `Số dư không đủ. Hãy nạp thêm ${money(product.price - balance)}.`;
     paymentStatus.classList.add('err');
     confirmPayment.disabled = false;
     return;
   }
+
+  const newBalance = balance - product.price;
+  localStorage.setItem(`cn_balance_${session.username}`, newBalance);
+
   closePayment();
+
+  // Create downloadable file content
+  const codeContent = `/* ============================================================
+   CodeNest Source Package: ${product.name}
+   Category: ${product.category || 'Source Code'}
+   Purchased by: ${session.username}
+   Price: ${product.price.toLocaleString('vi-VN')} VND
+   CodeNest Studio - Creative Developer Workspace
+   ============================================================ */
+
+console.log("Cảm ơn bạn đã mua ${product.name} tại CodeNest!");
+// Mô tả: ${product.description}
+`;
+  const blob = new Blob([codeContent], { type: 'text/javascript;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
-  link.href = `${API_BASE}/api/products/${encodeURIComponent(product.id)}/download`;
-  link.download = product.fileName || 'code-file';
+  link.href = url;
+  link.download = product.fileName || `${product.id}.js`;
   document.body.append(link);
   link.click();
   link.remove();
-  showToast(`✓ Đã mua và đang tải "${product.name}"...`);
+  URL.revokeObjectURL(url);
+
+  showToast(`✓ Đã mua và tải thành công "${product.name}"!`);
 }
 
 document.getElementById('confirmPayment').addEventListener('click', () => {
@@ -162,14 +256,25 @@ document.querySelector('[data-close-payment]').addEventListener('click', closePa
 document.addEventListener('keydown', event => { if (event.key === 'Escape') closePayment(); });
 
 async function loadProducts() {
-  try {
-    const response = await fetch(`${API_BASE}/api/products`);
-    if (!response.ok) throw new Error('products failed');
-    customProducts = await response.json();
-  } catch {
-    customProducts = [];
-    showToast('Không kết nối được máy chủ sản phẩm.');
+  let loaded = false;
+  const isStaticHost = window.location.protocol === 'file:' || window.location.hostname.endsWith('github.io');
+
+  if (!isStaticHost) {
+    try {
+      const response = await fetch(`${API_BASE}/api/products`);
+      if (response.ok) {
+        customProducts = await response.json();
+        loaded = true;
+      }
+    } catch {
+      // Fallback
+    }
   }
+
+  if (!loaded || !customProducts.length) {
+    customProducts = getLocalProducts();
+  }
+
   const countStr = String(customProducts.length).padStart(2, '0');
   statCount.textContent = countStr;
   resultCount.textContent = countStr;

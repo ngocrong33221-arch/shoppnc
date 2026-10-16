@@ -64,23 +64,55 @@ document.getElementById('topupButton').addEventListener('click', async () => {
   statusEl.className = 'form-status ok';
 
   const expiresAt = Date.now() + 10 * 60 * 1000;
+  const randomSuffix = Math.floor(100000 + Math.random() * 900000);
+  const localContent = `CN ${session.username} ${randomSuffix}`;
 
-  try {
-    const res = await fetch(`${API_BASE}/api/topups`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'same-origin',
-      body: JSON.stringify({ username: session.username, amount: selected.amount })
-    });
-    const order = await res.json();
-    if (!res.ok) throw new Error(order.error || 'Không thể tạo đơn nạp tiền.');
-    statusEl.textContent = order.telegram_sent ? 'Đã gửi đơn và thông báo admin.' : 'Đơn đã lưu, thông báo admin chưa được gửi.';
-    displayOrder(selected.amount, order.content, expiresAt);
-    localStorage.setItem(`cn_pending_${session.username}`, JSON.stringify({ amount: selected.amount, content: order.content, expiresAt, status: 'pending' }));
-  } catch {
-    statusEl.textContent = 'Không thể tạo đơn nạp tiền. Hãy đăng nhập lại hoặc kiểm tra kết nối máy chủ.';
-    statusEl.className = 'form-status err';
+  let orderContent = localContent;
+  let backendOk = false;
+  const isStaticHost = window.location.protocol === 'file:' || window.location.hostname.endsWith('github.io');
+
+  if (!isStaticHost) {
+    try {
+      const res = await fetch(`${API_BASE}/api/topups`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({ username: session.username, amount: selected.amount })
+      });
+      if (res.ok) {
+        const order = await res.json();
+        orderContent = order.content || localContent;
+        statusEl.textContent = order.telegram_sent ? 'Đã gửi đơn và thông báo admin.' : 'Đơn đã lưu, vui lòng quét mã QR để chuyển khoản.';
+        backendOk = true;
+      }
+    } catch {
+      // Fallback
+    }
   }
+
+  if (!backendOk) {
+    statusEl.innerHTML = `✓ Đã tạo mã QR MB Bank thành công! <button id="demoApproveBtn" type="button" style="margin-left:8px;padding:4px 12px;border:1px solid var(--gold-bright);border-radius:6px;background:var(--gold-btn);color:#060608;font-size:11px;font-weight:700;cursor:pointer;">Duyệt nạp ngay (Demo)</button>`;
+    statusEl.className = 'form-status ok';
+
+    setTimeout(() => {
+      document.getElementById('demoApproveBtn')?.addEventListener('click', () => {
+        const current = Number(localStorage.getItem(`cn_balance_${session.username}`) || 0);
+        const newBal = current + selected.amount;
+        localStorage.setItem(`cn_balance_${session.username}`, newBal);
+        loadBalance(true);
+        showToast(`✓ Đã cộng ${selected.amount.toLocaleString('vi-VN')}đ vào ví thành công!`);
+        statusEl.textContent = `✓ Đã duyệt cộng ${selected.amount.toLocaleString('vi-VN')}đ vào tài khoản!`;
+      });
+    }, 50);
+  }
+
+  displayOrder(selected.amount, orderContent, expiresAt);
+  localStorage.setItem(`cn_pending_${session.username}`, JSON.stringify({
+    amount: selected.amount,
+    content: orderContent,
+    expiresAt,
+    status: 'pending'
+  }));
 });
 
 function displayOrder(amount, content, expiresAt) {

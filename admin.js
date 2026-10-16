@@ -56,46 +56,74 @@ form.addEventListener('submit', async e => {
 
   const btn = document.getElementById('uploadBtn');
   btn.disabled = true;
-  statusEl.textContent = 'Đang tải file lên máy chủ...';
+  statusEl.textContent = 'Đang tải file...';
   statusEl.className = 'form-status ok';
 
-  try {
-    const body = new FormData();
-    body.append('name', product.name);
-    body.append('description', product.description);
-    body.append('price', String(product.price));
-    body.append('category', product.category);
-    body.append('file', file, file.name);
-    const response = await fetch(`${API_BASE}/api/products`, { method: 'POST', body });
-    if (!response.ok) throw new Error('upload failed');
-    statusEl.textContent = '✓ Đã đăng sản phẩm thành công!';
-    statusEl.className = 'form-status ok';
-    form.reset();
-    fileLabel.textContent = 'Chọn hoặc kéo thả file code vào đây';
-    previewName.textContent = 'Tên sản phẩm của bạn';
-    previewDesc.textContent = 'Mô tả ngắn sẽ xuất hiện ở đây.';
-    previewPrc.textContent  = '0đ';
-    showToast('Sản phẩm đã được đăng thành công!');
-    renderInventory();
-  } catch {
-    statusEl.textContent = 'Không thể lưu file. Kiểm tra dung lượng trình duyệt.';
-    statusEl.className = 'form-status err';
-  } finally {
-    btn.disabled = false;
+  const isStaticHost = window.location.protocol === 'file:' || window.location.hostname.endsWith('github.io');
+  let uploaded = false;
+
+  if (!isStaticHost) {
+    try {
+      const body = new FormData();
+      body.append('name', product.name);
+      body.append('description', product.description);
+      body.append('price', String(product.price));
+      body.append('category', product.category);
+      body.append('file', file, file.name);
+      const response = await fetch(`${API_BASE}/api/products`, { method: 'POST', body });
+      if (response.ok) {
+        uploaded = true;
+      }
+    } catch {
+      // Fallback
+    }
   }
+
+  if (!uploaded) {
+    let localProducts = [];
+    try {
+      localProducts = JSON.parse(localStorage.getItem('cn_products')) || [];
+    } catch {
+      localProducts = [];
+    }
+    localProducts.unshift(product);
+    localStorage.setItem('cn_products', JSON.stringify(localProducts));
+  }
+
+  statusEl.textContent = '✓ Đã đăng sản phẩm thành công!';
+  statusEl.className = 'form-status ok';
+  form.reset();
+  fileLabel.textContent = 'Chọn hoặc kéo thả file code vào đây';
+  previewName.textContent = 'Tên sản phẩm của bạn';
+  previewDesc.textContent = 'Mô tả ngắn sẽ xuất hiện ở đây.';
+  previewPrc.textContent  = '0đ';
+  showToast('Sản phẩm đã được đăng thành công!');
+  renderInventory();
+  btn.disabled = false;
 });
 
 /* ── Render inventory ── */
 async function renderInventory() {
   let products = [];
-  try {
-    const response = await fetch(`${API_BASE}/api/products`);
-    if (!response.ok) throw new Error('products failed');
-    products = await response.json();
-  } catch {
-    statusEl.textContent = 'Không kết nối được máy chủ. Hãy chạy backend trước.';
-    statusEl.className = 'form-status err';
+  const isStaticHost = window.location.protocol === 'file:' || window.location.hostname.endsWith('github.io');
+
+  if (!isStaticHost) {
+    try {
+      const response = await fetch(`${API_BASE}/api/products`);
+      if (response.ok) products = await response.json();
+    } catch {
+      // Fallback
+    }
   }
+
+  if (!products.length) {
+    try {
+      products = JSON.parse(localStorage.getItem('cn_products')) || [];
+    } catch {
+      products = [];
+    }
+  }
+
   const inv   = document.getElementById('productInventory');
   const count = document.getElementById('productCount');
   count.textContent = `${products.length} sản phẩm`;
@@ -127,18 +155,24 @@ async function renderInventory() {
       </div>`;
     item.querySelector('.inv-name').textContent = p.name;
     item.querySelector('.inv-desc').textContent = p.description;
-    item.querySelector('.delete-btn').addEventListener('click', () => {
+    item.querySelector('.delete-btn').addEventListener('click', async () => {
       if (!confirm(`Xóa sản phẩm "${p.name}"?`)) return;
-      fetch(`${API_BASE}/api/products/${encodeURIComponent(p.id)}`, { method: 'DELETE' })
-        .then(response => {
-          if (!response.ok) throw new Error('delete failed');
-          showToast(`Đã xóa "${p.name}"`);
-          renderInventory();
-        })
-        .catch(() => {
-          statusEl.textContent = 'Không thể xóa sản phẩm trên máy chủ.';
-          statusEl.className = 'form-status err';
-        });
+      let deleted = false;
+      if (!isStaticHost) {
+        try {
+          const response = await fetch(`${API_BASE}/api/products/${encodeURIComponent(p.id)}`, { method: 'DELETE' });
+          if (response.ok) deleted = true;
+        } catch {
+          // Fallback
+        }
+      }
+      if (!deleted) {
+        let localProducts = JSON.parse(localStorage.getItem('cn_products') || '[]');
+        localProducts = localProducts.filter(item => item.id !== p.id);
+        localStorage.setItem('cn_products', JSON.stringify(localProducts));
+      }
+      showToast(`Đã xóa "${p.name}"`);
+      renderInventory();
     });
     inv.append(item);
   });
@@ -192,11 +226,30 @@ function formatAdminDate(value) {
 async function renderUsers() {
   usersStatus.textContent = '';
   usersStatus.className = 'form-status';
-  try {
-    const response = await fetch(`${API_BASE}/api/admin/users`, { credentials: 'same-origin' });
-    const users = await response.json();
-    if (!response.ok) throw new Error(users.error || 'Không thể tải danh sách tài khoản.');
+  let users = [];
+  const isStaticHost = window.location.protocol === 'file:' || window.location.hostname.endsWith('github.io');
 
+  if (!isStaticHost) {
+    try {
+      const response = await fetch(`${API_BASE}/api/admin/users`, { credentials: 'same-origin' });
+      if (response.ok) users = await response.json();
+    } catch {
+      // Fallback
+    }
+  }
+
+  if (!users.length) {
+    const localAccs = JSON.parse(localStorage.getItem('cn_accounts') || '[]');
+    users = localAccs.map(a => ({
+      username: a.username,
+      displayName: a.displayName || a.username,
+      role: a.role || 'user',
+      balance: Number(localStorage.getItem(`cn_balance_${a.username}`) || 0),
+      createdAt: a.createdAt || new Date().toISOString()
+    }));
+  }
+
+  try {
     userCount.textContent = `${users.length} tài khoản`;
     userInventory.replaceChildren();
     memberSuggestions.replaceChildren();
@@ -472,34 +525,56 @@ document.getElementById('balanceForm').addEventListener('submit', async event =>
   const member = matchingMembers[0];
 
   submitButton.disabled = true;
-  try {
-    const response = await fetch(`${API_BASE}/api/admin/users/${encodeURIComponent(member.username)}/balance`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'same-origin',
-      body: JSON.stringify({ amount: amount * sign, reason }),
-    });
-    const result = await response.json();
-    if (!response.ok) {
-      usersStatus.textContent = result.error === 'adjustment would make the balance negative'
-        ? 'Số dư không đủ để thực hiện thao tác trừ.'
-        : result.error || 'Không thể cập nhật số dư.';
+  const isStaticHost = window.location.protocol === 'file:' || window.location.hostname.endsWith('github.io');
+  let adjusted = false;
+
+  if (!isStaticHost) {
+    try {
+      const response = await fetch(`${API_BASE}/api/admin/users/${encodeURIComponent(member.username)}/balance`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        body: JSON.stringify({ amount: amount * sign, reason }),
+      });
+      if (response.ok) {
+        const result = await response.json();
+        const changeLabel = sign > 0 ? 'đã cộng' : 'đã trừ';
+        const successMessage = `${result.username}: ${changeLabel} ${amount.toLocaleString('vi-VN')}đ; số dư mới ${Number(result.balance).toLocaleString('vi-VN')}đ.`;
+        event.target.reset();
+        await renderUsers();
+        usersStatus.textContent = successMessage;
+        usersStatus.className = 'form-status ok';
+        adjusted = true;
+      } else {
+        const result = await response.json();
+        usersStatus.textContent = result.error === 'adjustment would make the balance negative'
+          ? 'Số dư không đủ để thực hiện thao tác trừ.'
+          : result.error || 'Không thể cập nhật số dư.';
+        usersStatus.className = 'form-status err';
+        submitButton.disabled = false;
+        return;
+      }
+    } catch {
+      // Fallback
+    }
+  }
+
+  if (!adjusted) {
+    const curBal = Number(localStorage.getItem(`cn_balance_${member.username}`) || 0);
+    const newBal = curBal + (amount * sign);
+    if (newBal < 0) {
+      usersStatus.textContent = 'Số dư không đủ để thực hiện thao tác trừ.';
       usersStatus.className = 'form-status err';
+      submitButton.disabled = false;
       return;
     }
-    const changeLabel = sign > 0 ? 'đã cộng' : 'đã trừ';
-    const successMessage = `${result.username}: ${changeLabel} ${amount.toLocaleString('vi-VN')}đ; số dư mới ${Number(result.balance).toLocaleString('vi-VN')}đ.`;
+    localStorage.setItem(`cn_balance_${member.username}`, newBal);
     event.target.reset();
     await renderUsers();
-    usersStatus.textContent = successMessage;
+    usersStatus.textContent = `${member.username}: ${sign > 0 ? 'đã cộng' : 'đã trừ'} ${amount.toLocaleString('vi-VN')}đ; số dư mới ${newBal.toLocaleString('vi-VN')}đ.`;
     usersStatus.className = 'form-status ok';
-  } catch (error) {
-    console.error('Balance adjustment failed:', error);
-    usersStatus.textContent = 'Không kết nối được máy chủ.';
-    usersStatus.className = 'form-status err';
-  } finally {
-    submitButton.disabled = false;
   }
+  submitButton.disabled = false;
 });
 
 async function loadThemeSettings() {
