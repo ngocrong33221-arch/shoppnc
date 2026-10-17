@@ -478,20 +478,26 @@ function showToast(msg, duration = 3000) {
 const BALANCE_API_BASE = window.location.protocol === 'file:' ? 'http://127.0.0.1:5000' : window.location.origin;
 
 async function fetchBalance(username) {
-  const key = `cn_balance_${username}`;
   try {
-    if (!window.location.hostname.endsWith('github.io') && window.location.protocol !== 'file:') {
-      const res = await fetch(`${BALANCE_API_BASE}/api/balances/${encodeURIComponent(username)}`, { cache: 'no-store' });
-      if (res.ok) {
-        const data = await res.json();
-        const amt = Number(data.amount || 0);
-        localStorage.setItem(key, amt);
-        return amt;
+    // Online check first
+    if (typeof supabase !== 'undefined' && supabase) {
+      if (username === 'ADM') return 9999999;
+      const { data, error } = await supabase
+        .from('users')
+        .select('balance')
+        .eq('username', username)
+        .maybeSingle();
+      
+      if (!error && data) {
+        return Number(data.balance || 0);
       }
     }
-  } catch {
-    // fallback
+  } catch (error) {
+    console.warn('Could not fetch balance from Supabase:', error);
   }
+
+  // Fallback to local (for development/legacy)
+  const key = `cn_balance_${username}`;
   const saved = localStorage.getItem(key);
   if (saved !== null) return Number(saved);
   const defaultAmt = username === 'ADM' ? 9999999 : 0;

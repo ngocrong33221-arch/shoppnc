@@ -771,13 +771,19 @@ document.getElementById('loginForm').addEventListener('submit', async e => {
     }
   }
 
-  // Fallback LocalStorage Authentication (GitHub Pages / Offline)
+  // Supabase Online Authentication
   try {
     await new Promise(r => setTimeout(r, 400));
-    const accounts = loadLocalAccounts();
-
+    
     if (isSignup) {
-      if (accounts.find(a => a.username.toLowerCase() === user.toLowerCase())) {
+      // Check if user exists
+      const { data: existingUser } = await supabase
+        .from('users')
+        .select('username')
+        .eq('username', user)
+        .maybeSingle();
+
+      if (existingUser) {
         emailErr.textContent = 'Tài khoản này đã tồn tại trong hệ thống.';
         shakeField(emailInput);
         submitBtn.classList.remove('loading');
@@ -785,29 +791,32 @@ document.getElementById('loginForm').addEventListener('submit', async e => {
         return;
       }
 
-      const newAcc = {
-        username: user,
-        password: pass,
-        role: 'user',
-        createdAt: new Date().toISOString()
-      };
-      accounts.push(newAcc);
-      saveLocalAccounts(accounts);
+      // Create new user
+      const { error: signupError } = await supabase
+        .from('users')
+        .insert([{ username: user, password: pass, role: 'user', balance: 0 }]);
 
-      const balKey = `cn_balance_${user}`;
-      if (localStorage.getItem(balKey) === null) {
-        localStorage.setItem(balKey, '0');
-      }
+      if (signupError) throw signupError;
 
       sessionStorage.setItem(SESSION_KEY, JSON.stringify({ username: user, role: 'user' }));
       showStatus('✨ Tạo tài khoản thành công! Đang chuyển vào hệ thống...', true);
       setTimeout(() => navigate('store.html'), 750);
     } else {
-      const lUser = user.toLowerCase();
-      const acc =
-        (lUser === ADMIN.username.toLowerCase() && pass === ADMIN.password)
-          ? ADMIN
-          : accounts.find(a => a.username.toLowerCase() === lUser && a.password === pass);
+      // Admin bypass or check DB
+      let acc = null;
+      if (user.toLowerCase() === ADMIN.username.toLowerCase() && pass === ADMIN.password) {
+        acc = ADMIN;
+      } else {
+        const { data: dbUser, error: loginError } = await supabase
+          .from('users')
+          .select('*')
+          .eq('username', user)
+          .eq('password', pass)
+          .maybeSingle();
+        
+        if (loginError) throw loginError;
+        acc = dbUser;
+      }
 
       if (!acc) {
         showStatus('Tài khoản hoặc mật khẩu không chính xác.', false);
@@ -824,15 +833,13 @@ document.getElementById('loginForm').addEventListener('submit', async e => {
         localStorage.removeItem('cn_remember');
       }
 
-      const balKey = `cn_balance_${acc.username}`;
-      if (localStorage.getItem(balKey) === null) {
-        localStorage.setItem(balKey, acc.role === 'admin' ? '9999999' : '0');
-      }
-
       sessionStorage.setItem(SESSION_KEY, JSON.stringify({ username: acc.username, role: acc.role }));
       showStatus('✨ Đăng nhập thành công! Đang vào CodeNest...', true);
       setTimeout(() => navigate('store.html'), 650);
     }
+  } catch (error) {
+    console.error('Supabase Error:', error);
+    showStatus('Lỗi kết nối Database online. Hãy thử lại sau.', false);
   } finally {
     submitBtn.classList.remove('loading');
     if (arrowSvg) arrowSvg.style.display = '';

@@ -83,37 +83,46 @@ form.addEventListener('submit', async e => {
   statusEl.textContent = 'Đang tải file...';
   statusEl.className = 'form-status ok';
 
-  let uploaded = false;
-
-  if (!isStaticHost) {
-    try {
-      const body = new FormData();
-      body.append('name', product.name);
-      body.append('description', product.description);
-      body.append('price', String(product.price));
-      body.append('category', product.category);
-      body.append('file', file, file.name);
-      const response = await fetch(`${API_BASE}/api/products`, { method: 'POST', body });
-      if (response.ok) {
-        uploaded = true;
-      }
-    } catch {
-      // Fallback
+  try {
+    if (typeof supabase !== 'undefined' && supabase) {
+      const { error } = await supabase
+        .from('products')
+        .insert([{
+          name: product.name,
+          description: product.description,
+          price: product.price,
+          category: product.category,
+          file_name: product.fileName
+        }]);
+      
+      if (error) throw error;
+      statusEl.textContent = '✓ Đã đăng sản phẩm thành công!';
+      statusEl.className = 'form-status ok';
+      form.reset();
+      fileLabel.textContent = 'Chọn hoặc kéo thả file code vào đây';
+      previewName.textContent = 'Tên sản phẩm của bạn';
+      previewDesc.textContent = 'Mô tả ngắn sẽ xuất hiện ở đây.';
+      previewPrc.textContent  = '0đ';
+      showToast('Sản phẩm đã được đăng thành công!');
+      renderInventory();
+      btn.disabled = false;
+      return;
     }
+  } catch (error) {
+    console.error('Upload error:', error);
   }
 
-  if (!uploaded) {
-    let localProducts = [];
-    try {
-      localProducts = JSON.parse(localStorage.getItem('cn_products')) || [];
-    } catch {
-      localProducts = [];
-    }
-    localProducts.unshift(product);
-    localStorage.setItem('cn_products', JSON.stringify(localProducts));
+  // Local fallback
+  let localProducts = [];
+  try {
+    localProducts = JSON.parse(localStorage.getItem('cn_products')) || [];
+  } catch {
+    localProducts = [];
   }
+  localProducts.unshift(product);
+  localStorage.setItem('cn_products', JSON.stringify(localProducts));
 
-  statusEl.textContent = '✓ Đã đăng sản phẩm thành công!';
+  statusEl.textContent = '✓ Đã đăng sản phẩm thành công! (Lưu cục bộ)';
   statusEl.className = 'form-status ok';
   form.reset();
   fileLabel.textContent = 'Chọn hoặc kéo thả file code vào đây';
@@ -128,16 +137,20 @@ form.addEventListener('submit', async e => {
 /* ── Render inventory ── */
 async function renderInventory() {
   let products = [];
-
-  if (!isStaticHost) {
-    try {
-      const response = await fetch(`${API_BASE}/api/products`);
-      if (response.ok) products = await response.json();
-    } catch {
-      // Fallback
+  try {
+    if (typeof supabase !== 'undefined' && supabase) {
+      const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (!error) products = data;
     }
+  } catch (error) {
+    console.warn('Could not fetch products from Supabase:', error);
   }
 
+  // Fallback to local
   if (!products.length) {
     try {
       products = JSON.parse(localStorage.getItem('cn_products')) || [];
@@ -167,7 +180,7 @@ async function renderInventory() {
     item.style.animationDelay = (i * .06) + 's';
     item.innerHTML = `
       <div class="inv-item-info">
-        <span class="inv-cat">${p.category || 'web'} · ${p.fileName || 'CODE'}</span>
+        <span class="inv-cat">${p.category || 'web'} · ${p.file_name || p.fileName || 'CODE'}</span>
         <h3 class="inv-name"></h3>
         <p class="inv-desc"></p>
       </div>
@@ -177,22 +190,30 @@ async function renderInventory() {
       </div>`;
     item.querySelector('.inv-name').textContent = p.name;
     item.querySelector('.inv-desc').textContent = p.description;
+
     item.querySelector('.delete-btn').addEventListener('click', async () => {
       if (!confirm(`Xóa sản phẩm "${p.name}"?`)) return;
-      let deleted = false;
-      if (!isStaticHost) {
-        try {
-          const response = await fetch(`${API_BASE}/api/products/${encodeURIComponent(p.id)}`, { method: 'DELETE' });
-          if (response.ok) deleted = true;
-        } catch {
-          // Fallback
+      
+      try {
+        if (typeof supabase !== 'undefined' && supabase) {
+          const { error } = await supabase
+            .from('products')
+            .delete()
+            .eq('id', p.id);
+          
+          if (error) throw error;
+          showToast(`Đã xóa "${p.name}"`);
+          renderInventory();
+          return;
         }
+      } catch (error) {
+        console.error('Delete error:', error);
       }
-      if (!deleted) {
-        let localProducts = JSON.parse(localStorage.getItem('cn_products') || '[]');
-        localProducts = localProducts.filter(item => item.id !== p.id);
-        localStorage.setItem('cn_products', JSON.stringify(localProducts));
-      }
+
+      // Local fallback
+      let localProducts = JSON.parse(localStorage.getItem('cn_products') || '[]');
+      localProducts = localProducts.filter(item => item.id !== p.id);
+      localStorage.setItem('cn_products', JSON.stringify(localProducts));
       showToast(`Đã xóa "${p.name}"`);
       renderInventory();
     });
@@ -250,13 +271,17 @@ async function renderUsers() {
   usersStatus.className = 'form-status';
   let users = [];
 
-  if (!isStaticHost) {
-    try {
-      const response = await fetch(`${API_BASE}/api/admin/users`, { credentials: 'same-origin' });
-      if (response.ok) users = await response.json();
-    } catch {
-      // Fallback
+  try {
+    if (typeof supabase !== 'undefined' && supabase) {
+      const { data, error } = await supabase
+        .from('users')
+        .select('*')
+        .order('username', { ascending: true });
+      
+      if (!error) users = data;
     }
+  } catch (error) {
+    console.warn('Could not fetch users from Supabase:', error);
   }
 
   if (!users.length) {
@@ -545,54 +570,55 @@ document.getElementById('balanceForm').addEventListener('submit', async event =>
   }
   const member = matchingMembers[0];
   submitButton.disabled = true;
-  let adjusted = false;
-
-  if (!isStaticHost) {
-    try {
-      const response = await fetch(`${API_BASE}/api/admin/users/${encodeURIComponent(member.username)}/balance`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'same-origin',
-        body: JSON.stringify({ amount: amount * sign, reason }),
-      });
-      if (response.ok) {
-        const result = await response.json();
-        const changeLabel = sign > 0 ? 'đã cộng' : 'đã trừ';
-        const successMessage = `${result.username}: ${changeLabel} ${amount.toLocaleString('vi-VN')}đ; số dư mới ${Number(result.balance).toLocaleString('vi-VN')}đ.`;
-        event.target.reset();
-        await renderUsers();
-        usersStatus.textContent = successMessage;
-        usersStatus.className = 'form-status ok';
-        adjusted = true;
-      } else {
-        const result = await response.json();
-        usersStatus.textContent = result.error === 'adjustment would make the balance negative'
-          ? 'Số dư không đủ để thực hiện thao tác trừ.'
-          : result.error || 'Không thể cập nhật số dư.';
+  
+  try {
+    if (typeof supabase !== 'undefined' && supabase) {
+      const { data: curUser } = await supabase
+        .from('users')
+        .select('balance')
+        .eq('username', member.username)
+        .maybeSingle();
+      
+      const newBal = (Number(curUser?.balance) || 0) + (amount * sign);
+      if (newBal < 0) {
+        usersStatus.textContent = 'Số dư không đủ để thực hiện thao tác trừ.';
         usersStatus.className = 'form-status err';
         submitButton.disabled = false;
         return;
       }
-    } catch {
-      // Fallback
-    }
-  }
 
-  if (!adjusted) {
-    const curBal = Number(localStorage.getItem(`cn_balance_${member.username}`) || 0);
-    const newBal = curBal + (amount * sign);
-    if (newBal < 0) {
-      usersStatus.textContent = 'Số dư không đủ để thực hiện thao tác trừ.';
-      usersStatus.className = 'form-status err';
+      const { error: updateError } = await supabase
+        .from('users')
+        .update({ balance: newBal })
+        .eq('username', member.username);
+      
+      if (updateError) throw updateError;
+
+      event.target.reset();
+      await renderUsers();
+      usersStatus.textContent = `${member.username}: ${sign > 0 ? 'đã cộng' : 'đã trừ'} ${amount.toLocaleString('vi-VN')}đ; số dư mới ${newBal.toLocaleString('vi-VN')}đ.`;
+      usersStatus.className = 'form-status ok';
       submitButton.disabled = false;
       return;
     }
-    localStorage.setItem(`cn_balance_${member.username}`, newBal);
-    event.target.reset();
-    await renderUsers();
-    usersStatus.textContent = `${member.username}: ${sign > 0 ? 'đã cộng' : 'đã trừ'} ${amount.toLocaleString('vi-VN')}đ; số dư mới ${newBal.toLocaleString('vi-VN')}đ.`;
-    usersStatus.className = 'form-status ok';
+  } catch (error) {
+    console.error('Balance update error:', error);
   }
+
+  // Local fallback
+  const curBal = Number(localStorage.getItem(`cn_balance_${member.username}`) || 0);
+  const newBal = curBal + (amount * sign);
+  if (newBal < 0) {
+    usersStatus.textContent = 'Số dư không đủ để thực hiện thao tác trừ.';
+    usersStatus.className = 'form-status err';
+    submitButton.disabled = false;
+    return;
+  }
+  localStorage.setItem(`cn_balance_${member.username}`, newBal);
+  event.target.reset();
+  await renderUsers();
+  usersStatus.textContent = `${member.username}: ${sign > 0 ? 'đã cộng' : 'đã trừ'} ${amount.toLocaleString('vi-VN')}đ; số dư mới ${newBal.toLocaleString('vi-VN')}đ. (Lưu cục bộ)`;
+  usersStatus.className = 'form-status ok';
   submitButton.disabled = false;
 });
 
@@ -793,7 +819,37 @@ function renderOrders(serverOrders) {
   });
 }
 
-function applyOrderApproval(order) {
+async function applyOrderApproval(order) {
+  try {
+    if (typeof supabase !== 'undefined' && supabase) {
+      // 1. Get current balance
+      const { data: user } = await supabase
+        .from('users')
+        .select('balance')
+        .eq('username', order.username)
+        .maybeSingle();
+      
+      const newBalance = (Number(user?.balance) || 0) + Number(order.amount || 0);
+
+      // 2. Update balance
+      await supabase
+        .from('users')
+        .update({ balance: newBalance })
+        .eq('username', order.username);
+      
+      // 3. Update order status
+      await supabase
+        .from('orders')
+        .update({ status: 'approved' })
+        .eq('id', order.id);
+      
+      return newBalance;
+    }
+  } catch (error) {
+    console.error('Order approval error:', error);
+  }
+
+  // Local fallback
   const balanceKey = `cn_balance_${order.username}`;
   const current = Number(localStorage.getItem(balanceKey) || 0);
   const newBalance = current + Number(order.amount || 0);
@@ -814,8 +870,22 @@ function applyOrderApproval(order) {
 async function loadOrders() {
   ordersStatus.textContent = 'Đang tải danh sách đơn nạp...';
   ordersStatus.className = 'form-status';
-  const serverOrders = await fetchBackendOrders();
-  renderOrders(serverOrders);
+  
+  let orders = [];
+  try {
+    if (typeof supabase !== 'undefined' && supabase) {
+      const { data, error } = await supabase
+        .from('orders')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (!error) orders = data;
+    }
+  } catch (error) {
+    console.warn('Could not fetch orders from Supabase:', error);
+  }
+
+  renderOrders(orders);
   if (!orderRows.querySelector('.activity-empty')) {
     ordersStatus.textContent = 'Gửi lệnh “/duyet <mã đơn>” cho bot Telegram để duyệt đơn.';
     ordersStatus.className = 'form-status';

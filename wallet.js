@@ -65,40 +65,42 @@ document.getElementById('topupButton').addEventListener('click', async () => {
 
   const expiresAt = Date.now() + 10 * 60 * 1000;
   const randomSuffix = Math.floor(100000 + Math.random() * 900000);
-  const localContent = `CN ${session.username} ${randomSuffix}`;
+  const orderContent = `CN ${session.username} ${randomSuffix}`;
 
-  let orderContent = localContent;
-  let backendOk = false;
-  const isStaticHost = window.location.protocol === 'file:' || window.location.hostname.endsWith('github.io');
+  try {
+    if (typeof supabase !== 'undefined' && supabase) {
+      const { error } = await supabase
+        .from('orders')
+        .insert([{
+          username: session.username,
+          amount: selected.amount,
+          content: orderContent,
+          status: 'pending'
+        }]);
+      
+      if (error) throw error;
 
-  if (!isStaticHost) {
-    try {
-      const res = await fetch(`${API_BASE}/api/topups`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'same-origin',
-        body: JSON.stringify({ username: session.username, amount: selected.amount })
-      });
-      if (res.ok) {
-        const order = await res.json();
-        orderContent = order.content || localContent;
-        statusEl.textContent = order.telegram_sent ? 'Đã gửi đơn và thông báo admin.' : 'Đơn đã lưu, vui lòng quét mã QR để chuyển khoản.';
-        backendOk = true;
-      }
-    } catch {
-      // Fallback
+      const notified = await notifyAdminTelegram(
+        `ĐƠN NẠP MỚI\nKhách hàng: ${session.username}\nSố tiền: ${selected.amount.toLocaleString('vi-VN')} VNĐ\nMã đơn: ${orderContent}\n\nDuyệt bằng lệnh:\n/duyet ${orderContent}`
+      );
+
+      statusEl.innerHTML = `${notified ? '✓ Đã gửi thông báo cho admin. ' : ''}✓ Đã tạo mã QR MB Bank thành công! Vui lòng chuyển khoản, admin sẽ duyệt và cộng tiền vào ví.`;
+      statusEl.className = 'form-status ok';
+      displayOrder(selected.amount, orderContent, expiresAt);
+      return;
     }
+  } catch (error) {
+    console.error('Supabase Order error:', error);
   }
 
-  if (!backendOk) {
-    statusEl.textContent = 'Đang gửi thông báo cho admin...';
-    statusEl.className = 'form-status ok';
-    const notified = await notifyAdminTelegram(
-      `ĐƠN NẠP MỚI\nKhách hàng: ${session.username}\nSố tiền: ${selected.amount.toLocaleString('vi-VN')} VNĐ\nMã đơn: ${orderContent}\n\nDuyệt bằng lệnh:\n/duyet ${orderContent}`
-    );
-    statusEl.innerHTML = `${notified ? '✓ Đã gửi thông báo cho admin. ' : ''}✓ Đã tạo mã QR MB Bank thành công! Vui lòng chuyển khoản, admin sẽ duyệt và cộng tiền vào ví.`;
-    statusEl.className = 'form-status ok';
-  }
+  // Local fallback
+  statusEl.textContent = 'Đang gửi thông báo cho admin...';
+  statusEl.className = 'form-status ok';
+  const notified = await notifyAdminTelegram(
+    `ĐƠN NẠP MỚI\nKhách hàng: ${session.username}\nSố tiền: ${selected.amount.toLocaleString('vi-VN')} VNĐ\nMã đơn: ${orderContent}\n\nDuyệt bằng lệnh:\n/duyet ${orderContent}`
+  );
+  statusEl.innerHTML = `${notified ? '✓ Đã gửi thông báo cho admin. ' : ''}✓ Đã tạo mã QR MB Bank thành công! Vui lòng chuyển khoản, admin sẽ duyệt và cộng tiền vào ví.`;
+  statusEl.className = 'form-status ok';
 
   displayOrder(selected.amount, orderContent, expiresAt);
   localStorage.setItem(`cn_pending_${session.username}`, JSON.stringify({
@@ -124,7 +126,7 @@ document.getElementById('topupButton').addEventListener('click', async () => {
       localStorage.setItem('cn_orders', JSON.stringify(orderList.slice(0, 500)));
     }
   } catch {
-    // Bỏ qua nếu localStorage không dùng được
+    // Bỏ qua
   }
 });
 

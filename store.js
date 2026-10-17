@@ -257,18 +257,21 @@ document.addEventListener('keydown', event => { if (event.key === 'Escape') clos
 
 async function loadProducts() {
   let loaded = false;
-  const isStaticHost = window.location.protocol === 'file:' || window.location.hostname.endsWith('github.io');
-
-  if (!isStaticHost) {
-    try {
-      const response = await fetch(`${API_BASE}/api/products`);
-      if (response.ok) {
-        customProducts = await response.json();
+  
+  try {
+    if (typeof supabase !== 'undefined' && supabase) {
+      const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (!error && data) {
+        customProducts = data;
         loaded = true;
       }
-    } catch {
-      // Fallback
     }
+  } catch (error) {
+    console.warn('Could not fetch products from Supabase:', error);
   }
 
   if (!loaded || !customProducts.length) {
