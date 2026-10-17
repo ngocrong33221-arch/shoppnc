@@ -982,8 +982,8 @@ def create_product():
         price = int(request.form.get('price', '0'))
     except (TypeError, ValueError):
         price = 0
-    if not name or not description or price < 1000:
-        return jsonify({'error': 'name, description and price >= 1000 are required'}), 400
+    if not name or not description or price < 0:
+        return jsonify({'error': 'name, description and price >= 0 are required'}), 400
 
     original_name = uploaded.filename
     safe_name = secure_filename(original_name) or 'download'
