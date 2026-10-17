@@ -796,7 +796,7 @@ document.getElementById('loginForm').addEventListener('submit', async e => {
 
       const balKey = `cn_balance_${user}`;
       if (localStorage.getItem(balKey) === null) {
-        localStorage.setItem(balKey, '300000');
+        localStorage.setItem(balKey, '0');
       }
 
       sessionStorage.setItem(SESSION_KEY, JSON.stringify({ username: user, role: 'user' }));
@@ -826,7 +826,7 @@ document.getElementById('loginForm').addEventListener('submit', async e => {
 
       const balKey = `cn_balance_${acc.username}`;
       if (localStorage.getItem(balKey) === null) {
-        localStorage.setItem(balKey, acc.role === 'admin' ? '9999999' : '500000');
+        localStorage.setItem(balKey, acc.role === 'admin' ? '9999999' : '0');
       }
 
       sessionStorage.setItem(SESSION_KEY, JSON.stringify({ username: acc.username, role: acc.role }));
