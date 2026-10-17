@@ -67,7 +67,8 @@
   }
 
   window.applyCodeNestTheme = applyCodeNestTheme;
-  if (window.location.protocol === 'file:') return;
+  const isStaticHost = window.location.protocol === 'file:' || window.location.hostname.endsWith('github.io');
+  if (isStaticHost) return;
   fetch(`${apiBase}/api/site/theme`)
     .then(response => {
       if (!response.ok) throw new Error(`Theme request failed (${response.status}).`);

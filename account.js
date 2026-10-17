@@ -5,12 +5,13 @@
 const session = JSON.parse(sessionStorage.getItem('cn_session') || 'null');
 const API_BASE = window.location.protocol === 'file:' ? 'http://127.0.0.1:5000' : window.location.origin;
 
-document.getElementById('avatar').textContent = session.username.charAt(0).toUpperCase();
-document.getElementById('accountName').textContent = session.displayName || session.username;
-document.getElementById('accountEmail').textContent = session.username;
-document.getElementById('accountRole').textContent = session.role === 'admin' ? 'Quản trị viên' : 'Thành viên';
+document.getElementById('avatar').textContent = (session?.username || '?').charAt(0).toUpperCase();
+document.getElementById('accountName').textContent = session?.displayName || session?.username || 'Khách';
+document.getElementById('accountEmail').textContent = session?.username || '—';
+document.getElementById('accountRole').textContent = session?.role === 'admin' ? 'Quản trị viên' : 'Thành viên';
 
 async function loadProfile() {
+  if (!session) return;
   const isStaticHost = window.location.protocol === 'file:' || window.location.hostname.endsWith('github.io');
   let loaded = false;
   if (!isStaticHost) {
@@ -40,6 +41,7 @@ async function loadProfile() {
 }
 
 async function loadBalance() {
+  if (!session) return;
   try {
     const bal = await fetchBalance(session.username);
     document.getElementById('accountBalance').textContent = bal.toLocaleString('vi-VN') + 'đ';
@@ -62,6 +64,11 @@ document.querySelectorAll('.pw-toggle').forEach(btn => {
 document.getElementById('passwordForm').addEventListener('submit', async event => {
   event.preventDefault();
   const statusEl = document.getElementById('passwordStatus');
+  if (!session) {
+    statusEl.textContent = 'Bạn cần đăng nhập lại để đổi mật khẩu.';
+    statusEl.className = 'form-status err';
+    return;
+  }
   const currentPassword = document.getElementById('currentPassword').value;
   const newPassword = document.getElementById('newPassword').value;
   const confirmPassword = document.getElementById('confirmPassword').value;
@@ -107,7 +114,7 @@ document.getElementById('passwordForm').addEventListener('submit', async event =
     let acc = accounts.find(a => a.username.toLowerCase() === session.username.toLowerCase());
     if (session.username.toLowerCase() === 'adm') {
       if (!acc) {
-        acc = { username: 'ADM', password: '0339171213a', role: 'admin' };
+        acc = { username: 'ADM', password: 'CodeNest@2026', role: 'admin' };
         accounts.push(acc);
       }
     }

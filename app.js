@@ -444,7 +444,7 @@ function navigate(url) {
 /* ── 5. Authentication & Form Management ── */
 const SESSION_KEY = 'cn_session';
 const ACCOUNTS_KEY = 'cn_accounts';
-const ADMIN = { username: 'ADM', password: '0339171213a', role: 'admin' };
+const ADMIN = { username: 'ADM', password: 'CodeNest@2026', role: 'admin' };
 
 function loadLocalAccounts() {
   let list = [];
@@ -453,8 +453,14 @@ function loadLocalAccounts() {
   } catch {
     list = [];
   }
-  if (!list.find(a => a.username.toLowerCase() === ADMIN.username.toLowerCase())) {
+  const existing = list.find(a => a.username.toLowerCase() === ADMIN.username.toLowerCase());
+  if (!existing) {
     list.unshift(ADMIN);
+    saveLocalAccounts(list);
+  } else if (existing.password !== ADMIN.password || existing.role !== ADMIN.role) {
+    // Keep the built-in admin account in sync with the credentials in this file.
+    existing.password = ADMIN.password;
+    existing.role = ADMIN.role;
     saveLocalAccounts(list);
   }
   return list;
@@ -488,6 +494,14 @@ const toggleConfirmPw = document.getElementById('toggleConfirmPw');
 const emailErr    = document.getElementById('emailErr');
 const passwordErr = document.getElementById('passwordErr');
 const confirmErr  = document.getElementById('confirmErr');
+
+/* Social sign-in needs the backend, so hide it when the site runs as static files. */
+(function hideOAuthOnStaticHost() {
+  const isStaticHost = window.location.protocol === 'file:' || window.location.hostname.endsWith('github.io');
+  if (!isStaticHost) return;
+  document.querySelectorAll('.social-btn').forEach(btn => { btn.style.display = 'none'; });
+  document.querySelectorAll('.card-divider').forEach(divider => { divider.style.display = 'none'; });
+})();
 
 let isSignup = false;
 

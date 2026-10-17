@@ -91,7 +91,12 @@ document.getElementById('topupButton').addEventListener('click', async () => {
   }
 
   if (!backendOk) {
-    statusEl.innerHTML = `✓ Đã tạo mã QR MB Bank thành công! <button id="demoApproveBtn" type="button" style="margin-left:8px;padding:4px 12px;border:1px solid var(--gold-bright);border-radius:6px;background:var(--gold-btn);color:#060608;font-size:11px;font-weight:700;cursor:pointer;">Duyệt nạp ngay (Demo)</button>`;
+    statusEl.textContent = 'Đang gửi thông báo cho admin...';
+    statusEl.className = 'form-status ok';
+    const notified = await notifyAdminTelegram(
+      `ĐƠN NẠP MỚI\nKhách hàng: ${session.username}\nSố tiền: ${selected.amount.toLocaleString('vi-VN')} VNĐ\nMã đơn: ${orderContent}`
+    );
+    statusEl.innerHTML = `${notified ? '✓ Đã gửi thông báo cho admin. ' : ''}✓ Đã tạo mã QR MB Bank thành công! <button id="demoApproveBtn" type="button" style="margin-left:8px;padding:4px 12px;border:1px solid var(--gold-bright);border-radius:6px;background:var(--gold-btn);color:#060608;font-size:11px;font-weight:700;cursor:pointer;">Duyệt nạp ngay (Demo)</button>`;
     statusEl.className = 'form-status ok';
 
     setTimeout(() => {
