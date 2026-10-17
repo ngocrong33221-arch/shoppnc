@@ -24,9 +24,7 @@ function initSupabase() {
   window.supabase = supabase;
 }
 
-// Initialize when this script loads (assuming CDN is loaded before)
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initSupabase);
-} else {
-  initSupabase();
-}
+// The CDN script tag always runs before this file, so the SDK is available now.
+// Initialize immediately so pages that query Supabase while parsing (store.js,
+// admin.js) don't see the raw SDK namespace instead of the client.
+initSupabase();
