@@ -96,31 +96,8 @@ document.getElementById('topupButton').addEventListener('click', async () => {
     const notified = await notifyAdminTelegram(
       `ĐƠN NẠP MỚI\nKhách hàng: ${session.username}\nSố tiền: ${selected.amount.toLocaleString('vi-VN')} VNĐ\nMã đơn: ${orderContent}`
     );
-    statusEl.innerHTML = `${notified ? '✓ Đã gửi thông báo cho admin. ' : ''}✓ Đã tạo mã QR MB Bank thành công! <button id="demoApproveBtn" type="button" style="margin-left:8px;padding:4px 12px;border:1px solid var(--gold-bright);border-radius:6px;background:var(--gold-btn);color:#060608;font-size:11px;font-weight:700;cursor:pointer;">Duyệt nạp ngay (Demo)</button>`;
+    statusEl.innerHTML = `${notified ? '✓ Đã gửi thông báo cho admin. ' : ''}✓ Đã tạo mã QR MB Bank thành công! Vui lòng chuyển khoản, admin sẽ duyệt và cộng tiền vào ví.`;
     statusEl.className = 'form-status ok';
-
-    setTimeout(() => {
-      document.getElementById('demoApproveBtn')?.addEventListener('click', () => {
-        const current = Number(localStorage.getItem(`cn_balance_${session.username}`) || 0);
-        const newBal = current + selected.amount;
-        localStorage.setItem(`cn_balance_${session.username}`, newBal);
-        try {
-          const allOrders = JSON.parse(localStorage.getItem('cn_orders') || '[]');
-          const orderList = Array.isArray(allOrders) ? allOrders : [];
-          const match = orderList.find(order => order.content === orderContent);
-          if (match) {
-            match.status = 'approved';
-            match.approvedAt = new Date().toISOString();
-            localStorage.setItem('cn_orders', JSON.stringify(orderList));
-          }
-        } catch {
-          // Bỏ qua nếu localStorage không dùng được
-        }
-        loadBalance(true);
-        showToast(`✓ Đã cộng ${selected.amount.toLocaleString('vi-VN')}đ vào ví thành công!`);
-        statusEl.textContent = `✓ Đã duyệt cộng ${selected.amount.toLocaleString('vi-VN')}đ vào tài khoản!`;
-      });
-    }, 50);
   }
 
   displayOrder(selected.amount, orderContent, expiresAt);
