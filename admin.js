@@ -652,3 +652,153 @@ document.getElementById('themeForm').addEventListener('submit', async event => {
 renderInventory();
 renderUsers();
 loadThemeSettings();
+
+/* ── Top-up order approval ── */
+const ORDERS_KEY = 'cn_orders';
+const ordersStatus = document.getElementById('ordersStatus');
+const orderRows = document.getElementById('orderRows');
+const orderCount = document.getElementById('orderCount');
+
+function readLocalOrders() {
+  try {
+    const list = JSON.parse(localStorage.getItem(ORDERS_KEY) || '[]');
+    return Array.isArray(list) ? list : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeLocalOrders(list) {
+  localStorage.setItem(ORDERS_KEY, JSON.stringify(list.slice(0, 500)));
+}
+
+function formatOrderTime(value) {
+  if (!value) return '—';
+  const date = new Date(value);
+  return Number.isNaN(date.getTime())
+    ? '—'
+    : date.toLocaleString('vi-VN', { dateStyle: 'short', timeStyle: 'short' });
+}
+
+async function fetchBackendOrders() {
+  const isStaticHost = window.location.protocol === 'file:' || window.location.hostname.endsWith('github.io');
+  if (isStaticHost) return null;
+  try {
+    const response = await fetch(`${API_BASE}/api/admin/topups`, { credentials: 'same-origin' });
+    if (!response.ok) return null;
+    const data = await response.json();
+    if (!Array.isArray(data)) return null;
+    return data.map(item => ({
+      id: item.id,
+      username: item.username,
+      amount: Number(item.amount) || 0,
+      content: item.content,
+      createdAt: item.created_at || item.createdAt,
+      status: item.status || 'pending'
+    }));
+  } catch {
+    return null;
+  }
+}
+
+function renderOrders(serverOrders) {
+  const merged = new Map();
+  (serverOrders || []).forEach(order => merged.set(order.content, order));
+  readLocalOrders().forEach(order => {
+    const existing = merged.get(order.content);
+    if (!existing || (existing.status !== 'approved' && order.status === 'approved')) {
+      merged.set(order.content, order);
+    }
+  });
+  const orders = [...merged.values()]
+    .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+
+  orderCount.textContent = `${orders.length} đơn`;
+  orderRows.replaceChildren();
+
+  if (!orders.length) {
+    const row = document.createElement('tr');
+    const cell = document.createElement('td');
+    cell.className = 'activity-empty';
+    cell.colSpan = 6;
+    cell.textContent = 'Chưa có đơn nạp nào.';
+    row.append(cell);
+    orderRows.append(row);
+    return;
+  }
+
+  orders.forEach(order => {
+    const row = document.createElement('tr');
+
+    const time = document.createElement('td');
+    time.textContent = formatOrderTime(order.createdAt);
+
+    const user = document.createElement('td');
+    user.textContent = order.username || '—';
+
+    const code = document.createElement('td');
+    code.className = 'activity-description';
+    code.textContent = order.content || '—';
+
+    const amount = document.createElement('td');
+    amount.className = 'activity-amount-positive';
+    amount.textContent = `+${formatAdminMoney(order.amount)}`;
+
+    const approved = order.status === 'approved';
+    const status = document.createElement('td');
+    status.textContent = approved ? 'Đã duyệt' : 'Chờ duyệt';
+    status.className = `activity-status activity-status-${approved ? 'approved' : 'pending'}`;
+
+    const action = document.createElement('td');
+    if (approved) {
+      action.textContent = '—';
+    } else {
+      const approveButton = document.createElement('button');
+      approveButton.className = 'admin-secondary-btn';
+      approveButton.type = 'button';
+      approveButton.textContent = 'Duyệt';
+      approveButton.addEventListener('click', () => approveOrder(order, approveButton));
+      action.append(approveButton);
+    }
+
+    row.append(time, user, code, amount, status, action);
+    orderRows.append(row);
+  });
+}
+
+async function approveOrder(order, button) {
+  button.disabled = true;
+  const balanceKey = `cn_balance_${order.username}`;
+  const current = Number(localStorage.getItem(balanceKey) || 0);
+  localStorage.setItem(balanceKey, current + Number(order.amount || 0));
+
+  const list = readLocalOrders();
+  const existing = list.find(item => item.content === order.content);
+  if (existing) {
+    existing.status = 'approved';
+    existing.approvedAt = new Date().toISOString();
+  } else {
+    list.unshift({ ...order, status: 'approved', approvedAt: new Date().toISOString() });
+  }
+  writeLocalOrders(list);
+
+  ordersStatus.textContent = `✓ Đã duyệt ${formatAdminMoney(order.amount)} cho ${order.username}. Số dư mới: ${formatAdminMoney(Number(localStorage.getItem(balanceKey) || 0))}.`;
+  ordersStatus.className = 'form-status ok';
+  window.showToast?.(`✓ Đã cộng ${formatAdminMoney(order.amount)} cho ${order.username}`);
+  await loadOrders();
+  await renderUsers();
+}
+
+async function loadOrders() {
+  ordersStatus.textContent = 'Đang tải danh sách đơn nạp...';
+  ordersStatus.className = 'form-status';
+  const serverOrders = await fetchBackendOrders();
+  renderOrders(serverOrders);
+  if (!orderRows.querySelector('.activity-empty')) {
+    ordersStatus.textContent = 'Bấm “Duyệt” để cộng tiền vào ví khách.';
+    ordersStatus.className = 'form-status';
+  }
+}
+
+document.getElementById('refreshOrders').addEventListener('click', loadOrders);
+loadOrders();
