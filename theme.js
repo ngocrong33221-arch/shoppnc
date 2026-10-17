@@ -77,7 +77,10 @@
     }
   }
 
-  const isStaticHost = window.location.protocol === 'file:' || window.location.hostname.endsWith('github.io');
+  const isStaticHost = window.location.protocol === 'file:' || 
+                       window.location.hostname.includes('github.io') || 
+                       window.location.hostname.includes('localhost') || 
+                       window.location.hostname === '127.0.0.1';
   if (isStaticHost) {
     loadSavedTheme();
     return;
@@ -85,8 +88,14 @@
   fetch(`${apiBase}/api/site/theme`)
     .then(response => {
       if (!response.ok) throw new Error(`Theme request failed (${response.status}).`);
-      return response.json();
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        return response.json();
+      }
+      return null;
     })
-    .then(applyCodeNestTheme)
+    .then(theme => {
+      if (theme) applyCodeNestTheme(theme);
+    })
     .catch(error => console.error('Could not load the saved site theme:', error));
 })();

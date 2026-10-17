@@ -19,6 +19,11 @@ const priceInput  = document.getElementById('productPrice');
 
 const API_BASE = window.location.protocol === 'file:' ? 'http://127.0.0.1:5000' : window.location.origin;
 const MAX_FILE_SIZE = 25 * 1024 * 1024; // 25MB
+const THEME_KEY = 'cn_theme';
+const isStaticHost = window.location.protocol === 'file:' || 
+                     window.location.hostname.includes('github.io') || 
+                     window.location.hostname.includes('localhost') || 
+                     window.location.hostname === '127.0.0.1';
 
 /* ── File drop zone ── */
 fileDrop.addEventListener('dragover',  e => { e.preventDefault(); fileDrop.classList.add('dragover'); });
@@ -78,7 +83,6 @@ form.addEventListener('submit', async e => {
   statusEl.textContent = 'Đang tải file...';
   statusEl.className = 'form-status ok';
 
-  const isStaticHost = window.location.protocol === 'file:' || window.location.hostname.endsWith('github.io');
   let uploaded = false;
 
   if (!isStaticHost) {
@@ -124,7 +128,6 @@ form.addEventListener('submit', async e => {
 /* ── Render inventory ── */
 async function renderInventory() {
   let products = [];
-  const isStaticHost = window.location.protocol === 'file:' || window.location.hostname.endsWith('github.io');
 
   if (!isStaticHost) {
     try {
@@ -246,7 +249,6 @@ async function renderUsers() {
   usersStatus.textContent = '';
   usersStatus.className = 'form-status';
   let users = [];
-  const isStaticHost = window.location.protocol === 'file:' || window.location.hostname.endsWith('github.io');
 
   if (!isStaticHost) {
     try {
@@ -542,9 +544,7 @@ document.getElementById('balanceForm').addEventListener('submit', async event =>
     return;
   }
   const member = matchingMembers[0];
-
   submitButton.disabled = true;
-  const isStaticHost = window.location.protocol === 'file:' || window.location.hostname.endsWith('github.io');
   let adjusted = false;
 
   if (!isStaticHost) {
@@ -596,9 +596,6 @@ document.getElementById('balanceForm').addEventListener('submit', async event =>
   submitButton.disabled = false;
 });
 
-const THEME_KEY = 'cn_theme';
-const isStaticHost = window.location.protocol === 'file:' || window.location.hostname.endsWith('github.io');
-
 function readLocalTheme() {
   try {
     const saved = JSON.parse(localStorage.getItem(THEME_KEY) || 'null');
@@ -620,9 +617,13 @@ async function loadThemeSettings() {
   try {
     const response = await fetch(`${API_BASE}/api/site/theme`);
     if (!response.ok) throw new Error('Không tải được giao diện đã lưu.');
-    const theme = await response.json();
-    document.getElementById('themeBackground').value = theme.background;
-    document.getElementById('themeAccent').value = theme.accent;
+    
+    const contentType = response.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) {
+      const theme = await response.json();
+      document.getElementById('themeBackground').value = theme.background;
+      document.getElementById('themeAccent').value = theme.accent;
+    }
   } catch (error) {
     console.error('Could not load site theme:', error);
     const status = document.getElementById('themeStatus');
@@ -663,9 +664,20 @@ document.getElementById('themeForm').addEventListener('submit', async event => {
       credentials: 'same-origin',
       body: JSON.stringify({ background, accent }),
     });
-    const result = await response.json();
-    if (!response.ok) throw new Error(result.error || 'Không thể lưu giao diện.');
-    window.applyCodeNestTheme?.(result);
+    
+    const contentType = response.headers.get('content-type');
+    if (!response.ok) {
+      const errorText = contentType && contentType.includes('application/json') 
+        ? (await response.json()).error 
+        : 'Lỗi máy chủ (không nhận được JSON).';
+      throw new Error(errorText || 'Không thể lưu giao diện.');
+    }
+
+    if (contentType && contentType.includes('application/json')) {
+      const result = await response.json();
+      window.applyCodeNestTheme?.(result);
+    }
+    
     status.textContent = 'Đã cập nhật giao diện cho toàn trang.';
     status.className = 'form-status ok';
   } catch (error) {
@@ -709,7 +721,6 @@ function formatOrderTime(value) {
 }
 
 async function fetchBackendOrders() {
-  const isStaticHost = window.location.protocol === 'file:' || window.location.hostname.endsWith('github.io');
   if (isStaticHost) return null;
   try {
     const response = await fetch(`${API_BASE}/api/admin/topups`, { credentials: 'same-origin' });
