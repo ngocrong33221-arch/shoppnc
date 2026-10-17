@@ -104,6 +104,18 @@ document.getElementById('topupButton').addEventListener('click', async () => {
         const current = Number(localStorage.getItem(`cn_balance_${session.username}`) || 0);
         const newBal = current + selected.amount;
         localStorage.setItem(`cn_balance_${session.username}`, newBal);
+        try {
+          const allOrders = JSON.parse(localStorage.getItem('cn_orders') || '[]');
+          const orderList = Array.isArray(allOrders) ? allOrders : [];
+          const match = orderList.find(order => order.content === orderContent);
+          if (match) {
+            match.status = 'approved';
+            match.approvedAt = new Date().toISOString();
+            localStorage.setItem('cn_orders', JSON.stringify(orderList));
+          }
+        } catch {
+          // Bỏ qua nếu localStorage không dùng được
+        }
         loadBalance(true);
         showToast(`✓ Đã cộng ${selected.amount.toLocaleString('vi-VN')}đ vào ví thành công!`);
         statusEl.textContent = `✓ Đã duyệt cộng ${selected.amount.toLocaleString('vi-VN')}đ vào tài khoản!`;
@@ -118,6 +130,25 @@ document.getElementById('topupButton').addEventListener('click', async () => {
     expiresAt,
     status: 'pending'
   }));
+
+  try {
+    const allOrders = JSON.parse(localStorage.getItem('cn_orders') || '[]');
+    const orderList = Array.isArray(allOrders) ? allOrders : [];
+    if (!orderList.some(order => order.content === orderContent)) {
+      orderList.unshift({
+        id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        username: session.username,
+        amount: selected.amount,
+        content: orderContent,
+        createdAt: new Date().toISOString(),
+        expiresAt,
+        status: 'pending'
+      });
+      localStorage.setItem('cn_orders', JSON.stringify(orderList.slice(0, 500)));
+    }
+  } catch {
+    // Bỏ qua nếu localStorage không dùng được
+  }
 });
 
 function displayOrder(amount, content, expiresAt) {
