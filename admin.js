@@ -18,7 +18,8 @@ const descInput   = document.getElementById('productDescription');
 const priceInput  = document.getElementById('productPrice');
 
 const API_BASE = window.location.protocol === 'file:' ? 'http://127.0.0.1:5000' : window.location.origin;
-const MAX_FILE_SIZE = 25 * 1024 * 1024; // 25MB
+const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB — giới hạn upload của Supabase Storage (gói free)
+const STORAGE_BUCKET = 'products';
 const THEME_KEY = 'cn_theme';
 const isStaticHost = window.location.protocol === 'file:' || 
                      window.location.hostname.includes('github.io') || 
@@ -36,19 +37,18 @@ fileDrop.addEventListener('drop', e => {
 });
 fileInput.addEventListener('change', () => {
   const f = fileInput.files[0];
-  if (f) {
-    if (f.size > MAX_FILE_SIZE) {
-      statusEl.textContent = 'Dung lượng file vượt quá giới hạn 25MB. Vui lòng chọn file nhỏ hơn.';
-      statusEl.className = 'form-status err';
-      fileInput.value = '';
-      fileLabel.textContent = 'Chọn hoặc kéo thả file code vào đây';
-      return;
-    }
-    const sizeMb = (f.size / (1024 * 1024)).toFixed(1);
-    fileLabel.textContent = `${f.name} · đã nhận (${sizeMb}MB)`;
+  if (!f) {
+    fileLabel.textContent = 'Chọn hoặc kéo thả file vào đây';
     statusEl.textContent = '';
+    return;
+  }
+  const sizeMb = (f.size / (1024 * 1024)).toFixed(1);
+  fileLabel.textContent = `${f.name} · đã nhận (${sizeMb}MB)`;
+  if (f.size > MAX_FILE_SIZE) {
+    statusEl.textContent = `File ${sizeMb}MB vượt 50MB — Supabase Storage (gói free) sẽ từ chối. Hãy chọn file nhỏ hơn.`;
+    statusEl.className = 'form-status err';
   } else {
-    fileLabel.textContent = 'Chọn hoặc kéo thả file code vào đây';
+    statusEl.textContent = '';
   }
 });
 
@@ -62,11 +62,6 @@ form.addEventListener('submit', async e => {
   e.preventDefault();
   const file = fileInput.files[0];
   if (!file) { statusEl.textContent = 'Hãy chọn file muốn đăng.'; statusEl.className = 'form-status err'; return; }
-  if (file.size > MAX_FILE_SIZE) {
-    statusEl.textContent = 'Dung lượng file vượt quá giới hạn 25MB. Vui lòng chọn file nhỏ hơn.';
-    statusEl.className = 'form-status err';
-    return;
-  }
 
   const product = {
     id:          `${Date.now()}-${Math.random().toString(36).slice(2)}`,
@@ -84,7 +79,27 @@ form.addEventListener('submit', async e => {
   statusEl.className = 'form-status ok';
 
   try {
-    if (typeof supabase !== 'undefined' && supabase) {
+    if (typeof supabase !== 'undefined' && supabase && supabase.storage) {
+      // 1. Tải file gốc (apk, zip, exe...) lên Supabase Storage
+      const safeName = file.name.replace(/[^\w.\-]+/g, '_');
+      const path = `${Date.now()}-${safeName}`;
+      const { error: uploadError } = await supabase.storage
+        .from(STORAGE_BUCKET)
+        .upload(path, file, {
+          contentType: file.type || 'application/octet-stream',
+          upsert: false
+        });
+
+      if (uploadError) {
+        statusEl.textContent = `Lỗi tải file lên: ${uploadError.message || uploadError}`;
+        statusEl.className = 'form-status err';
+        btn.disabled = false;
+        return;
+      }
+
+      const { data: urlData } = supabase.storage.from(STORAGE_BUCKET).getPublicUrl(path);
+
+      // 2. Lưu thông tin sản phẩm kèm link file thật cho khách tải
       const { error } = await supabase
         .from('products')
         .insert([{
@@ -92,14 +107,16 @@ form.addEventListener('submit', async e => {
           description: product.description,
           price: product.price,
           category: product.category,
-          file_name: product.fileName
+          file_name: product.fileName,
+          file_url: urlData?.publicUrl || null
         }]);
-      
+
       if (error) throw error;
+
       statusEl.textContent = '✓ Đã đăng sản phẩm thành công!';
       statusEl.className = 'form-status ok';
       form.reset();
-      fileLabel.textContent = 'Chọn hoặc kéo thả file code vào đây';
+      fileLabel.textContent = 'Chọn hoặc kéo thả file vào đây';
       previewName.textContent = 'Tên sản phẩm của bạn';
       previewDesc.textContent = 'Mô tả ngắn sẽ xuất hiện ở đây.';
       previewPrc.textContent  = '0đ';
@@ -110,9 +127,13 @@ form.addEventListener('submit', async e => {
     }
   } catch (error) {
     console.error('Upload error:', error);
+    statusEl.textContent = `Lỗi đăng sản phẩm: ${error.message || error}`;
+    statusEl.className = 'form-status err';
+    btn.disabled = false;
+    return;
   }
 
-  // Local fallback
+  // Local fallback (chỉ dùng khi chưa cấu hình Supabase)
   let localProducts = [];
   try {
     localProducts = JSON.parse(localStorage.getItem('cn_products')) || [];
@@ -122,10 +143,10 @@ form.addEventListener('submit', async e => {
   localProducts.unshift(product);
   localStorage.setItem('cn_products', JSON.stringify(localProducts));
 
-  statusEl.textContent = '✓ Đã đăng sản phẩm thành công! (Lưu cục bộ)';
+  statusEl.textContent = '✓ Đã đăng sản phẩm thành công! (Lưu cục bộ — file không được tải lên)';
   statusEl.className = 'form-status ok';
   form.reset();
-  fileLabel.textContent = 'Chọn hoặc kéo thả file code vào đây';
+  fileLabel.textContent = 'Chọn hoặc kéo thả file vào đây';
   previewName.textContent = 'Tên sản phẩm của bạn';
   previewDesc.textContent = 'Mô tả ngắn sẽ xuất hiện ở đây.';
   previewPrc.textContent  = '0đ';

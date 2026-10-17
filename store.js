@@ -219,7 +219,23 @@ async function confirmSelectedPurchase() {
 
   closePayment();
 
-  // Create downloadable file content
+  const fileName = product.fileName || product.file_name || `${product.id}.zip`;
+
+  // Sản phẩm đăng online: tải đúng file gốc (apk, zip, exe...) từ Supabase Storage
+  if (product.file_url) {
+    const link = document.createElement('a');
+    link.href = product.file_url;
+    link.download = fileName;
+    link.target = '_blank';
+    link.rel = 'noopener';
+    document.body.append(link);
+    link.click();
+    link.remove();
+    showToast(`✓ Đã mua và đang tải "${product.name}"...`);
+    return;
+  }
+
+  // Sản phẩm cũ (chưa có file thật): tạo file mẫu
   const codeContent = `/* ============================================================
    CodeNest Source Package: ${product.name}
    Category: ${product.category || 'Source Code'}
@@ -266,7 +282,7 @@ async function loadProducts() {
         .order('created_at', { ascending: false });
       
       if (!error && data) {
-        customProducts = data;
+        customProducts = data.map(p => ({ ...p, fileName: p.file_name || p.fileName }));
         loaded = true;
       }
     }
