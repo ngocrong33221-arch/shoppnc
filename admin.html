@@ -103,10 +103,42 @@
       <div class="member-list" id="userInventory" aria-live="polite"></div>
     </section>
 
+    <section class="admin-management reveal" aria-labelledby="ordersTitle">
+      <div class="management-header">
+        <div>
+          <span class="card-label">02 / TOP-UP ORDERS</span>
+          <h2 class="inv-title" id="ordersTitle">Đơn nạp chờ duyệt</h2>
+          <p class="management-copy">Danh sách đơn nạp khách đã tạo. Chỉ duyệt được bằng Telegram: nhắn <b>/duyet &lt;mã đơn&gt;</b> cho bot.</p>
+        </div>
+        <div class="management-tools">
+          <span class="inv-count" id="orderCount">0 đơn</span>
+          <button class="admin-secondary-btn" id="refreshOrders" type="button">Làm mới</button>
+        </div>
+      </div>
+      <p class="form-status" id="ordersStatus" role="status">Đang tải danh sách đơn nạp...</p>
+      <p class="form-status" id="telegramStatus" role="status">Telegram: đang kết nối...</p>
+      <div class="activity-table-wrap">
+        <table class="activity-table">
+          <thead>
+            <tr>
+              <th>Thời gian</th>
+              <th>Khách hàng</th>
+              <th>Mã đơn</th>
+              <th>Số tiền</th>
+              <th>Trạng thái</th>
+            </tr>
+          </thead>
+          <tbody id="orderRows">
+            <tr><td class="activity-empty" colspan="5">Chưa có đơn nạp nào.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
     <section class="admin-management activity-panel reveal" aria-labelledby="activityTitle">
       <div class="management-header">
         <div>
-          <span class="card-label">02 / MEMBER ACTIVITY</span>
+          <span class="card-label">03 / MEMBER ACTIVITY</span>
           <h2 class="inv-title" id="activityTitle">Lịch sử nạp và chi tiêu</h2>
           <p class="management-copy">Xem các lần nạp tiền, đơn đang chờ duyệt, giao dịch mua file và những lần quản trị viên điều chỉnh số dư.</p>
         </div>
@@ -264,6 +296,7 @@
 
   <script src="theme.js"></script>
   <script src="shared.js"></script>
+  <script src="telegram-config.js"></script>
   <script src="admin.js"></script>
 </body>
 </html>

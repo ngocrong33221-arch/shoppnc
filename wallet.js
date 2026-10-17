@@ -96,19 +96,8 @@ document.getElementById('topupButton').addEventListener('click', async () => {
     const notified = await notifyAdminTelegram(
       `ĐƠN NẠP MỚI\nKhách hàng: ${session.username}\nSố tiền: ${selected.amount.toLocaleString('vi-VN')} VNĐ\nMã đơn: ${orderContent}`
     );
-    statusEl.innerHTML = `${notified ? '✓ Đã gửi thông báo cho admin. ' : ''}✓ Đã tạo mã QR MB Bank thành công! <button id="demoApproveBtn" type="button" style="margin-left:8px;padding:4px 12px;border:1px solid var(--gold-bright);border-radius:6px;background:var(--gold-btn);color:#060608;font-size:11px;font-weight:700;cursor:pointer;">Duyệt nạp ngay (Demo)</button>`;
+    statusEl.innerHTML = `${notified ? '✓ Đã gửi thông báo cho admin. ' : ''}✓ Đã tạo mã QR MB Bank thành công! Vui lòng chuyển khoản, admin sẽ duyệt và cộng tiền vào ví.`;
     statusEl.className = 'form-status ok';
-
-    setTimeout(() => {
-      document.getElementById('demoApproveBtn')?.addEventListener('click', () => {
-        const current = Number(localStorage.getItem(`cn_balance_${session.username}`) || 0);
-        const newBal = current + selected.amount;
-        localStorage.setItem(`cn_balance_${session.username}`, newBal);
-        loadBalance(true);
-        showToast(`✓ Đã cộng ${selected.amount.toLocaleString('vi-VN')}đ vào ví thành công!`);
-        statusEl.textContent = `✓ Đã duyệt cộng ${selected.amount.toLocaleString('vi-VN')}đ vào tài khoản!`;
-      });
-    }, 50);
   }
 
   displayOrder(selected.amount, orderContent, expiresAt);
@@ -118,6 +107,25 @@ document.getElementById('topupButton').addEventListener('click', async () => {
     expiresAt,
     status: 'pending'
   }));
+
+  try {
+    const allOrders = JSON.parse(localStorage.getItem('cn_orders') || '[]');
+    const orderList = Array.isArray(allOrders) ? allOrders : [];
+    if (!orderList.some(order => order.content === orderContent)) {
+      orderList.unshift({
+        id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        username: session.username,
+        amount: selected.amount,
+        content: orderContent,
+        createdAt: new Date().toISOString(),
+        expiresAt,
+        status: 'pending'
+      });
+      localStorage.setItem('cn_orders', JSON.stringify(orderList.slice(0, 500)));
+    }
+  } catch {
+    // Bỏ qua nếu localStorage không dùng được
+  }
 });
 
 function displayOrder(amount, content, expiresAt) {
