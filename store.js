@@ -217,6 +217,20 @@ async function confirmSelectedPurchase() {
   const newBalance = balance - product.price;
   localStorage.setItem(`cn_balance_${session.username}`, newBalance);
 
+  // Đồng bộ số dư lên Supabase, nếu không thì lần sau fetchBalance lại trả số dư cũ.
+  // Bỏ qua ADM vì tài khoản này dùng số dư ảo (xem fetchBalance trong shared.js).
+  if (session.username !== 'ADM' && typeof supabase !== 'undefined' && supabase) {
+    try {
+      const { error } = await supabase
+        .from('users')
+        .update({ balance: newBalance })
+        .eq('username', session.username);
+      if (error) console.error('Không cập nhật được số dư lên Supabase:', error);
+    } catch (error) {
+      console.error('Không cập nhật được số dư lên Supabase:', error);
+    }
+  }
+
   closePayment();
 
   const fileName = product.fileName || product.file_name || `${product.id}.zip`;
