@@ -766,11 +766,11 @@ function renderOrders(serverOrders) {
   });
 }
 
-async function approveOrder(order, button) {
-  button.disabled = true;
+function applyOrderApproval(order) {
   const balanceKey = `cn_balance_${order.username}`;
   const current = Number(localStorage.getItem(balanceKey) || 0);
-  localStorage.setItem(balanceKey, current + Number(order.amount || 0));
+  const newBalance = current + Number(order.amount || 0);
+  localStorage.setItem(balanceKey, newBalance);
 
   const list = readLocalOrders();
   const existing = list.find(item => item.content === order.content);
@@ -781,8 +781,14 @@ async function approveOrder(order, button) {
     list.unshift({ ...order, status: 'approved', approvedAt: new Date().toISOString() });
   }
   writeLocalOrders(list);
+  return newBalance;
+}
 
-  ordersStatus.textContent = `✓ Đã duyệt ${formatAdminMoney(order.amount)} cho ${order.username}. Số dư mới: ${formatAdminMoney(Number(localStorage.getItem(balanceKey) || 0))}.`;
+async function approveOrder(order, button) {
+  button.disabled = true;
+  const newBalance = applyOrderApproval(order);
+
+  ordersStatus.textContent = `✓ Đã duyệt ${formatAdminMoney(order.amount)} cho ${order.username}. Số dư mới: ${formatAdminMoney(newBalance)}.`;
   ordersStatus.className = 'form-status ok';
   window.showToast?.(`✓ Đã cộng ${formatAdminMoney(order.amount)} cho ${order.username}`);
   await loadOrders();
@@ -802,3 +808,96 @@ async function loadOrders() {
 
 document.getElementById('refreshOrders').addEventListener('click', loadOrders);
 loadOrders();
+
+/* ── Duyệt đơn bằng lệnh Telegram /duyet ── */
+const TG_OFFSET_KEY = 'cn_tg_offset';
+const telegramStatus = document.getElementById('telegramStatus');
+
+function normalizeOrderCode(value) {
+  return String(value || '').toUpperCase().replace(/\s+/g, '');
+}
+
+function findOrderByCode(code) {
+  const target = normalizeOrderCode(code);
+  if (!target) return null;
+  return readLocalOrders().find(order => normalizeOrderCode(order.content) === target) || null;
+}
+
+async function handleTelegramUpdate(update) {
+  const message = update.message || {};
+  const chatId = String((message.chat || {}).id || '');
+  if (chatId !== String(TELEGRAM_ADMIN_CHAT_ID)) return;
+
+  const text = String(message.text || '').trim();
+  const command = (text.split(/\s+/)[0] || '').split('@')[0].toLowerCase();
+  if (command !== '/duyet') return;
+
+  const code = text.replace(/^\/duyet(@[A-Za-z0-9_]+)?/i, '').trim();
+  if (!code) {
+    await notifyAdminTelegram('Cú pháp đúng: /duyet <mã đơn>\nVí dụ: /duyet CN-1A2B3C');
+    return;
+  }
+
+  const order = findOrderByCode(code);
+  if (!order) {
+    await notifyAdminTelegram(`Không tìm thấy đơn ${code} trên trình duyệt này.\nKiểm tra lại mã đơn hoặc duyệt bằng nút trên trang quản trị.`);
+    return;
+  }
+  if (order.status === 'approved') {
+    await notifyAdminTelegram(`Đơn ${order.content} đã được duyệt trước đó.`);
+    return;
+  }
+
+  const newBalance = applyOrderApproval(order);
+  await loadOrders();
+  await renderUsers();
+  await notifyAdminTelegram(
+    `Đã duyệt đơn ${order.content}\nKhách hàng: ${order.username}\nSố tiền: ${formatAdminMoney(order.amount)}\nSố dư mới: ${formatAdminMoney(newBalance)}`
+  );
+}
+
+async function telegramGetUpdates(offset) {
+  const url = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/getUpdates`
+    + `?timeout=25&allowed_updates=${encodeURIComponent('["message"]')}`
+    + (offset ? `&offset=${offset}` : '');
+  const response = await fetch(url, { cache: 'no-store' });
+  const data = await response.json();
+  if (!response.ok || !data.ok) {
+    throw new Error(data.description || `Telegram trả về mã ${response.status}`);
+  }
+  return data.result || [];
+}
+
+async function telegramPollLoop() {
+  if (typeof TELEGRAM_BOT_TOKEN === 'undefined' || !TELEGRAM_BOT_TOKEN || !TELEGRAM_ADMIN_CHAT_ID) {
+    telegramStatus.textContent = 'Telegram: chưa cấu hình token, không nhận được lệnh /duyet.';
+    telegramStatus.className = 'form-status err';
+    return;
+  }
+  telegramStatus.textContent = 'Telegram: đang lắng nghe lệnh /duyet...';
+  telegramStatus.className = 'form-status ok';
+
+  let offset = Number(localStorage.getItem(TG_OFFSET_KEY) || 0) || undefined;
+  while (true) {
+    try {
+      const updates = await telegramGetUpdates(offset);
+      telegramStatus.textContent = 'Telegram: đang lắng nghe lệnh /duyet...';
+      telegramStatus.className = 'form-status ok';
+      for (const update of updates) {
+        offset = update.update_id + 1;
+        localStorage.setItem(TG_OFFSET_KEY, String(offset));
+        try {
+          await handleTelegramUpdate(update);
+        } catch (error) {
+          console.warn('Không xử lý được lệnh Telegram:', error);
+        }
+      }
+    } catch (error) {
+      telegramStatus.textContent = `Telegram: ${error.message || 'không kết nối được'}. Đang thử lại...`;
+      telegramStatus.className = 'form-status err';
+      await new Promise(resolve => setTimeout(resolve, 8000));
+    }
+  }
+}
+
+telegramPollLoop();
