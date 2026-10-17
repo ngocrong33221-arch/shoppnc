@@ -720,7 +720,7 @@ function renderOrders(serverOrders) {
     const row = document.createElement('tr');
     const cell = document.createElement('td');
     cell.className = 'activity-empty';
-    cell.colSpan = 6;
+    cell.colSpan = 5;
     cell.textContent = 'Chưa có đơn nạp nào.';
     row.append(cell);
     orderRows.append(row);
@@ -749,19 +749,7 @@ function renderOrders(serverOrders) {
     status.textContent = approved ? 'Đã duyệt' : 'Chờ duyệt';
     status.className = `activity-status activity-status-${approved ? 'approved' : 'pending'}`;
 
-    const action = document.createElement('td');
-    if (approved) {
-      action.textContent = '—';
-    } else {
-      const approveButton = document.createElement('button');
-      approveButton.className = 'admin-secondary-btn';
-      approveButton.type = 'button';
-      approveButton.textContent = 'Duyệt';
-      approveButton.addEventListener('click', () => approveOrder(order, approveButton));
-      action.append(approveButton);
-    }
-
-    row.append(time, user, code, amount, status, action);
+    row.append(time, user, code, amount, status);
     orderRows.append(row);
   });
 }
@@ -784,24 +772,13 @@ function applyOrderApproval(order) {
   return newBalance;
 }
 
-async function approveOrder(order, button) {
-  button.disabled = true;
-  const newBalance = applyOrderApproval(order);
-
-  ordersStatus.textContent = `✓ Đã duyệt ${formatAdminMoney(order.amount)} cho ${order.username}. Số dư mới: ${formatAdminMoney(newBalance)}.`;
-  ordersStatus.className = 'form-status ok';
-  window.showToast?.(`✓ Đã cộng ${formatAdminMoney(order.amount)} cho ${order.username}`);
-  await loadOrders();
-  await renderUsers();
-}
-
 async function loadOrders() {
   ordersStatus.textContent = 'Đang tải danh sách đơn nạp...';
   ordersStatus.className = 'form-status';
   const serverOrders = await fetchBackendOrders();
   renderOrders(serverOrders);
   if (!orderRows.querySelector('.activity-empty')) {
-    ordersStatus.textContent = 'Bấm “Duyệt” để cộng tiền vào ví khách.';
+    ordersStatus.textContent = 'Gửi lệnh “/duyet <mã đơn>” cho bot Telegram để duyệt đơn.';
     ordersStatus.className = 'form-status';
   }
 }
@@ -826,7 +803,9 @@ function findOrderByCode(code) {
 async function handleTelegramUpdate(update) {
   const message = update.message || {};
   const chatId = String((message.chat || {}).id || '');
-  if (chatId !== String(TELEGRAM_ADMIN_CHAT_ID)) return;
+  const senderId = String((message.from || {}).id || '');
+  // Chỉ chấp nhận lệnh từ đúng chat và đúng tài khoản admin.
+  if (chatId !== String(TELEGRAM_ADMIN_CHAT_ID) || senderId !== String(TELEGRAM_ADMIN_CHAT_ID)) return;
 
   const text = String(message.text || '').trim();
   const command = (text.split(/\s+/)[0] || '').split('@')[0].toLowerCase();
@@ -840,7 +819,7 @@ async function handleTelegramUpdate(update) {
 
   const order = findOrderByCode(code);
   if (!order) {
-    await notifyAdminTelegram(`Không tìm thấy đơn ${code} trên trình duyệt này.\nKiểm tra lại mã đơn hoặc duyệt bằng nút trên trang quản trị.`);
+    await notifyAdminTelegram(`Không tìm thấy đơn ${code} trên trình duyệt này.\nKiểm tra lại mã đơn hoặc mở lại trang quản trị đúng máy đã tạo đơn.`);
     return;
   }
   if (order.status === 'approved') {
