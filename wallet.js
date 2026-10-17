@@ -94,7 +94,7 @@ document.getElementById('topupButton').addEventListener('click', async () => {
     statusEl.textContent = 'Đang gửi thông báo cho admin...';
     statusEl.className = 'form-status ok';
     const notified = await notifyAdminTelegram(
-      `ĐƠN NẠP MỚI\nKhách hàng: ${session.username}\nSố tiền: ${selected.amount.toLocaleString('vi-VN')} VNĐ\nMã đơn: ${orderContent}`
+      `ĐƠN NẠP MỚI\nKhách hàng: ${session.username}\nSố tiền: ${selected.amount.toLocaleString('vi-VN')} VNĐ\nMã đơn: ${orderContent}\n\nDuyệt bằng lệnh:\n/duyet ${orderContent}`
     );
     statusEl.innerHTML = `${notified ? '✓ Đã gửi thông báo cho admin. ' : ''}✓ Đã tạo mã QR MB Bank thành công! Vui lòng chuyển khoản, admin sẽ duyệt và cộng tiền vào ví.`;
     statusEl.className = 'form-status ok';
