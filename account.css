@@ -12,6 +12,12 @@
   padding: 0 6vw;
 }
 
+/* Purchase history card spans both columns */
+.purchase-card {
+  grid-column: 1 / -1;
+  padding: 36px;
+}
+
 /* Card Section Titles */
 .card-label {
   font-size: 10px;

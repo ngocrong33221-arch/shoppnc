@@ -49,8 +49,52 @@ async function loadBalance() {
     document.getElementById('accountBalance').textContent = '0đ';
   }
 }
+async function loadPurchases() {
+  const statusEl = document.getElementById('purchaseStatus');
+  const listEl = document.getElementById('purchaseList');
+  if (!session) {
+    statusEl.textContent = 'Bạn cần đăng nhập để xem lịch sử mua.';
+    return;
+  }
+
+  let items = [];
+  try {
+    if (typeof supabase !== 'undefined' && supabase) {
+      const { data, error } = await supabase
+        .from('purchases')
+        .select('*')
+        .eq('username', session.username)
+        .order('created_at', { ascending: false });
+      if (!error && data) items = data;
+    }
+  } catch (error) {
+    console.warn('Could not load purchases from Supabase:', error);
+  }
+
+  if (!items.length) {
+    statusEl.textContent = 'Bạn chưa mua sản phẩm nào.';
+    return;
+  }
+
+  const wrap = document.createElement('div');
+  wrap.className = 'profile-details';
+  items.forEach(item => {
+    const row = document.createElement('div');
+    row.className = 'detail-row';
+    const name = document.createElement('span');
+    name.textContent = item.product_name;
+    const meta = document.createElement('strong');
+    const date = item.created_at ? new Date(item.created_at).toLocaleDateString('vi-VN') : '';
+    meta.textContent = `${Number(item.amount || 0).toLocaleString('vi-VN')}đ${date ? ` · ${date}` : ''}`;
+    row.append(name, meta);
+    wrap.append(row);
+  });
+  listEl.replaceChildren(wrap);
+}
+
 loadProfile();
 loadBalance();
+loadPurchases();
 
 document.querySelectorAll('.pw-toggle').forEach(btn => {
   btn.addEventListener('click', () => {

@@ -430,6 +430,64 @@ document.getElementById('refreshUsers').addEventListener('click', renderUsers);
 
 activityMember.addEventListener('change', clearMemberActivity);
 
+// Dựng lịch sử giao dịch từ Supabase khi backend Python không chạy (GitHub Pages).
+async function buildActivityFromSupabase(username) {
+  const [ordersRes, purchasesRes] = await Promise.all([
+    supabase.from('orders').select('*').eq('username', username).order('created_at', { ascending: false }),
+    supabase.from('purchases').select('*').eq('username', username).order('created_at', { ascending: false }),
+  ]);
+  if (ordersRes.error) throw ordersRes.error;
+  if (purchasesRes.error) throw purchasesRes.error;
+
+  const orders = ordersRes.data || [];
+  const purchases = purchasesRes.data || [];
+
+  const activity = [
+    ...orders.map(order => ({
+      eventAt: order.created_at,
+      eventType: 'topup',
+      description: `Nạp tiền · Mã đơn ${order.content || '—'}`,
+      amount: Number(order.amount || 0),
+      status: order.status || 'pending',
+    })),
+    ...purchases.map(item => ({
+      eventAt: item.created_at,
+      eventType: 'purchase',
+      description: `Mua file: ${item.product_name}`,
+      amount: -Number(item.amount || 0),
+      status: 'completed',
+    })),
+  ].sort((a, b) => new Date(b.eventAt) - new Date(a.eventAt));
+
+  return {
+    username,
+    summary: {
+      approvedTopups: orders
+        .filter(order => order.status === 'approved')
+        .reduce((sum, order) => sum + Number(order.amount || 0), 0),
+      pendingTopups: orders
+        .filter(order => order.status !== 'approved' && order.status !== 'rejected')
+        .reduce((sum, order) => sum + Number(order.amount || 0), 0),
+      purchases: purchases.reduce((sum, item) => sum + Number(item.amount || 0), 0),
+    },
+    activity,
+  };
+}
+
+async function loadMemberActivity(username) {
+  try {
+    const response = await fetch(
+      `${API_BASE}/api/admin/users/${encodeURIComponent(username)}/activity`,
+      { credentials: 'same-origin' },
+    );
+    const data = await response.json();
+    if (response.ok) return data;
+  } catch {
+    // Backend không phản hồi — dùng Supabase bên dưới
+  }
+  return buildActivityFromSupabase(username);
+}
+
 document.getElementById('activityForm').addEventListener('submit', async event => {
   event.preventDefault();
   const username = activityMember.value;
@@ -440,12 +498,7 @@ document.getElementById('activityForm').addEventListener('submit', async event =
   activityStatus.className = 'form-status';
   submitButton.disabled = true;
   try {
-    const response = await fetch(
-      `${API_BASE}/api/admin/users/${encodeURIComponent(username)}/activity`,
-      { credentials: 'same-origin' },
-    );
-    const result = await response.json();
-    if (!response.ok) throw new Error(result.error || 'Không thể tải lịch sử giao dịch.');
+    const result = await loadMemberActivity(username);
 
     document.getElementById('activityTopups').textContent = formatAdminMoney(result.summary.approvedTopups);
     document.getElementById('activityPending').textContent = formatAdminMoney(result.summary.pendingTopups);
@@ -490,7 +543,8 @@ document.getElementById('activityForm').addEventListener('submit', async event =
         const status = document.createElement('td');
         status.textContent = item.status === 'pending'
           ? 'Chờ duyệt'
-          : item.status === 'approved' ? 'Đã duyệt' : 'Hoàn tất';
+          : item.status === 'approved' ? 'Đã duyệt'
+            : item.status === 'rejected' ? 'Từ chối' : 'Hoàn tất';
         status.className = `activity-status activity-status-${item.status}`;
         row.append(date, type, description, amount, status);
         activityRows.append(row);
