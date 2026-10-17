@@ -494,7 +494,7 @@ async function fetchBalance(username) {
   }
   const saved = localStorage.getItem(key);
   if (saved !== null) return Number(saved);
-  const defaultAmt = username === 'ADM' ? 9999999 : 500000;
+  const defaultAmt = username === 'ADM' ? 9999999 : 0;
   localStorage.setItem(key, defaultAmt);
   return defaultAmt;
 }
