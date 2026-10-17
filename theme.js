@@ -67,8 +67,21 @@
   }
 
   window.applyCodeNestTheme = applyCodeNestTheme;
+
+  function loadSavedTheme() {
+    try {
+      const saved = JSON.parse(localStorage.getItem('cn_theme') || 'null');
+      if (saved) applyCodeNestTheme(saved);
+    } catch {
+      // Bỏ qua nếu dữ liệu lưu không hợp lệ
+    }
+  }
+
   const isStaticHost = window.location.protocol === 'file:' || window.location.hostname.endsWith('github.io');
-  if (isStaticHost) return;
+  if (isStaticHost) {
+    loadSavedTheme();
+    return;
+  }
   fetch(`${apiBase}/api/site/theme`)
     .then(response => {
       if (!response.ok) throw new Error(`Theme request failed (${response.status}).`);

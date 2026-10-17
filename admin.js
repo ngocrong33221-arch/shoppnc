@@ -596,7 +596,27 @@ document.getElementById('balanceForm').addEventListener('submit', async event =>
   submitButton.disabled = false;
 });
 
+const THEME_KEY = 'cn_theme';
+const isStaticHost = window.location.protocol === 'file:' || window.location.hostname.endsWith('github.io');
+
+function readLocalTheme() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(THEME_KEY) || 'null');
+    return saved && saved.background && saved.accent ? saved : null;
+  } catch {
+    return null;
+  }
+}
+
 async function loadThemeSettings() {
+  if (isStaticHost) {
+    const theme = readLocalTheme();
+    if (theme) {
+      document.getElementById('themeBackground').value = theme.background;
+      document.getElementById('themeAccent').value = theme.accent;
+    }
+    return;
+  }
   try {
     const response = await fetch(`${API_BASE}/api/site/theme`);
     if (!response.ok) throw new Error('Không tải được giao diện đã lưu.');
@@ -629,6 +649,14 @@ document.getElementById('themeForm').addEventListener('submit', async event => {
   const submitButton = document.getElementById('themeSubmit');
   submitButton.disabled = true;
   try {
+    if (isStaticHost) {
+      const theme = { background, accent };
+      localStorage.setItem(THEME_KEY, JSON.stringify(theme));
+      window.applyCodeNestTheme?.(theme);
+      status.textContent = 'Đã cập nhật giao diện cho toàn trang.';
+      status.className = 'form-status ok';
+      return;
+    }
     const response = await fetch(`${API_BASE}/api/admin/theme`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
