@@ -77,6 +77,7 @@ function uploadFile(file, path) {
       retryDelays: [0, 3000, 5000, 10000, 20000],
       headers: {
         authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+        apikey: SUPABASE_ANON_KEY,
         'x-upsert': 'false'
       },
       uploadDataDuringCreation: true,
