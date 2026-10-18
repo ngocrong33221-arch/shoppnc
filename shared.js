@@ -625,7 +625,41 @@ async function loadProductCatalog() {
   return getLocalProducts();
 }
 
-/* ── 11. Page In Animation ── */
+/* ── 11. Tải file sản phẩm đã lưu ── */
+async function downloadProductFile(url, fileName) {
+  if (!url) return false;
+  const name = fileName || url.split('/').pop() || 'san-pham';
+
+  // File trên Supabase Storage là khác miền nên thuộc tính download của thẻ <a>
+  // bị trình duyệt bỏ qua. Tải về dạng blob để giữ đúng tên file gốc.
+  try {
+    const response = await fetch(url);
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const objectUrl = URL.createObjectURL(await response.blob());
+    const link = document.createElement('a');
+    link.href = objectUrl;
+    link.download = name;
+    document.body.append(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(objectUrl), 10000);
+    return true;
+  } catch (error) {
+    console.warn('Không tải được file dạng blob, chuyển sang mở trực tiếp:', error);
+  }
+
+  const fallback = document.createElement('a');
+  fallback.href = url;
+  fallback.download = name;
+  fallback.target = '_blank';
+  fallback.rel = 'noopener';
+  document.body.append(fallback);
+  fallback.click();
+  fallback.remove();
+  return true;
+}
+
+/* ── 12. Page In Animation ── */
 document.addEventListener('DOMContentLoaded', () => {
   document.body.style.opacity = '0';
   requestAnimationFrame(() => {

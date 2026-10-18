@@ -103,6 +103,29 @@
   font-family: var(--mono);
   font-size: 13px;
 }
+.detail-row-end {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.purchase-download {
+  padding: 6px 12px;
+  border: 1px solid var(--gold-border-focus);
+  border-radius: var(--radius-sm);
+  background: rgba(212, 175, 55, 0.12);
+  color: var(--gold-bright);
+  font-size: 11px;
+  font-family: var(--mono);
+  cursor: pointer;
+  transition: var(--trans);
+}
+.purchase-download:hover {
+  background: rgba(212, 175, 55, 0.24);
+}
+.purchase-download:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
 .balance-val {
   color: var(--gold-bright) !important;
   font-size: 15px !important;

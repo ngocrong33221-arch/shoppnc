@@ -76,6 +76,13 @@ async function loadPurchases() {
     return;
   }
 
+  // Ghép tên sản phẩm với file đã lưu trên Supabase để khách tải lại bất cứ lúc nào.
+  const catalog = await loadProductCatalog();
+  const filesByName = new Map();
+  catalog.forEach(product => {
+    if (product && product.name) filesByName.set(String(product.name).trim().toLowerCase(), product);
+  });
+
   const wrap = document.createElement('div');
   wrap.className = 'profile-details';
   items.forEach(item => {
@@ -83,10 +90,32 @@ async function loadPurchases() {
     row.className = 'detail-row';
     const name = document.createElement('span');
     name.textContent = item.product_name;
+
+    const right = document.createElement('div');
+    right.className = 'detail-row-end';
     const meta = document.createElement('strong');
     const date = item.created_at ? new Date(item.created_at).toLocaleDateString('vi-VN') : '';
     meta.textContent = `${Number(item.amount || 0).toLocaleString('vi-VN')}đ${date ? ` · ${date}` : ''}`;
-    row.append(name, meta);
+    right.append(meta);
+
+    const product = filesByName.get(String(item.product_name || '').trim().toLowerCase());
+    if (product && product.file_url) {
+      const download = document.createElement('button');
+      download.type = 'button';
+      download.className = 'purchase-download';
+      download.textContent = 'Tải file';
+      download.addEventListener('click', async () => {
+        download.disabled = true;
+        download.textContent = 'Đang tải...';
+        const ok = await downloadProductFile(product.file_url, product.fileName || product.file_name || 'san-pham');
+        if (!ok) showToast('Không tải được file. Vui lòng thử lại.');
+        download.disabled = false;
+        download.textContent = 'Tải file';
+      });
+      right.append(download);
+    }
+
+    row.append(name, right);
     wrap.append(row);
   });
   listEl.replaceChildren(wrap);

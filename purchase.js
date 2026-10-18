@@ -165,15 +165,12 @@ async function confirmSelectedPurchase() {
 
   // Sản phẩm đăng online: tải đúng file gốc (apk, zip, exe...) từ Supabase Storage
   if (product.file_url) {
-    const link = document.createElement('a');
-    link.href = product.file_url;
-    link.download = fileName;
-    link.target = '_blank';
-    link.rel = 'noopener';
-    document.body.append(link);
-    link.click();
-    link.remove();
-    showToast(`✓ Đã mua và đang tải "${product.name}"...`);
+    showToast(`✓ Đã mua "${product.name}", đang tải file...`);
+    const downloaded = await downloadProductFile(product.file_url, fileName);
+    if (!downloaded) {
+      paymentStatus.textContent = 'Đã trừ tiền nhưng chưa tải được file. Vào Tài khoản > Lịch sử mua để tải lại.';
+      paymentStatus.classList.add('err');
+    }
     return;
   }
 
