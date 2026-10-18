@@ -28,7 +28,7 @@ const API_BASE = window.location.protocol === 'file:' ? 'http://127.0.0.1:5000' 
 const STORAGE_BUCKET = 'products';
 /* File được chia nhỏ khi tải lên để không đứt giữa đường. Phía trình duyệt không giới hạn dung lượng;
    giới hạn (nếu có) là do cấu hình bucket trên Supabase. */
-const UPLOAD_CHUNK_SIZE = 6 * 1024 * 1024;
+const UPLOAD_CHUNK_SIZE = 2 * 1024 * 1024; // Giảm xuống 2MB để tránh lỗi 413 Payload Too Large
 const THEME_KEY = 'cn_theme';
 const isStaticHost = window.location.protocol === 'file:' || 
                      window.location.hostname.includes('github.io') || 
@@ -80,7 +80,7 @@ function uploadFile(file, path) {
         apikey: SUPABASE_ANON_KEY,
         'x-upsert': 'false'
       },
-      uploadDataDuringCreation: true,
+      uploadDataDuringCreation: false, // Tắt để yêu cầu khởi tạo không chứa dữ liệu, tránh lỗi 413
       removeFingerprintOnSuccess: true,
       chunkSize: UPLOAD_CHUNK_SIZE,
       metadata: {
