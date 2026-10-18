@@ -737,6 +737,10 @@ async function loadThemeSettings() {
       document.getElementById('themeBackground').value = theme.background;
       document.getElementById('themeAccent').value = theme.accent;
     }
+    const artDefault = readArtDefault();
+    themeArtDefault.value = artDefault || '#38bdf8';
+    themeArtAuto.checked = !artDefault;
+    themeArtDefault.disabled = !artDefault;
     return;
   }
   try {
@@ -762,22 +766,37 @@ document.querySelectorAll('.theme-preset').forEach(button => {
     document.getElementById('themeBackground').value = button.dataset.background;
     document.getElementById('themeAccent').value = button.dataset.accent;
     // Live preview khi bấm preset
-    window.applyCodeNestTheme?.({
-      background: button.dataset.background,
-      accent: button.dataset.accent,
-    });
+    previewTheme();
   });
 });
 
-/* Live preview khi admin kéo chọn màu nền / màu nhấn */
-['themeBackground', 'themeAccent'].forEach(id => {
-  document.getElementById(id).addEventListener('input', () => {
-    window.applyCodeNestTheme?.({
-      background: document.getElementById('themeBackground').value,
-      accent: document.getElementById('themeAccent').value,
-    });
+/* Live preview khi admin kéo chọn màu nền / màu nhấn / màu ảnh sản phẩm mặc định */
+const themeArtDefault = document.getElementById('themeArtDefault');
+const themeArtAuto = document.getElementById('themeArtAuto');
+
+/* Rỗng nghĩa là ảnh sản phẩm dùng theo màu nhấn của theme. */
+function readThemeArtDefault() {
+  return themeArtAuto.checked ? '' : themeArtDefault.value;
+}
+
+function previewTheme() {
+  window.applyCodeNestTheme?.({
+    background: document.getElementById('themeBackground').value,
+    accent: document.getElementById('themeAccent').value,
+    artDefault: readThemeArtDefault(),
+    artColors: readArtColors(),
   });
+}
+
+['themeBackground', 'themeAccent'].forEach(id => {
+  document.getElementById(id).addEventListener('input', previewTheme);
 });
+
+themeArtAuto.addEventListener('change', () => {
+  themeArtDefault.disabled = themeArtAuto.checked;
+  previewTheme();
+});
+themeArtDefault.addEventListener('input', previewTheme);
 
 /* ── Màu ảnh riêng cho từng sản phẩm ──
    Không cần thêm cột vào bảng Supabase: màu lưu trong file theme trên Storage
@@ -791,6 +810,17 @@ function readArtColors() {
   }
 }
 
+/* Màu ảnh mặc định Admin đặt (rỗng = ảnh sản phẩm theo màu nhấn của theme). */
+function readArtDefault() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(THEME_KEY) || 'null');
+    const value = (saved && saved.artDefault) || '';
+    return /^#[0-9a-f]{6}$/i.test(value) ? value : '';
+  } catch {
+    return '';
+  }
+}
+
 async function setProductArtColor(productId, color) {
   const colors = readArtColors();
   const key = String(productId);
@@ -798,7 +828,7 @@ async function setProductArtColor(productId, color) {
   else delete colors[key];
 
   const base = readLocalTheme() || window.getCurrentCodeNestTheme?.() || { background: '#080b11', accent: '#38bdf8' };
-  const theme = { background: base.background, accent: base.accent, artColors: colors };
+  const theme = { background: base.background, accent: base.accent, artColors: colors, artDefault: readArtDefault() };
   localStorage.setItem(THEME_KEY, JSON.stringify(theme));
   window.applyCodeNestTheme?.(theme);
   return isStaticHost ? publishThemeToCloud(theme) : { ok: true };
@@ -832,7 +862,7 @@ document.getElementById('themeForm').addEventListener('submit', async event => {
   try {
     if (isStaticHost) {
       // Giữ nguyên màu ảnh riêng của từng sản phẩm khi đổi giao diện
-      const theme = { background, accent, artColors: readArtColors() };
+      const theme = { background, accent, artColors: readArtColors(), artDefault: readThemeArtDefault() };
       localStorage.setItem(THEME_KEY, JSON.stringify(theme));
       window.applyCodeNestTheme?.(theme);
       const publish = await publishThemeToCloud(theme);

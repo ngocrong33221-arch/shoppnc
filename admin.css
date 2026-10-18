@@ -725,3 +725,12 @@
   background: var(--surface);
   cursor: pointer;
 }
+/* Màu ảnh sản phẩm mặc định trong form giao diện */
+.color-field input:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.appearance-form .art-color-auto {
+  flex-basis: 100%;
+  align-self: flex-start;
+}

@@ -825,11 +825,12 @@ function productThemeStyle(theme, product) {
   return style;
 }
 
-/* Màu ảnh riêng của sản phẩm do Admin đặt (gửi kèm file theme qua window.CN_ART).
-   Không có thì trả về rỗng để ảnh dùng màu theme hiện tại. */
+/* Màu ảnh của sản phẩm (gửi kèm file theme qua window.CN_ART):
+   ưu tiên màu riêng của sản phẩm, rồi tới màu mặc định Admin đặt.
+   Không có cả hai thì trả về rỗng để ảnh dùng màu nhấn của theme hiện tại. */
 function productArtColor(product) {
   if (!product || !window.CN_ART) return '';
-  return window.CN_ART.colorOf(product.id);
+  return window.CN_ART.resolve(product.id);
 }
 
 function productThemeIcon(theme) {

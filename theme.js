@@ -45,15 +45,17 @@
     { id: 'amber',    name: 'Amber Gold',   background: '#0f0c05', accent: '#f59e0b', icon: '⚡' },
   ];
 
-  /* Màu ảnh riêng cho từng sản phẩm do Admin đặt, được gửi kèm trong file theme
-     dưới dạng { "<id sản phẩm>": "#màu" }. Không cần thêm cột vào bảng Supabase. */
-  const artState = { colors: {} };
+  /* Màu ảnh do Admin đặt, gửi kèm trong file theme (không cần thêm cột Supabase):
+     - artColors: màu riêng cho từng sản phẩm, dạng { "<id sản phẩm>": "#màu" }
+     - artDefault: màu mặc định cho mọi sản phẩm không có màu riêng (rỗng = theo màu nhấn) */
+  const artState = { colors: {}, default: '' };
 
   function applyCodeNestTheme(theme) {
     if (!theme || !/^#[0-9a-f]{6}$/i.test(theme.background) || !/^#[0-9a-f]{6}$/i.test(theme.accent)) return;
     if (theme.artColors && typeof theme.artColors === 'object') {
       artState.colors = theme.artColors;
     }
+    artState.default = /^#[0-9a-f]{6}$/i.test(theme.artDefault || '') ? theme.artDefault : '';
     const root = document.documentElement;
     const background = theme.background.toLowerCase();
     const accent = theme.accent.toLowerCase();
@@ -114,7 +116,7 @@
     }
 
     try {
-      window.dispatchEvent(new CustomEvent('codenest:themechange', { detail: { theme, isLight, artColors: artState.colors } }));
+      window.dispatchEvent(new CustomEvent('codenest:themechange', { detail: { theme, isLight, artColors: artState.colors, artDefault: artState.default } }));
     } catch {
       // Ignored in non-DOM/older environments
     }
@@ -147,12 +149,18 @@
     }
   }
 
-  /* Cho các trang đọc màu ảnh riêng của sản phẩm (xem productThemeStyle trong shared.js). */
+  /* Cho các trang đọc màu ảnh của sản phẩm (xem productThemeStyle trong shared.js). */
   window.CN_ART = {
     get colors() { return artState.colors; },
+    get default() { return artState.default; },
     colorOf(id) {
       const value = artState.colors[String(id)];
       return /^#[0-9a-f]{6}$/i.test(value || '') ? value : '';
+    },
+    /* Màu ảnh dùng cho sản phẩm: ưu tiên màu riêng, rồi tới màu mặc định Admin đặt,
+       cuối cùng trả về rỗng để ảnh dùng màu nhấn của theme. */
+    resolve(id) {
+      return this.colorOf(id) || artState.default || '';
     }
   };
 
