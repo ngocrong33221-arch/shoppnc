@@ -174,21 +174,21 @@
   flex-direction: column;
 }
 
-/* Rotating Cyan & Violet Border on Hover */
+/* Vệt sáng chạy quanh viền sản phẩm. Màu do Admin đặt (--card-beam), mặc định trắng. */
 .product-card::after {
   content: '';
   position: absolute;
   inset: -1px;
   padding: 1.5px;
   border-radius: inherit;
-  background: conic-gradient(from 0deg, transparent 0deg, transparent 280deg, var(--gold-light) 325deg, #818cf8 350deg, transparent 360deg);
+  background: conic-gradient(from 0deg, transparent 0deg, transparent 285deg, var(--card-beam, #ffffff) 330deg, var(--card-beam, #ffffff) 352deg, transparent 360deg);
   animation: borderSpin 4.5s linear infinite;
   mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   mask-composite: exclude;
   -webkit-mask-composite: xor;
   pointer-events: none;
   z-index: 0;
-  opacity: 0;
+  opacity: 0.55;
   transition: opacity 0.3s ease;
 }
 .product-card:hover::after {
@@ -803,4 +803,19 @@
   .detail-section { padding: 32px 6vw 72px; }
   .detail-grid { grid-template-columns: 1fr; gap: 30px; }
   .detail-art { aspect-ratio: 16 / 10; }
+}
+
+/* Vệt sáng viền sản phẩm: giảm hoặc tắt khi máy yếu / người dùng giảm chuyển động */
+html[data-perf="low"] .product-card::after {
+  animation-duration: 9s;
+}
+html[data-perf="off"] .product-card::after {
+  animation: none;
+  opacity: 0;
+}
+@media (prefers-reduced-motion: reduce) {
+  .product-card::after {
+    animation: none;
+    opacity: 0;
+  }
 }

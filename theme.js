@@ -103,6 +103,9 @@
     root.style.setProperty('--gold-border', `rgba(${red}, ${green}, ${blue}, ${isLight ? 0.24 : 0.25})`);
     root.style.setProperty('--gold-border-focus', `rgba(${red}, ${green}, ${blue}, ${isLight ? 0.6 : 0.75})`);
 
+    /* Màu vệt sáng chạy quanh viền sản phẩm (Admin đặt, mặc định trắng) */
+    root.style.setProperty('--card-beam', /^#[0-9a-f]{6}$/i.test(theme.cardBeam || '') ? theme.cardBeam : '#ffffff');
+
     if (isLight) {
       root.style.setProperty('--gold-gradient', `linear-gradient(135deg, ${accent} 0%, ${shade(accent, 0.8)} 50%, ${shade(accent, 0.65)} 100%)`);
       root.style.setProperty('--gold-text-grad', `linear-gradient(135deg, ${shade(accent, 0.85)} 0%, ${accent} 50%, ${shade(accent, 0.65)} 100%)`);
