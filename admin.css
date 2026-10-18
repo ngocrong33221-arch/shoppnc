@@ -25,9 +25,9 @@
 .live-badge {
   font-size: 11px;
   font-family: var(--mono);
-  color: #0284c7;
+  color: var(--gold-bright);
   letter-spacing: 0.08em;
-  text-shadow: 0 0 10px rgba(2, 132, 199, 0.4);
+  text-shadow: 0 0 10px var(--gold-glow);
   display: flex;
   align-items: center;
   gap: 6px;
@@ -37,8 +37,8 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #0284c7;
-  box-shadow: 0 0 8px #0284c7;
+  background: var(--gold-bright);
+  box-shadow: 0 0 8px var(--gold-bright);
   animation: pulseDot 1.8s infinite ease-in-out;
 }
 
@@ -57,17 +57,17 @@
   align-items: center;
   gap: 16px;
   padding: 22px;
-  border: 1.5px dashed rgba(2, 132, 199, 0.3);
+  border: 1.5px dashed var(--gold-border);
   border-radius: var(--radius-sm);
-  background: rgba(15, 23, 42, 0.04);
+  background: var(--panel-soft);
   cursor: pointer;
   transition: var(--trans);
   margin-bottom: 22px;
 }
 .file-drop:hover, .file-drop.dragover {
-  border-color: #0284c7;
-  background: rgba(2, 132, 199, 0.08);
-  box-shadow: 0 0 20px rgba(2, 132, 199, 0.15);
+  border-color: var(--gold);
+  background: var(--gold-subtle);
+  box-shadow: 0 0 20px var(--gold-glow);
   transform: translateY(-1px);
 }
 .file-icon {
@@ -75,22 +75,22 @@
   height: 44px;
   display: grid;
   place-items: center;
-  border: 1px solid rgba(2, 132, 199, 0.3);
+  border: 1px solid var(--gold-border);
   border-radius: var(--radius-sm);
-  color: #0284c7;
-  background: rgba(2, 132, 199, 0.1);
+  color: var(--gold-bright);
+  background: var(--gold-subtle);
   flex-shrink: 0;
   transition: var(--trans);
 }
 .file-drop:hover .file-icon {
-  border-color: #0284c7;
-  box-shadow: 0 0 16px rgba(2, 132, 199, 0.4);
+  border-color: var(--gold);
+  box-shadow: 0 0 16px var(--gold-glow);
 }
 .file-drop b {
   display: block;
   font-size: 13.5px;
   margin-bottom: 4px;
-  color: #0f172a;
+  color: var(--ink);
 }
 .file-drop small {
   font-size: 11px;
@@ -108,20 +108,20 @@
   align-items: center;
   justify-content: center;
   height: 160px;
-  background: linear-gradient(135deg, #ffffff 0%, #f5f7fb 50%, #ffffff 100%);
-  border: 1px solid rgba(2, 132, 199, 0.25);
+  background: linear-gradient(135deg, var(--surface) 0%, var(--bg) 50%, var(--surface) 100%);
+  border: 1px solid var(--gold-border);
   border-radius: var(--radius-sm);
   margin: 16px 0;
   font-family: var(--mono);
   font-size: 32px;
   font-weight: 700;
-  color: #0284c7;
-  text-shadow: 0 0 20px rgba(2, 132, 199, 0.4);
+  color: var(--gold-bright);
+  text-shadow: 0 0 20px var(--gold-glow);
 }
 .preview-tag {
   font-size: 10px;
   font-family: var(--mono);
-  color: #0284c7;
+  color: var(--gold-bright);
   letter-spacing: 0.1em;
   margin-bottom: 8px;
   text-transform: uppercase;
@@ -131,7 +131,7 @@
   font-weight: 700;
   letter-spacing: -0.02em;
   margin-bottom: 8px;
-  color: #0f172a;
+  color: var(--ink);
 }
 .preview-desc {
   font-size: 12.5px;
@@ -144,8 +144,8 @@
   font-size: 22px;
   font-family: var(--mono);
   font-weight: 700;
-  color: #0f172a;
-  text-shadow: 0 0 14px rgba(2, 132, 199, 0.3);
+  color: var(--ink);
+  text-shadow: 0 0 14px var(--gold-glow);
 }
 
 /* Inventory Section */
@@ -160,14 +160,14 @@
   align-items: flex-end;
   margin-bottom: 22px;
   padding-top: 36px;
-  border-top: 1px solid rgba(15, 23, 42, 0.08);
+  border-top: 1px solid var(--hairline);
 }
 .inv-title {
   font-size: 22px;
   font-weight: 700;
   letter-spacing: -0.03em;
   margin-top: 6px;
-  color: #0f172a;
+  color: var(--ink);
 }
 .inv-count {
   font-size: 11.5px;
@@ -197,9 +197,9 @@
   animation: cardFadeIn 0.4s ease both;
 }
 .inventory-item:hover {
-  border-color: rgba(2, 132, 199, 0.4);
-  background: rgba(2, 132, 199, 0.06);
-  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.16), 0 0 20px rgba(2, 132, 199, 0.12);
+  border-color: var(--gold-border-focus);
+  background: var(--gold-subtle);
+  box-shadow: var(--shadow-soft), 0 0 20px var(--gold-glow);
   transform: translateY(-2px);
 }
 @keyframes cardFadeIn {
@@ -215,7 +215,7 @@
   font-size: 10px;
   font-family: var(--mono);
   letter-spacing: 0.1em;
-  color: #0284c7;
+  color: var(--gold-bright);
   text-transform: uppercase;
 }
 .inv-name {
@@ -225,7 +225,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: #0f172a;
+  color: var(--ink);
 }
 .inv-desc {
   font-size: 12.5px;
@@ -244,9 +244,9 @@
   font-size: 16px;
   font-family: var(--mono);
   font-weight: 700;
-  color: #0f172a;
+  color: var(--ink);
   white-space: nowrap;
-  text-shadow: 0 0 12px rgba(2, 132, 199, 0.25);
+  text-shadow: 0 0 12px var(--gold-glow);
 }
 .delete-btn {
   padding: 8px 16px;
@@ -274,20 +274,20 @@
   align-items: center;
   gap: 12px;
   padding: 52px;
-  border: 1px dashed rgba(2, 132, 199, 0.25);
+  border: 1px dashed var(--gold-border);
   border-radius: var(--radius);
-  background: rgba(15, 23, 42, 0.04);
+  background: var(--panel-soft);
   text-align: center;
 }
 .empty-inventory span {
   font-size: 32px;
   font-family: var(--mono);
-  color: #0284c7;
-  text-shadow: 0 0 20px rgba(2, 132, 199, 0.4);
+  color: var(--gold-bright);
+  text-shadow: 0 0 20px var(--gold-glow);
 }
 .empty-inventory strong {
   font-size: 16px;
-  color: #0f172a;
+  color: var(--ink);
 }
 .empty-inventory p {
   font-size: 13px;
@@ -321,18 +321,18 @@
 }
 .admin-secondary-btn {
   padding: 8px 16px;
-  border: 1px solid rgba(2, 132, 199, 0.3);
+  border: 1px solid var(--gold-border);
   border-radius: var(--radius-sm);
-  color: #0284c7;
-  background: rgba(2, 132, 199, 0.08);
+  color: var(--gold-bright);
+  background: var(--gold-subtle);
   font: 600 12px var(--sans);
   cursor: pointer;
   transition: var(--trans);
 }
 .admin-secondary-btn:hover {
-  border-color: #0284c7;
-  color: #0369a1;
-  background: rgba(2, 132, 199, 0.2);
+  border-color: var(--gold);
+  color: var(--gold-bright);
+  background: var(--gold-subtle);
 }
 .balance-adjust-form {
   display: grid;
@@ -393,7 +393,7 @@
 .member-name {
   display: block;
   overflow: hidden;
-  color: #0f172a;
+  color: var(--ink);
   font-size: 13.5px;
   font-weight: 700;
   text-overflow: ellipsis;
@@ -405,26 +405,26 @@
 }
 .member-row-selectable:hover,
 .member-row-selectable:focus-visible {
-  border-color: rgba(2, 132, 199, 0.45);
-  background: rgba(2, 132, 199, 0.06);
+  border-color: var(--gold-border-focus);
+  background: var(--gold-subtle);
   outline: none;
 }
 .member-manage-button {
   margin-top: 9px;
   padding: 5px 10px;
-  border: 1px solid rgba(2, 132, 199, 0.3);
+  border: 1px solid var(--gold-border);
   border-radius: var(--radius-sm);
-  color: #0284c7;
-  background: rgba(2, 132, 199, 0.08);
+  color: var(--gold-bright);
+  background: var(--gold-subtle);
   font: 500 10px var(--sans);
   cursor: pointer;
   transition: var(--trans);
 }
 .member-manage-button:hover,
 .member-manage-button:focus-visible {
-  border-color: #0284c7;
-  color: #0369a1;
-  background: rgba(2, 132, 199, 0.2);
+  border-color: var(--gold);
+  color: var(--gold-bright);
+  background: var(--gold-subtle);
   outline: none;
 }
 .member-meta {
@@ -445,12 +445,12 @@
   font-weight: 500;
 }
 .member-balance {
-  color: #0284c7 !important;
+  color: var(--gold-bright) !important;
   font: 700 13px var(--mono) !important;
 }
 .member-empty {
   padding: 30px;
-  border: 1px dashed rgba(2, 132, 199, 0.3);
+  border: 1px dashed var(--gold-border);
   border-radius: var(--radius);
   color: var(--muted);
   text-align: center;
@@ -493,7 +493,7 @@
   font-size: 11px;
 }
 .activity-stat strong {
-  color: #0284c7;
+  color: var(--gold-bright);
   font: 700 20px var(--mono);
 }
 .activity-table-wrap {
@@ -510,7 +510,7 @@
 .activity-table th,
 .activity-table td {
   padding: 14px 18px;
-  border-bottom: 1px solid rgba(15, 23, 42, 0.07);
+  border-bottom: 1px solid var(--hairline);
   font-size: 12px;
   vertical-align: middle;
 }
@@ -526,7 +526,7 @@
   border-bottom: 0;
 }
 .activity-table tbody tr:hover {
-  background: rgba(2, 132, 199, 0.04);
+  background: var(--gold-subtle);
 }
 .activity-description {
   min-width: 220px;
@@ -538,7 +538,7 @@
 .activity-amount-positive,
 .activity-status-approved,
 .activity-status-completed {
-  color: #0284c7 !important;
+  color: var(--gold-bright) !important;
   font-family: var(--mono);
   white-space: nowrap;
 }
@@ -572,7 +572,7 @@
   width: 100%;
   height: 44px;
   padding: 4px;
-  border: 1px solid rgba(2, 132, 199, 0.3);
+  border: 1px solid var(--gold-border);
   border-radius: var(--radius-sm);
   background: var(--surface2);
   cursor: pointer;
@@ -588,7 +588,7 @@
   align-items: center;
   gap: 7px;
   padding: 10px 14px;
-  border: 1px solid rgba(15, 23, 42, 0.1);
+  border: 1px solid var(--hairline-strong);
   border-radius: var(--radius-sm);
   background: var(--surface2);
   color: var(--ink-dim);
@@ -597,9 +597,9 @@
   transition: var(--trans);
 }
 .theme-preset:hover {
-  border-color: #0284c7;
-  color: #0369a1;
-  background: rgba(2, 132, 199, 0.1);
+  border-color: var(--gold);
+  color: var(--gold-bright);
+  background: var(--gold-subtle);
 }
 .theme-preset i {
   width: 11px;

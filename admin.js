@@ -737,6 +737,21 @@ document.querySelectorAll('.theme-preset').forEach(button => {
   button.addEventListener('click', () => {
     document.getElementById('themeBackground').value = button.dataset.background;
     document.getElementById('themeAccent').value = button.dataset.accent;
+    // Live preview khi bấm preset
+    window.applyCodeNestTheme?.({
+      background: button.dataset.background,
+      accent: button.dataset.accent,
+    });
+  });
+});
+
+/* Live preview khi admin kéo chọn màu nền / màu nhấn */
+['themeBackground', 'themeAccent'].forEach(id => {
+  document.getElementById(id).addEventListener('input', () => {
+    window.applyCodeNestTheme?.({
+      background: document.getElementById('themeBackground').value,
+      accent: document.getElementById('themeAccent').value,
+    });
   });
 });
 

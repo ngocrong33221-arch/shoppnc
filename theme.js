@@ -34,53 +34,133 @@
     return (luminances[0] + 0.05) / (luminances[1] + 0.05);
   }
 
+  const CODE_NEST_PRESETS = [
+    { id: 'obsidian', name: 'Obsidian Dark', background: '#080b11', accent: '#38bdf8', icon: '🌙' },
+    { id: 'light',    name: 'Light Clean',  background: '#f8fafc', accent: '#0284c7', icon: '☀️' },
+    { id: 'snow',     name: 'Snow White',   background: '#ffffff', accent: '#6366f1', icon: '⚪' },
+    { id: 'ocean',    name: 'Ocean Cyan',   background: '#07131c', accent: '#06b6d4', icon: '🌊' },
+    { id: 'violet',   name: 'Royal Violet', background: '#0f0b18', accent: '#a855f7', icon: '🔮' },
+    { id: 'emerald',  name: 'Emerald Green',background: '#06140e', accent: '#10b981', icon: '🍃' },
+    { id: 'sunset',   name: 'Sunset Rose',  background: '#180c10', accent: '#f43f5e', icon: '🌅' },
+    { id: 'amber',    name: 'Amber Gold',   background: '#0f0c05', accent: '#f59e0b', icon: '⚡' },
+  ];
+
   function applyCodeNestTheme(theme) {
     if (!theme || !/^#[0-9a-f]{6}$/i.test(theme.background) || !/^#[0-9a-f]{6}$/i.test(theme.accent)) return;
     const root = document.documentElement;
     const background = theme.background.toLowerCase();
     const accent = theme.accent.toLowerCase();
-    const ink = contrastRatio(background, '#edf6ff') >= contrastRatio(background, '#10131a')
-      ? '#edf6ff'
-      : '#10131a';
+    
+    // Quyết định hướng pha màu cho bề mặt, viền và bóng đổ dựa trên độ tương phản
+    const isLight = contrastRatio(background, '#0f172a') > contrastRatio(background, '#f8fafc');
+    root.setAttribute('data-theme', isLight ? 'light' : 'dark');
+    root.style.colorScheme = isLight ? 'light' : 'dark';
+
     const [red, green, blue] = rgb(accent);
+    const ink = isLight ? '#0f172a' : '#f8fafc';
+    const inkRgb = rgb(ink).join(', ');
+    const shadowInk = isLight ? '15, 23, 42' : '0, 0, 0';
+
+    const surface = isLight ? '#ffffff' : shade(background, 1.75);
+    const surface2 = isLight ? mix(background, '#0f172a', 0.035) : shade(background, 2.35);
+    const surfaceRgb = rgb(surface).join(', ');
+
     root.style.setProperty('--bg', background);
-    root.style.setProperty('--bg-deep', shade(background, 0.55));
-    root.style.setProperty('--surface', shade(background, 1.35));
-    root.style.setProperty('--surface2', shade(background, 1.8));
-    root.style.setProperty('--surface-card', `rgba(${rgb(shade(background, 1.4)).join(', ')}, 0.88)`);
+    root.style.setProperty('--bg-deep', isLight ? mix(background, '#0f172a', 0.05) : shade(background, 0.55));
+    root.style.setProperty('--surface', surface);
+    root.style.setProperty('--surface2', surface2);
+    root.style.setProperty('--surface-card', isLight ? 'rgba(255, 255, 255, 0.90)' : `rgba(${surfaceRgb}, 0.72)`);
+    root.style.setProperty('--glass-bg', isLight ? 'rgba(255, 255, 255, 0.86)' : `rgba(${surfaceRgb}, 0.82)`);
+    root.style.setProperty('--glass-bg-soft', isLight ? 'rgba(255, 255, 255, 0.96)' : `rgba(${surfaceRgb}, 0.95)`);
+    root.style.setProperty('--panel-soft', isLight ? 'rgba(15, 23, 42, 0.035)' : `rgba(${inkRgb}, 0.05)`);
+    root.style.setProperty('--hairline', isLight ? 'rgba(15, 23, 42, 0.08)' : `rgba(${inkRgb}, 0.09)`);
+    root.style.setProperty('--hairline-strong', isLight ? 'rgba(15, 23, 42, 0.13)' : `rgba(${inkRgb}, 0.16)`);
+    root.style.setProperty('--border-subtle', isLight ? 'rgba(15, 23, 42, 0.09)' : `rgba(${inkRgb}, 0.10)`);
+    root.style.setProperty('--border', `rgba(${red}, ${green}, ${blue}, ${isLight ? 0.24 : 0.28})`);
+    root.style.setProperty('--shadow-soft', isLight ? '0 16px 40px -18px rgba(15, 23, 42, 0.14)' : '0 18px 44px -20px rgba(0, 0, 0, 0.65)');
     root.style.setProperty('--ink', ink);
-    root.style.setProperty('--ink-dim', mix(ink, background, 0.18));
-    root.style.setProperty('--muted', mix(ink, background, 0.38));
+    root.style.setProperty('--ink-dim', isLight ? '#334155' : '#94a3b8');
+    root.style.setProperty('--muted', '#64748b');
+
     root.style.setProperty('--gold', accent);
-    root.style.setProperty('--gold-light', mix(accent, '#ffffff', 0.52));
-    root.style.setProperty('--gold-bright', mix(accent, '#ffffff', 0.18));
-    root.style.setProperty('--gold-warm', shade(accent, 0.78));
-    root.style.setProperty('--gold-deep', shade(accent, 0.52));
-    root.style.setProperty('--gold-glow', `rgba(${red}, ${green}, ${blue}, 0.35)`);
-    root.style.setProperty('--gold-subtle', `rgba(${red}, ${green}, ${blue}, 0.08)`);
-    root.style.setProperty('--gold-border', `rgba(${red}, ${green}, ${blue}, 0.22)`);
-    root.style.setProperty('--gold-border-focus', `rgba(${rgb(mix(accent, '#ffffff', 0.52)).join(', ')}, 0.65)`);
-    root.style.setProperty('--gold-gradient', `linear-gradient(135deg, ${shade(accent, 0.72)} 0%, ${mix(accent, '#ffffff', 0.68)} 28%, ${accent} 55%, ${mix(accent, '#ffffff', 0.52)} 80%, ${shade(accent, 0.52)} 100%)`);
-    root.style.setProperty('--gold-text-grad', `linear-gradient(135deg, ${mix(accent, '#ffffff', 0.76)} 0%, ${mix(accent, '#ffffff', 0.18)} 35%, ${accent} 70%, ${shade(accent, 0.65)} 100%)`);
-    root.style.setProperty('--gold-btn', `linear-gradient(135deg, ${mix(accent, '#ffffff', 0.42)} 0%, ${accent} 55%, ${shade(accent, 0.78)} 100%)`);
-    root.style.setProperty('--gold-btn-hover', `linear-gradient(135deg, ${mix(accent, '#ffffff', 0.62)} 0%, ${mix(accent, '#ffffff', 0.38)} 55%, ${accent} 100%)`);
+    root.style.setProperty('--gold-rgb', `${red}, ${green}, ${blue}`);
+    root.style.setProperty('--gold-light-rgb', `${rgb(mix(accent, '#ffffff', 0.52)).join(', ')}`);
+    root.style.setProperty('--gold-light', isLight ? mix(accent, '#0284c7', 0.25) : mix(accent, '#ffffff', 0.52));
+    root.style.setProperty('--gold-bright', accent);
+    root.style.setProperty('--gold-warm', isLight ? shade(accent, 0.8) : shade(accent, 0.78));
+    root.style.setProperty('--gold-deep', isLight ? shade(accent, 0.65) : shade(accent, 0.52));
+    root.style.setProperty('--gold-glow', `rgba(${red}, ${green}, ${blue}, ${isLight ? 0.22 : 0.35})`);
+    root.style.setProperty('--gold-subtle', `rgba(${red}, ${green}, ${blue}, ${isLight ? 0.08 : 0.10})`);
+    root.style.setProperty('--gold-border', `rgba(${red}, ${green}, ${blue}, ${isLight ? 0.24 : 0.25})`);
+    root.style.setProperty('--gold-border-focus', `rgba(${red}, ${green}, ${blue}, ${isLight ? 0.6 : 0.75})`);
+
+    if (isLight) {
+      root.style.setProperty('--gold-gradient', `linear-gradient(135deg, ${accent} 0%, ${shade(accent, 0.8)} 50%, ${shade(accent, 0.65)} 100%)`);
+      root.style.setProperty('--gold-text-grad', `linear-gradient(135deg, ${shade(accent, 0.85)} 0%, ${accent} 50%, ${shade(accent, 0.65)} 100%)`);
+      root.style.setProperty('--gold-btn', `linear-gradient(135deg, ${accent} 0%, ${mix(accent, '#38bdf8', 0.25)} 50%, ${shade(accent, 0.85)} 100%)`);
+      root.style.setProperty('--gold-btn-hover', `linear-gradient(135deg, ${mix(accent, '#ffffff', 0.15)} 0%, ${accent} 55%, ${mix(accent, '#38bdf8', 0.35)} 100%)`);
+    } else {
+      root.style.setProperty('--gold-gradient', `linear-gradient(135deg, ${shade(accent, 0.72)} 0%, ${mix(accent, '#ffffff', 0.68)} 28%, ${accent} 55%, ${mix(accent, '#ffffff', 0.52)} 80%, ${shade(accent, 0.52)} 100%)`);
+      root.style.setProperty('--gold-text-grad', `linear-gradient(135deg, #ffffff 0%, ${mix(accent, '#ffffff', 0.35)} 35%, ${accent} 70%, ${shade(accent, 0.65)} 100%)`);
+      root.style.setProperty('--gold-btn', `linear-gradient(135deg, ${mix(accent, '#ffffff', 0.35)} 0%, ${accent} 55%, ${shade(accent, 0.78)} 100%)`);
+      root.style.setProperty('--gold-btn-hover', `linear-gradient(135deg, ${mix(accent, '#ffffff', 0.55)} 0%, ${mix(accent, '#ffffff', 0.35)} 55%, ${accent} 100%)`);
+    }
+
+    try {
+      window.dispatchEvent(new CustomEvent('codenest:themechange', { detail: { theme, isLight } }));
+    } catch {
+      // Ignored in non-DOM/older environments
+    }
   }
 
+  function getCurrentCodeNestTheme() {
+    try {
+      const saved = JSON.parse(localStorage.getItem('cn_theme') || 'null');
+      if (saved && saved.background && saved.accent) return saved;
+    } catch {}
+    const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+    return isLight 
+      ? { background: '#f8fafc', accent: '#0284c7' }
+      : { background: '#080b11', accent: '#38bdf8' };
+  }
+
+  function setCodeNestTheme(theme) {
+    if (!theme || !theme.background || !theme.accent) return;
+    localStorage.setItem('cn_theme', JSON.stringify(theme));
+    applyCodeNestTheme(theme);
+  }
+
+  function toggleCodeNestThemeMode() {
+    const current = getCurrentCodeNestTheme();
+    const isLight = contrastRatio(current.background, '#0f172a') > contrastRatio(current.background, '#f8fafc');
+    if (isLight) {
+      setCodeNestTheme({ background: '#080b11', accent: '#38bdf8' });
+    } else {
+      setCodeNestTheme({ background: '#f8fafc', accent: '#0284c7' });
+    }
+  }
+
+  window.CODE_NEST_PRESETS = CODE_NEST_PRESETS;
   window.applyCodeNestTheme = applyCodeNestTheme;
+  window.getCurrentCodeNestTheme = getCurrentCodeNestTheme;
+  window.setCodeNestTheme = setCodeNestTheme;
+  window.toggleCodeNestThemeMode = toggleCodeNestThemeMode;
 
   function loadSavedTheme() {
     try {
       const saved = JSON.parse(localStorage.getItem('cn_theme') || 'null');
-      if (saved) applyCodeNestTheme(saved);
+      if (saved) {
+        applyCodeNestTheme(saved);
+      } else {
+        // Default to Obsidian Dark if not previously set
+        applyCodeNestTheme({ background: '#080b11', accent: '#38bdf8' });
+      }
     } catch {
       // Bỏ qua nếu dữ liệu lưu không hợp lệ
     }
   }
 
-  /* Trên host tĩnh (GitHub Pages) theme dùng chung được phát qua Supabase Storage:
-     mỗi lần admin lưu sẽ tạo 1 file "cn_theme-<thời gian>.json" mới trong bucket
-     (bucket chặn ghi đè nên luôn tạo file mới). Khách đọc file mới nhất rồi áp dụng
-     để tất cả mọi người thấy cùng một giao diện. */
+  /* Trên host tĩnh (GitHub Pages) theme dùng chung được phát qua Supabase Storage */
   async function loadCloudTheme() {
     const client = window.supabase;
     if (!client || !client.storage) return;

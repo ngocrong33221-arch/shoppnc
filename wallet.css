@@ -21,8 +21,8 @@
   padding: 34px;
   min-height: 250px;
   border-radius: var(--radius);
-  background: linear-gradient(135deg, #ffffff 0%, #f5f7fb 100%);
-  border: 1px solid rgba(2, 132, 199, 0.24);
+  background: linear-gradient(135deg, var(--surface) 0%, var(--bg) 100%);
+  border: 1px solid rgba(var(--gold-rgb), 0.24);
   box-shadow: 0 20px 48px -10px rgba(15, 23, 42, 0.12), inset 0 1px 0 rgba(15, 23, 42, 0.06);
   overflow: hidden;
 }
@@ -36,8 +36,8 @@
   width: 44px;
   height: 34px;
   border-radius: 6px;
-  background: linear-gradient(135deg, #38bdf8 0%, #818cf8 50%, #c084fc 100%);
-  box-shadow: 0 0 18px rgba(56, 189, 248, 0.22);
+  background: linear-gradient(135deg, var(--gold-light) 0%, #818cf8 50%, #c084fc 100%);
+  box-shadow: 0 0 18px rgba(var(--gold-light-rgb), 0.22);
   opacity: 0.85;
   border: 1px solid rgba(255, 255, 255, 0.3);
 }
@@ -46,7 +46,7 @@
   font-size: 10px;
   font-family: var(--mono);
   letter-spacing: 0.16em;
-  color: #0284c7;
+  color: var(--gold);
   text-transform: uppercase;
   font-weight: 700;
   display: flex;
@@ -63,11 +63,11 @@
   font-size: clamp(38px, 4.2vw, 54px);
   font-family: var(--mono);
   font-weight: 800;
-  color: #0f172a;
+  color: var(--ink);
   letter-spacing: -0.05em;
   line-height: 1;
   margin: 22px 0 18px;
-  text-shadow: 0 0 30px rgba(56, 189, 248, 0.2);
+  text-shadow: 0 0 30px rgba(var(--gold-light-rgb), 0.2);
 }
 
 .balance-footer {
@@ -75,7 +75,7 @@
   align-items: center;
   justify-content: space-between;
   padding-top: 14px;
-  border-top: 1px solid rgba(15, 23, 42, 0.08);
+  border-top: 1px solid var(--hairline);
 }
 .balance-user {
   font-size: 12px;
@@ -95,9 +95,9 @@
 .refresh-btn {
   width: 34px;
   height: 34px;
-  border: 1px solid rgba(15, 23, 42, 0.12);
+  border: 1px solid var(--hairline-strong);
   border-radius: var(--radius-sm);
-  background: rgba(15, 23, 42, 0.04);
+  background: var(--panel-soft);
   color: var(--muted);
   cursor: pointer;
   display: grid;
@@ -105,10 +105,10 @@
   transition: var(--trans);
 }
 .refresh-btn:hover {
-  color: #0284c7;
-  border-color: #0284c7;
-  background: rgba(56, 189, 248, 0.15);
-  box-shadow: 0 0 14px rgba(56, 189, 248, 0.2);
+  color: var(--gold);
+  border-color: var(--gold);
+  background: rgba(var(--gold-light-rgb), 0.15);
+  box-shadow: 0 0 14px rgba(var(--gold-light-rgb), 0.2);
   transform: rotate(45deg);
 }
 .refresh-btn.spinning svg {
@@ -136,9 +136,9 @@
 }
 .amount-btn {
   height: 56px;
-  border: 1px solid rgba(15, 23, 42, 0.08);
+  border: 1px solid var(--hairline);
   border-radius: var(--radius-sm);
-  background: rgba(15, 23, 42, 0.04);
+  background: var(--panel-soft);
   color: var(--ink-dim);
   font-size: 14.5px;
   font-family: var(--mono);
@@ -152,16 +152,16 @@
   position: relative;
 }
 .amount-btn:hover {
-  border-color: rgba(2, 132, 199, 0.35);
-  color: #0284c7;
-  background: rgba(56, 189, 248, 0.08);
+  border-color: rgba(var(--gold-rgb), 0.35);
+  color: var(--gold);
+  background: rgba(var(--gold-light-rgb), 0.08);
   transform: translateY(-2px);
 }
 .amount-btn.active {
-  border-color: #0284c7;
-  color: #0284c7;
-  background: linear-gradient(135deg, rgba(56, 189, 248, 0.18), rgba(99, 102, 241, 0.18));
-  box-shadow: 0 0 20px rgba(56, 189, 248, 0.18);
+  border-color: var(--gold);
+  color: var(--gold);
+  background: linear-gradient(135deg, rgba(var(--gold-light-rgb), 0.18), rgba(99, 102, 241, 0.18));
+  box-shadow: 0 0 20px rgba(var(--gold-light-rgb), 0.18);
   transform: translateY(-1px);
 }
 
@@ -172,9 +172,9 @@
   letter-spacing: 0.05em;
   padding: 2px 7px;
   border-radius: 999px;
-  background: rgba(56, 189, 248, 0.15);
-  color: #0284c7;
-  border: 1px solid rgba(2, 132, 199, 0.3);
+  background: rgba(var(--gold-light-rgb), 0.15);
+  color: var(--gold);
+  border: 1px solid rgba(var(--gold-rgb), 0.3);
 }
 .amt-tag.vip {
   background: rgba(245, 158, 11, 0.15);
@@ -205,7 +205,7 @@
   font-weight: 700;
   letter-spacing: -0.03em;
   margin: 8px 0 10px;
-  color: #0f172a;
+  color: var(--ink);
 }
 .transfer-note {
   font-size: 13.5px;
@@ -224,7 +224,7 @@
   justify-content: space-between;
   align-items: center;
   padding-bottom: 12px;
-  border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+  border-bottom: 1px solid var(--hairline);
   font-size: 13.5px;
   color: var(--muted);
 }
@@ -233,7 +233,7 @@
   padding-bottom: 0;
 }
 .detail-row strong {
-  color: #0f172a;
+  color: var(--ink);
   font-weight: 600;
   font-family: var(--mono);
 }
@@ -249,9 +249,9 @@
   gap: 5px;
   padding: 4px 10px;
   border-radius: var(--radius-xs);
-  border: 1px solid rgba(2, 132, 199, 0.24);
-  background: rgba(56, 189, 248, 0.08);
-  color: #0284c7;
+  border: 1px solid rgba(var(--gold-rgb), 0.24);
+  background: rgba(var(--gold-light-rgb), 0.08);
+  color: var(--gold);
   font-size: 11px;
   font-family: var(--sans);
   font-weight: 500;
@@ -259,9 +259,9 @@
   transition: var(--trans);
 }
 .copy-btn:hover {
-  background: rgba(56, 189, 248, 0.2);
-  color: #0284c7;
-  border-color: #0284c7;
+  background: rgba(var(--gold-light-rgb), 0.2);
+  color: var(--gold);
+  border-color: var(--gold);
   transform: translateY(-1px);
 }
 .copy-btn.copied {
@@ -270,15 +270,15 @@
   color: #047857;
 }
 .copy-btn-primary {
-  background: rgba(56, 189, 248, 0.16);
-  border-color: rgba(2, 132, 199, 0.35);
+  background: rgba(var(--gold-light-rgb), 0.16);
+  border-color: rgba(var(--gold-rgb), 0.35);
   font-weight: 600;
 }
 
 .highlight-content {
-  color: #0284c7 !important;
+  color: var(--gold) !important;
   font-weight: 700;
-  text-shadow: 0 0 10px rgba(56, 189, 248, 0.2);
+  text-shadow: 0 0 10px rgba(var(--gold-light-rgb), 0.2);
 }
 
 .countdown-badge {
@@ -317,10 +317,10 @@
   width: 220px;
   height: 220px;
   padding: 12px;
-  background: #ffffff;
+  background: var(--surface);
   border-radius: var(--radius);
-  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.16), 0 0 28px rgba(56, 189, 248, 0.18);
-  border: 2px solid rgba(2, 132, 199, 0.3);
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.16), 0 0 28px rgba(var(--gold-light-rgb), 0.18);
+  border: 2px solid rgba(var(--gold-rgb), 0.3);
 }
 .qr-guide {
   font-size: 11px;
