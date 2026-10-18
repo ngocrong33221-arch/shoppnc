@@ -17,8 +17,8 @@
   padding: 36px 32px;
   border-radius: var(--radius);
   background: var(--surface-card);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 20px 48px -12px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(15, 23, 42, 0.08);
+  box-shadow: 0 20px 48px -12px rgba(15, 23, 42, 0.14), inset 0 1px 0 rgba(15, 23, 42, 0.06);
   backdrop-filter: blur(24px) saturate(180%);
   -webkit-backdrop-filter: blur(24px) saturate(180%);
   overflow: hidden;
@@ -29,8 +29,8 @@
 
 .support-card:hover {
   transform: translateY(-4px);
-  border-color: rgba(56, 189, 248, 0.45);
-  box-shadow: 0 26px 64px -12px rgba(0, 0, 0, 0.8), 0 0 28px rgba(56, 189, 248, 0.15);
+  border-color: rgba(2, 132, 199, 0.45);
+  box-shadow: 0 26px 64px -12px rgba(15, 23, 42, 0.18), 0 0 28px rgba(56, 189, 248, 0.15);
 }
 
 .support-card::before {
@@ -47,7 +47,7 @@
   inset: -1px;
   border-radius: inherit;
   padding: 1.5px;
-  background: conic-gradient(from 0deg, transparent 0deg, transparent 280deg, #38bdf8 325deg, #818cf8 350deg, transparent 360deg);
+  background: conic-gradient(from 0deg, transparent 0deg, transparent 280deg, #0284c7 325deg, #6366f1 350deg, transparent 360deg);
   animation: borderSpin 5s linear infinite;
   mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   mask-composite: exclude;
@@ -63,7 +63,7 @@
 
 .card-label {
   display: inline-block;
-  color: #38bdf8;
+  color: #0284c7;
   font-size: 10px;
   font-family: var(--mono);
   letter-spacing: 0.16em;
@@ -77,7 +77,7 @@
   line-height: 1.1;
   letter-spacing: -0.04em;
   margin-bottom: 14px;
-  color: #ffffff;
+  color: #0f172a;
 }
 
 .support-info p {
@@ -102,15 +102,15 @@
   color: var(--ink-dim);
   font-size: 14px;
   padding: 12px 16px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(15, 23, 42, 0.08);
   border-radius: var(--radius-sm);
-  background: rgba(10, 16, 28, 0.6);
+  background: rgba(15, 23, 42, 0.04);
   transition: var(--trans);
 }
 .support-list li:hover {
-  border-color: rgba(56, 189, 248, 0.3);
-  background: rgba(56, 189, 248, 0.06);
-  color: #ffffff;
+  border-color: rgba(2, 132, 199, 0.3);
+  background: rgba(2, 132, 199, 0.08);
+  color: #0f172a;
 }
 
 .support-list li::before {
@@ -120,9 +120,9 @@
   display: grid;
   place-items: center;
   border-radius: 50%;
-  background: rgba(56, 189, 248, 0.18);
-  color: #38bdf8;
-  box-shadow: 0 0 10px rgba(56, 189, 248, 0.3);
+  background: rgba(2, 132, 199, 0.16);
+  color: #0284c7;
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.25);
   font-weight: 700;
   font-size: 12px;
   flex-shrink: 0;
@@ -157,8 +157,8 @@
   padding: 18px;
   border-radius: 20px;
   background: #ffffff;
-  border: 2px solid rgba(56, 189, 248, 0.4);
-  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.7), 0 0 32px rgba(56, 189, 248, 0.25);
+  border: 2px solid rgba(2, 132, 199, 0.4);
+  box-shadow: 0 20px 48px rgba(15, 23, 42, 0.16), 0 0 32px rgba(56, 189, 248, 0.2);
   margin: 10px 0 20px;
 }
 
@@ -178,7 +178,7 @@
 .qr-note strong {
   font-size: 18px;
   letter-spacing: -0.02em;
-  color: #ffffff;
+  color: #0f172a;
 }
 
 .qr-note span {
