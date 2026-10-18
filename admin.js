@@ -25,8 +25,10 @@ productColorAuto.addEventListener('change', () => {
 });
 
 const API_BASE = window.location.protocol === 'file:' ? 'http://127.0.0.1:5000' : window.location.origin;
-const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB — giới hạn upload của Supabase Storage (gói free)
 const STORAGE_BUCKET = 'products';
+/* File được chia nhỏ khi tải lên để không đứt giữa đường. Phía trình duyệt không giới hạn dung lượng;
+   giới hạn (nếu có) là do cấu hình bucket trên Supabase. */
+const UPLOAD_CHUNK_SIZE = 6 * 1024 * 1024;
 const THEME_KEY = 'cn_theme';
 const isStaticHost = window.location.protocol === 'file:' || 
                      window.location.hostname.includes('github.io') || 
@@ -51,13 +53,51 @@ fileInput.addEventListener('change', () => {
   }
   const sizeMb = (f.size / (1024 * 1024)).toFixed(1);
   fileLabel.textContent = `${f.name} · đã nhận (${sizeMb}MB)`;
-  if (f.size > MAX_FILE_SIZE) {
-    statusEl.textContent = `File ${sizeMb}MB vượt 50MB — Supabase Storage (gói free) sẽ từ chối. Hãy chọn file nhỏ hơn.`;
-    statusEl.className = 'form-status err';
-  } else {
-    statusEl.textContent = '';
-  }
+  statusEl.textContent = '';
 });
+
+/* ── Tải file lên Supabase Storage ──
+   File lớn được đẩy theo từng phần (resumable) nên không bị giới hạn dung lượng ở phía
+   trình duyệt và có thể tải lại phần còn thiếu nếu mạng chập chờn. */
+function uploadFile(file, path) {
+  if (typeof tus === 'undefined') {
+    // Không có thư viện chia nhỏ thì đẩy nguyên file trong một lần
+    return supabase.storage
+      .from(STORAGE_BUCKET)
+      .upload(path, file, { contentType: file.type || 'application/octet-stream', upsert: false })
+      .then(({ data, error }) => {
+        if (error) throw error;
+        return data;
+      });
+  }
+
+  return new Promise((resolve, reject) => {
+    const upload = new tus.Upload(file, {
+      endpoint: `${SUPABASE_URL}/storage/v1/upload/resumable`,
+      retryDelays: [0, 3000, 5000, 10000, 20000],
+      headers: {
+        authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+        'x-upsert': 'false'
+      },
+      uploadDataDuringCreation: true,
+      removeFingerprintOnSuccess: true,
+      chunkSize: UPLOAD_CHUNK_SIZE,
+      metadata: {
+        bucketName: STORAGE_BUCKET,
+        objectName: path,
+        contentType: file.type || 'application/octet-stream',
+        cacheControl: '3600'
+      },
+      onProgress: (sent, total) => {
+        const percent = total ? Math.round((sent / total) * 100) : 0;
+        statusEl.textContent = `Đang tải file... ${percent}%`;
+      },
+      onSuccess: () => resolve({ path }),
+      onError: reject
+    });
+    upload.start();
+  });
+}
 
 /* ── Live preview ── */
 nameInput.addEventListener('input',  () => { previewName.textContent = nameInput.value  || 'Tên sản phẩm của bạn'; });
@@ -87,22 +127,10 @@ form.addEventListener('submit', async e => {
 
   try {
     if (typeof supabase !== 'undefined' && supabase && supabase.storage) {
-      // 1. Tải file gốc (apk, zip, exe...) lên Supabase Storage
+      // 1. Tải file gốc (apk, zip, exe...) lên Supabase Storage — không giới hạn dung lượng
       const safeName = file.name.replace(/[^\w.\-]+/g, '_');
       const path = `${Date.now()}-${safeName}`;
-      const { error: uploadError } = await supabase.storage
-        .from(STORAGE_BUCKET)
-        .upload(path, file, {
-          contentType: file.type || 'application/octet-stream',
-          upsert: false
-        });
-
-      if (uploadError) {
-        statusEl.textContent = `Lỗi tải file lên: ${uploadError.message || uploadError}`;
-        statusEl.className = 'form-status err';
-        btn.disabled = false;
-        return;
-      }
+      await uploadFile(file, path);
 
       const { data: urlData } = supabase.storage.from(STORAGE_BUCKET).getPublicUrl(path);
 
