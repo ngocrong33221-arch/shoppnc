@@ -1,0 +1,82 @@
+/* ============================================================
+   product.js — Trang chi tiết sản phẩm
+   ============================================================ */
+
+const DETAIL_THEMES = ['art-lime', 'art-blue', 'art-purple', 'art-orange'];
+const DETAIL_ICONS  = ['</>', '{ }', '( )', '#[]'];
+
+const detailId = new URLSearchParams(window.location.search).get('id');
+
+function detailText(id, text) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = text;
+}
+
+function detailDate(value) {
+  if (!value) return '—';
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? '—' : date.toLocaleDateString('vi-VN');
+}
+
+function detailExtension(fileName) {
+  const match = String(fileName || '').match(/\.([a-z0-9]+)$/i);
+  return match ? match[1].toUpperCase() : '—';
+}
+
+function detailCategoryLabel(category) {
+  return PRODUCT_CATEGORY_LABELS[category] || category || 'Khác';
+}
+
+function renderDetailSpecs(product) {
+  const specs = document.getElementById('detailSpecs');
+  const fileName = product.fileName || product.file_name || '—';
+  [
+    ['Danh mục', detailCategoryLabel(product.category)],
+    ['Tệp bàn giao', fileName],
+    ['Định dạng', detailExtension(fileName)],
+    ['Ngày đăng', detailDate(product.created_at)],
+    ['Mã sản phẩm', String(product.id)],
+  ].forEach(([label, value]) => {
+    const dt = document.createElement('dt');
+    dt.textContent = label;
+    const dd = document.createElement('dd');
+    dd.textContent = value;
+    specs.append(dt, dd);
+  });
+}
+
+function renderDetail(product, index) {
+  const art = document.getElementById('detailArt');
+  DETAIL_THEMES.forEach(theme => art.classList.remove(theme));
+  art.classList.add(DETAIL_THEMES[index % DETAIL_THEMES.length]);
+
+  const extension = detailExtension(product.fileName || product.file_name);
+  detailText('detailIcon', DETAIL_ICONS[index % DETAIL_ICONS.length]);
+  detailText('detailTag', `${detailCategoryLabel(product.category)} · ${extension}`);
+  detailText('detailName', product.name || 'Sản phẩm');
+  detailText('detailDesc', product.description || 'Sản phẩm này chưa có mô tả.');
+  detailText('detailPrice', `${Number(product.price || 0).toLocaleString('vi-VN')}đ`);
+  detailText('crumbCategory', detailCategoryLabel(product.category));
+  detailText('crumbName', product.name || 'Chi tiết');
+  renderDetailSpecs(product);
+
+  document.title = `${product.name || 'Sản phẩm'} | CodeNest`;
+  document.getElementById('detailBuy').addEventListener('click', () => window.CodeNestPurchase.open(product));
+}
+
+function showMissingProduct() {
+  document.getElementById('detailGrid').hidden = true;
+  document.getElementById('detailMissing').hidden = false;
+}
+
+async function initProductDetail() {
+  if (!detailId) { showMissingProduct(); return; }
+
+  const catalog = await loadProductCatalog();
+  const index = catalog.findIndex(product => String(product.id) === String(detailId));
+  if (index === -1) { showMissingProduct(); return; }
+
+  renderDetail(catalog[index], index);
+}
+
+initProductDetail();

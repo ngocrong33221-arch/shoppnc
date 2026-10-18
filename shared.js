@@ -505,7 +505,84 @@ async function fetchBalance(username) {
   return defaultAmt;
 }
 
-/* ── 10. Page In Animation ── */
+/* ── 10. Product Catalog (dùng chung cho store.html và product.html) ── */
+const PRODUCT_CATEGORY_LABELS = {
+  web: 'Web template',
+  ui: 'UI kit',
+  motion: 'Motion / Hiệu ứng',
+  apk: 'APK / Ứng dụng',
+  other: 'File khác'
+};
+
+/* Sản phẩm mẫu khi chạy offline hoặc khi Supabase chưa có dữ liệu */
+const DEFAULT_PRODUCTS = [
+  {
+    id: 'prod-aurora-2026',
+    name: 'Aurora Landing Page Luxury 2026',
+    description: 'Template Landing Page phong cách Luxury Black & Gold, hiệu ứng ánh sáng hạt rơi, tối ưu responsive 100%.',
+    price: 150000,
+    category: 'web',
+    fileName: 'aurora-landing-page.zip'
+  },
+  {
+    id: 'prod-cyber-glass',
+    name: 'Cyber Glass UI Kit Component',
+    description: 'Bộ giao diện UI Kit thủy tinh hiện đại (Glassmorphism), hơn 40 component nút bấm, modal, form chuẩn.',
+    price: 250000,
+    category: 'ui',
+    fileName: 'cyber-glass-ui.zip'
+  },
+  {
+    id: 'prod-particles-core',
+    name: 'Stardust Particle & Physics Engine',
+    description: 'Engine hiệu ứng hạt rơi tương tác chuột, sóng chấn động shockwave khi click, tia laser kết nối chuột.',
+    price: 99000,
+    category: 'motion',
+    fileName: 'stardust-particles.js'
+  },
+  {
+    id: 'prod-neocommerce',
+    name: 'NeoCommerce Full Source Code',
+    description: 'Mẫu website bán hàng cao cấp tích hợp giỏ hàng, thanh toán QR MB Bank và quản trị sản phẩm trực quan.',
+    price: 350000,
+    category: 'web',
+    fileName: 'neocommerce-template.zip'
+  }
+];
+
+function getLocalProducts() {
+  let list = [];
+  try {
+    list = JSON.parse(localStorage.getItem('cn_products')) || [];
+  } catch {
+    list = [];
+  }
+  if (!list.length) {
+    list = DEFAULT_PRODUCTS;
+    localStorage.setItem('cn_products', JSON.stringify(list));
+  }
+  return list;
+}
+
+async function loadProductCatalog() {
+  try {
+    if (typeof supabase !== 'undefined' && supabase) {
+      const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (!error && data && data.length) {
+        return data.map(product => ({ ...product, fileName: product.file_name || product.fileName }));
+      }
+    }
+  } catch (error) {
+    console.warn('Could not fetch products from Supabase:', error);
+  }
+  return getLocalProducts();
+}
+
+/* ── 11. Page In Animation ── */
 document.addEventListener('DOMContentLoaded', () => {
   document.body.style.opacity = '0';
   requestAnimationFrame(() => {

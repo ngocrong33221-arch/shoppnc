@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CodeNest | Chi tiết sản phẩm</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="shared.css">
+  <link rel="stylesheet" href="store.css">
+</head>
+<body>
+  <div class="page-glow page-glow-1" aria-hidden="true"></div>
+  <div class="page-glow page-glow-2" aria-hidden="true"></div>
+  <div class="cursor" id="cursor" aria-hidden="true"></div>
+
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="store.html">
+        <div class="brand-icon">&lt;/&gt;</div>
+        <span class="brand-name">code<span class="accent">nest</span></span>
+      </a>
+      <nav class="topbar-nav" id="topNav">
+        <a href="store.html" class="active">Kho code</a>
+        <a href="wallet.html">Ví tiền</a>
+        <a href="account.html">Tài khoản</a>
+        <a href="support.html">Hỗ trợ</a>
+        <a href="admin.html" id="adminLink" style="display:none">Quản trị</a>
+      </nav>
+      <div class="topbar-user">
+        <div class="user-badge">
+          <div class="user-avatar" id="userAvatar">U</div>
+          <span id="userBadge">USER</span>
+        </div>
+        <button class="logout-btn" id="logoutButton">Đăng xuất</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="page-fade">
+    <section class="detail-section">
+      <nav class="detail-crumb reveal" aria-label="Đường dẫn">
+        <a href="store.html">Kho code</a>
+        <span class="crumb-sep">/</span>
+        <a href="store.html" id="crumbCategory">Sản phẩm</a>
+        <span class="crumb-sep">/</span>
+        <span id="crumbName">Chi tiết</span>
+      </nav>
+
+      <div class="detail-grid" id="detailGrid">
+        <div class="detail-art art-lime reveal" id="detailArt">
+          <div class="art-pattern"></div>
+          <span class="art-code" id="detailIcon">&lt;/&gt;</span>
+        </div>
+
+        <div class="detail-info reveal">
+          <span class="product-tag" id="detailTag">Đang tải…</span>
+          <h1 class="detail-name" id="detailName">Đang tải sản phẩm…</h1>
+          <p class="detail-desc" id="detailDesc"></p>
+
+          <div class="detail-price-row">
+            <span class="detail-price-label">Giá bán</span>
+            <span class="detail-price" id="detailPrice">0đ</span>
+          </div>
+
+          <div class="detail-actions">
+            <button class="btn-primary detail-buy" type="button" id="detailBuy">Mua ngay</button>
+            <a class="detail-back" href="store.html">← Về kho code</a>
+          </div>
+
+          <dl class="detail-specs" id="detailSpecs"></dl>
+        </div>
+      </div>
+
+      <div class="detail-missing" id="detailMissing" hidden>
+        <div class="empty-icon">&lt;/&gt;</div>
+        <h2>Không tìm thấy sản phẩm</h2>
+        <p>Sản phẩm có thể đã bị xoá hoặc đường dẫn không đúng.</p>
+        <a class="btn-primary detail-buy" href="store.html">Về kho code</a>
+      </div>
+    </section>
+  </main>
+
+  <!-- Toast -->
+  <div class="toast" id="toast" role="status">
+    <span class="toast-icon">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+    </span>
+    <span id="toastMsg"></span>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-client.js"></script>
+  <script src="theme.js"></script>
+  <script src="shared.js"></script>
+  <script src="purchase.js"></script>
+  <script src="product.js"></script>
+</body>
+</html>
