@@ -128,9 +128,13 @@ loadPurchases();
 document.querySelectorAll('.pw-toggle').forEach(btn => {
   btn.addEventListener('click', () => {
     const target = document.getElementById(btn.dataset.target);
+    if (!target) return;
     const show = target.type === 'password';
     target.type = show ? 'text' : 'password';
-    btn.style.color = show ? 'var(--gold-bright)' : '';
+    btn.classList.toggle('is-visible', show);
+    btn.setAttribute('aria-pressed', String(show));
+    btn.setAttribute('aria-label', show ? 'Ẩn mật khẩu' : 'Hiện mật khẩu');
+    btn.title = show ? 'Ẩn mật khẩu' : 'Hiện mật khẩu';
   });
 });
 

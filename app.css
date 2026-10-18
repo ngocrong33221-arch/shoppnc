@@ -687,6 +687,55 @@ body.page-out .page-sweep {
   color: #38bdf8;
 }
 
+.field-wrap.password-reveal::after,
+.field-wrap.password-conceal::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background: linear-gradient(105deg, transparent 20%, rgba(186, 230, 253, 0.22) 48%, transparent 76%);
+  pointer-events: none;
+  animation: passwordRevealSweep 0.48s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.field-wrap.password-conceal::after {
+  animation-name: passwordConcealSweep;
+}
+.password-particle {
+  position: absolute;
+  z-index: 3;
+  width: var(--particle-size);
+  height: var(--particle-size);
+  border-radius: 50%;
+  background: var(--particle-color);
+  box-shadow: 0 0 8px var(--particle-color), 0 0 14px rgba(56, 189, 248, 0.55);
+  pointer-events: none;
+  animation: passwordParticleBurst 620ms cubic-bezier(0.16, 1, 0.3, 1) var(--particle-delay) both;
+}
+@keyframes passwordParticleBurst {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.2);
+  }
+  18% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.25);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(calc(-50% + var(--particle-x)), calc(-50% + var(--particle-y))) scale(0);
+  }
+}
+@keyframes passwordRevealSweep {
+  from { opacity: 0; transform: translateX(-35%); }
+  35% { opacity: 1; }
+  to { opacity: 0; transform: translateX(35%); }
+}
+@keyframes passwordConcealSweep {
+  from { opacity: 0; transform: translateX(35%); }
+  35% { opacity: 1; }
+  to { opacity: 0; transform: translateX(-35%); }
+}
+
 .field-input {
   flex: 1;
   height: 100%;
@@ -723,6 +772,59 @@ body.page-out .page-sweep {
 }
 .toggle-pw:active {
   transform: scale(0.9);
+}
+.toggle-pw:focus-visible {
+  outline: 2px solid #38bdf8;
+  outline-offset: -4px;
+  border-radius: 6px;
+}
+.toggle-pw svg {
+  position: absolute;
+  transition: opacity 0.2s ease, transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), filter 0.2s ease;
+}
+.toggle-pw .eye-open {
+  opacity: 1;
+  transform: scale(1) rotate(0);
+}
+.toggle-pw .eye-open circle {
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: transform 0.24s ease, opacity 0.2s ease;
+}
+.toggle-pw.is-visible .eye-open circle {
+  transform: scale(0.55);
+  opacity: 0;
+}
+.toggle-pw .eye-closed {
+  opacity: 0;
+  transform: scale(0.65) rotate(-35deg);
+}
+.toggle-pw.is-visible .eye-open {
+  opacity: 0;
+  transform: scale(0.65) rotate(35deg);
+}
+.toggle-pw.is-visible .eye-closed {
+  opacity: 1;
+  transform: scale(1) rotate(0);
+  filter: drop-shadow(0 0 5px var(--gold-glow));
+}
+.toggle-pw.eye-closing .eye-closed {
+  animation: eyeBlinkClose 0.42s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+.toggle-pw.eye-opening .eye-open {
+  animation: eyeBlinkOpen 0.42s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+@keyframes eyeBlinkClose {
+  0% { opacity: 0; transform: scaleY(0.15) scaleX(0.8) rotate(-8deg); }
+  38% { opacity: 1; transform: scaleY(0.18) scaleX(1.08) rotate(3deg); }
+  72% { opacity: 1; transform: scaleY(1.12) scaleX(0.96) rotate(-1deg); }
+  100% { opacity: 1; transform: scale(1) rotate(0); }
+}
+@keyframes eyeBlinkOpen {
+  0% { opacity: 0; transform: scaleY(0.18) scaleX(0.82) rotate(8deg); }
+  38% { opacity: 1; transform: scaleY(1.12) scaleX(1.08) rotate(-3deg); }
+  72% { opacity: 1; transform: scaleY(0.94) scaleX(0.97) rotate(1deg); }
+  100% { opacity: 1; transform: scale(1) rotate(0); }
 }
 
 .field-err {

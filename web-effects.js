@@ -641,6 +641,12 @@
     try {
       const response = await fetch(`${MUSIC_API_BASE}/api/music/tracks`);
       if (!response.ok) throw new Error(`Playlist request failed (${response.status}).`);
+      
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        throw new Error('Server returned non-JSON response');
+      }
+
       const tracks = await response.json();
       if (!Array.isArray(tracks)) throw new Error('The shared playlist response is invalid.');
       mergePlaylistTracks(tracks);
@@ -1061,10 +1067,17 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(savedTrack),
       });
-      const result = await response.json();
+      
       if (!response.ok) {
-        throw new Error(result.error || `Could not save track (${response.status}).`);
+        throw new Error(`Could not save track (${response.status})`);
       }
+
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        throw new Error('Server returned non-JSON response');
+      }
+
+      const result = await response.json();
       if (!result.track || typeof result.track.title !== 'string' || !isSoundCloudTrackUrl(result.track.url)) {
         throw new Error('The server returned an invalid saved track.');
       }

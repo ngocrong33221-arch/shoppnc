@@ -189,10 +189,33 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  overflow: hidden;
   transition: color 0.2s;
 }
-.pw-toggle:hover {
+.pw-toggle:hover,
+.pw-toggle.is-visible {
   color: #38bdf8;
+}
+.pw-toggle svg {
+  position: absolute;
+  transition: opacity 0.2s ease, transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.pw-toggle .eye-open {
+  opacity: 1;
+  transform: scale(1) rotate(0);
+}
+.pw-toggle .eye-closed {
+  opacity: 0;
+  transform: scale(0.65) rotate(-35deg);
+}
+.pw-toggle.is-visible .eye-open {
+  opacity: 0;
+  transform: scale(0.65) rotate(35deg);
+}
+.pw-toggle.is-visible .eye-closed {
+  opacity: 1;
+  transform: scale(1) rotate(0);
+  filter: drop-shadow(0 0 5px var(--gold-glow));
 }
 
 .btn-primary {
