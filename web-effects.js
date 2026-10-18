@@ -135,26 +135,242 @@
       border-top: 1px solid rgba(212, 175, 55, 0.18);
     }
     .music-player.library-open .music-library { display: block; }
+    .music-lib-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .music-lib-title {
+      margin: 0;
+      color: #f7f7fa;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .music-lib-count {
+      color: #d4af37;
+      font: 600 9px 'JetBrains Mono', monospace;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+    }
     .music-library iframe {
       display: block;
       width: 100%;
-      height: 166px;
+      height: 152px;
       margin-bottom: 10px;
-      border: 0;
-      border-radius: 9px;
+      border: 1px solid rgba(212, 175, 55, 0.18);
+      border-radius: 12px;
       background: #111;
     }
     .music-library iframe[hidden] { display: none; }
-    .music-search-row,
-    .music-save-row {
+    .music-lib-search {
       display: flex;
-      gap: 7px;
-      margin: 8px 0;
+      align-items: center;
+      gap: 8px;
+      height: 38px;
+      padding: 0 10px;
+      border: 1px solid rgba(212, 175, 55, 0.2);
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.05);
+      transition: border-color 0.2s ease;
     }
-    .music-search-row input,
-    .music-save-row input {
+    .music-lib-search:focus-within { border-color: rgba(250, 227, 140, 0.6); }
+    .music-lib-search > svg { flex-shrink: 0; color: #d4af37; }
+    .music-lib-search input {
       min-width: 0;
       flex: 1;
+      height: 100%;
+      border: 0;
+      outline: 0;
+      background: transparent;
+      color: #f7f7fa;
+      font: 12px 'Inter', sans-serif;
+      user-select: text;
+      -webkit-user-select: text;
+    }
+    .music-lib-cloud {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      flex-shrink: 0;
+      height: 26px;
+      padding: 0 9px;
+      border: 1px solid rgba(212, 175, 55, 0.32);
+      border-radius: 999px;
+      background: rgba(212, 175, 55, 0.12);
+      color: #fae38c;
+      font: 600 10px 'Inter', sans-serif;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+    .music-lib-cloud:hover { background: rgba(212, 175, 55, 0.24); }
+    .music-track-list {
+      display: grid;
+      gap: 6px;
+      max-height: 212px;
+      margin-top: 10px;
+      overflow-y: auto;
+      padding-right: 3px;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(212, 175, 55, 0.35) transparent;
+    }
+    .music-track-list::-webkit-scrollbar { width: 5px; }
+    .music-track-list::-webkit-scrollbar-thumb {
+      border-radius: 99px;
+      background: rgba(212, 175, 55, 0.35);
+    }
+    .music-track-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 0;
+      padding: 8px 9px;
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      border-radius: 11px;
+      background: rgba(255, 255, 255, 0.03);
+      transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s ease;
+    }
+    .music-track-row:hover {
+      border-color: rgba(212, 175, 55, 0.3);
+      background: rgba(212, 175, 55, 0.07);
+      transform: translateX(2px);
+    }
+    .music-track-row.is-playing {
+      border-color: rgba(250, 227, 140, 0.55);
+      background: linear-gradient(90deg, rgba(212, 175, 55, 0.18), rgba(212, 175, 55, 0.04));
+    }
+    .music-track-index {
+      width: 16px;
+      flex-shrink: 0;
+      color: #8a8a97;
+      font: 600 10px 'JetBrains Mono', monospace;
+      text-align: center;
+    }
+    .music-track-eq {
+      display: none;
+      align-items: flex-end;
+      gap: 2px;
+      width: 16px;
+      height: 14px;
+      flex-shrink: 0;
+    }
+    .music-track-row.is-playing .music-track-index { display: none; }
+    .music-track-row.is-playing .music-track-eq { display: flex; }
+    .music-track-eq i {
+      width: 2.5px;
+      height: 4px;
+      border-radius: 2px;
+      background: linear-gradient(180deg, #ffe27a, #d4af37);
+      animation: trackEq 0.9s infinite ease-in-out alternate;
+    }
+    .music-track-eq i:nth-child(2) { animation-duration: 0.7s; animation-delay: 0.15s; }
+    .music-track-eq i:nth-child(3) { animation-duration: 1.05s; animation-delay: 0.3s; }
+    @keyframes trackEq {
+      from { height: 3px; }
+      to   { height: 13px; }
+    }
+    .music-track-text {
+      flex: 1;
+      min-width: 0;
+    }
+    .music-track-name {
+      display: block;
+      overflow: hidden;
+      color: #e9e9f0;
+      font-size: 11.5px;
+      font-weight: 500;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .music-track-row.is-playing .music-track-name { color: #ffe27a; }
+    .music-track-meta {
+      display: block;
+      margin-top: 2px;
+      color: #85858f;
+      font: 500 9px 'JetBrains Mono', monospace;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+    .music-track-actions {
+      display: flex;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+    .music-track-btn {
+      width: 27px;
+      height: 27px;
+      display: grid;
+      place-items: center;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.04);
+      color: #cfcfda;
+      cursor: pointer;
+      transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+    }
+    .music-track-btn.play { color: #fae38c; }
+    .music-track-btn:hover {
+      border-color: rgba(212, 175, 55, 0.4);
+      background: rgba(212, 175, 55, 0.2);
+      color: #ffe27a;
+    }
+    .music-track-btn.remove:hover {
+      border-color: rgba(255, 99, 99, 0.4);
+      background: rgba(255, 99, 99, 0.18);
+      color: #ff9b9b;
+    }
+    .music-track-btn:disabled {
+      opacity: 0.38;
+      cursor: default;
+    }
+    .music-track-btn:disabled:hover {
+      border-color: rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.04);
+      color: #cfcfda;
+    }
+    .music-track-row.is-playing .music-track-btn.play {
+      border-color: rgba(250, 227, 140, 0.5);
+      background: rgba(212, 175, 55, 0.24);
+      color: #ffe27a;
+    }
+    .music-empty {
+      margin: 14px 0 4px;
+      color: #85858f;
+      font-size: 10.5px;
+      text-align: center;
+    }
+    .music-add-toggle {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      width: 100%;
+      height: 36px;
+      margin-top: 10px;
+      border: 1px dashed rgba(212, 175, 55, 0.35);
+      border-radius: 10px;
+      background: rgba(212, 175, 55, 0.06);
+      color: #fae38c;
+      font: 600 11px 'Inter', sans-serif;
+      cursor: pointer;
+      transition: background 0.2s ease;
+    }
+    .music-add-toggle:hover { background: rgba(212, 175, 55, 0.16); }
+    .music-add-toggle svg { transition: transform 0.25s ease; }
+    .music-add-toggle[aria-expanded="true"] svg { transform: rotate(45deg); }
+    .music-save-form {
+      display: grid;
+      gap: 7px;
+      margin-top: 9px;
+      padding: 10px;
+      border: 1px solid rgba(212, 175, 55, 0.16);
+      border-radius: 11px;
+      background: rgba(255, 255, 255, 0.03);
+    }
+    .music-save-form[hidden] { display: none; }
+    .music-save-form input {
+      min-width: 0;
       height: 36px;
       padding: 0 10px;
       border: 1px solid rgba(212, 175, 55, 0.2);
@@ -166,78 +382,39 @@
       user-select: text;
       -webkit-user-select: text;
     }
-    .music-search-row input:focus,
-    .music-save-row input:focus { border-color: rgba(250, 227, 140, 0.65); }
-    .music-search-row button,
-    .music-save-row button {
-      flex-shrink: 0;
-      padding: 0 10px;
+    .music-save-form input:focus { border-color: rgba(250, 227, 140, 0.65); }
+    .music-save-form button {
+      height: 36px;
       border: 1px solid rgba(212, 175, 55, 0.32);
       border-radius: 8px;
-      background: rgba(212, 175, 55, 0.12);
+      background: rgba(212, 175, 55, 0.14);
       color: #fae38c;
       font: 600 11px 'Inter', sans-serif;
       cursor: pointer;
+      transition: background 0.2s ease;
     }
-    .music-help {
-      margin: 0 0 8px;
-      color: #9999a6;
-      font-size: 10px;
+    .music-save-form button:hover { background: rgba(212, 175, 55, 0.26); }
+    .music-save-hint {
+      margin: 0;
+      color: #85858f;
+      font-size: 9.5px;
       line-height: 1.5;
     }
     .music-status {
-      min-height: 14px;
-      margin: 4px 0 8px;
+      margin: 8px 0 0;
       color: #fae38c;
       font-size: 10px;
-      line-height: 1.4;
+      line-height: 1.45;
     }
-    .music-track-list {
-      display: grid;
-      gap: 5px;
-      max-height: 176px;
-      overflow-y: auto;
-      padding-right: 2px;
-    }
-    .music-track-row {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      min-width: 0;
-      padding: 7px 8px;
-      border: 1px solid rgba(255, 255, 255, 0.06);
-      border-radius: 8px;
-      background: rgba(255, 255, 255, 0.025);
-    }
-    .music-track-name {
-      flex: 1;
-      min-width: 0;
-      overflow: hidden;
-      color: #e6e6ed;
-      font-size: 11px;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-    .music-track-action {
-      flex-shrink: 0;
-      padding: 5px 7px;
-      border: 0;
-      border-radius: 6px;
-      background: transparent;
-      color: #fae38c;
-      font: 600 10px 'Inter', sans-serif;
-      cursor: pointer;
-    }
-    .music-track-action:disabled {
-      color: #777782;
-      cursor: default;
-    }
+    .music-status:empty { display: none; }
     @media (max-width: 480px) {
       .music-player { right: 14px; bottom: 14px; }
       .music-aura-border { inset: 5px; border-radius: 13px; }
+      .music-track-list { max-height: 46vh; }
+      .music-library iframe { height: 132px; }
     }
     @media (prefers-reduced-motion: reduce) {
-      .music-player, .music-eq-bar { animation: none !important; }
+      .music-player, .music-eq-bar, .music-track-eq i { animation: none !important; }
     }
   `;
   document.head.append(style);
@@ -271,19 +448,31 @@
       </div>
     </div>
     <div class="music-library" id="musicLibrary">
+      <div class="music-lib-head">
+        <h3 class="music-lib-title">Thư viện nhạc</h3>
+        <span class="music-lib-count" id="musicTrackCount">0 bài</span>
+      </div>
       <iframe id="soundcloudFrame" title="SoundCloud player" allow="autoplay" hidden></iframe>
-      <p class="music-help">Tìm bài trên SoundCloud, mở kết quả phù hợp rồi dán link bài công khai để lưu và phát.</p>
-      <form class="music-search-row" id="musicSearchForm">
-        <input id="musicSearch" type="search" placeholder="Tìm bài hát trên SoundCloud..." aria-label="Tìm bài trên SoundCloud">
-        <button type="submit">Tìm</button>
-      </form>
-      <form class="music-save-row" id="musicSaveForm">
+      <div class="music-lib-search">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="21" y2="21"/></svg>
+        <input id="musicSearch" type="search" placeholder="Lọc bài trong danh sách..." aria-label="Lọc bài hát trong danh sách">
+        <button class="music-lib-cloud" id="musicCloudSearch" type="button" title="Tìm bài này trên SoundCloud">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" aria-hidden="true"><path d="M7.2 18h8.9a3.9 3.9 0 0 0 .3-7.8 5.6 5.6 0 0 0-10.7 1.2A3.4 3.4 0 0 0 7.2 18z"/></svg>
+          SoundCloud
+        </button>
+      </div>
+      <div class="music-track-list" id="musicTrackList" aria-label="Danh sách bài hát"></div>
+      <button class="music-add-toggle" id="musicAddToggle" type="button" aria-expanded="false">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" aria-hidden="true"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Thêm bài hát
+      </button>
+      <form class="music-save-form" id="musicSaveForm" hidden>
         <input id="musicTrackTitle" type="text" placeholder="Tên bài hát" aria-label="Tên bài hát" required maxlength="120">
         <input id="musicTrackUrl" type="url" placeholder="Dán link bài SoundCloud" aria-label="Link bài SoundCloud" required>
-        <button type="submit">Lưu</button>
+        <p class="music-save-hint">Link bài công khai dạng https://soundcloud.com/ten-kenh/ten-bai</p>
+        <button type="submit">Lưu vào danh sách</button>
       </form>
       <p class="music-status" id="musicStatus" role="status"></p>
-      <div class="music-track-list" id="musicTrackList" aria-label="Danh sách bài hát"></div>
     </div>
     <audio id="localMusic" loop preload="metadata" style="display:none">
       <source src="${encodeURI('Tập Yêu Đi.mp3')}" type="audio/mpeg">
@@ -375,11 +564,21 @@
   const playIcon = player.querySelector('#iconPlay');
   const pauseIcon = player.querySelector('#iconPause');
   const searchInput = player.querySelector('#musicSearch');
+  const cloudSearchButton = player.querySelector('#musicCloudSearch');
+  const addToggle = player.querySelector('#musicAddToggle');
+  const saveForm = player.querySelector('#musicSaveForm');
+  const countEl = player.querySelector('#musicTrackCount');
   const trackTitleInput = player.querySelector('#musicTrackTitle');
   const trackUrlInput = player.querySelector('#musicTrackUrl');
   const statusEl = player.querySelector('#musicStatus');
   const trackList = player.querySelector('#musicTrackList');
+
+  const ICON_PLAY = '<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><polygon points="6 3.5 20 12 6 20.5 6 3.5"/></svg>';
+  const ICON_PAUSE = '<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>';
+  const ICON_REMOVE = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16"/><path d="M9.5 7V4.8h5V7"/><path d="M6.5 7l1 12.2h9L17.5 7"/></svg>';
+
   let playlist = loadPlaylist();
+  let musicFilter = '';
   let widget = null;
   let widgetReady = null;
   let activeTrack = null;
@@ -501,6 +700,26 @@
       stopBassReactiveBorder();
     }
     persistMusicSession(playing);
+    updateRowStates();
+  }
+
+  function isActiveTrack(track) {
+    return !!track && !!track.url && !!activeTrack && activeTrack.url === track.url;
+  }
+
+  function updateRowStates() {
+    trackList.querySelectorAll('.music-track-row').forEach(row => {
+      const playing = isPlaying && activeSource === 'soundcloud'
+        && !!row.dataset.url && !!activeTrack && row.dataset.url === activeTrack.url;
+      row.classList.toggle('is-playing', playing);
+      const button = row.querySelector('.music-track-btn.play');
+      if (!button) return;
+      button.innerHTML = playing ? ICON_PAUSE : ICON_PLAY;
+      if (button.disabled) return;
+      const label = playing ? 'Tạm dừng' : 'Phát';
+      button.title = label;
+      button.setAttribute('aria-label', `${label} ${row.querySelector('.music-track-name').textContent}`);
+    });
   }
 
   function readMusicSession() {
@@ -597,37 +816,117 @@
   }
 
   function renderPlaylist() {
+    const query = musicFilter.trim().toLocaleLowerCase();
+    const visible = query
+      ? playlist.filter(track => track.title.toLocaleLowerCase().includes(query))
+      : playlist;
+
+    if (countEl) {
+      countEl.textContent = query
+        ? `${visible.length}/${playlist.length} bài`
+        : `${playlist.length} bài`;
+    }
+
     trackList.replaceChildren();
-    playlist.forEach(track => {
+
+    if (!visible.length) {
+      const empty = document.createElement('p');
+      empty.className = 'music-empty';
+      empty.textContent = query
+        ? 'Không có bài nào khớp từ khoá lọc.'
+        : 'Danh sách nhạc đang trống.';
+      trackList.append(empty);
+      return;
+    }
+
+    visible.forEach((track, i) => {
+      const playing = isActiveTrack(track) && isPlaying && activeSource === 'soundcloud';
+
       const row = document.createElement('div');
       row.className = 'music-track-row';
+      row.dataset.url = track.url || '';
+      if (playing) row.classList.add('is-playing');
+
+      const index = document.createElement('span');
+      index.className = 'music-track-index';
+      index.textContent = String(i + 1).padStart(2, '0');
+
+      const eq = document.createElement('span');
+      eq.className = 'music-track-eq';
+      eq.setAttribute('aria-hidden', 'true');
+      eq.append(document.createElement('i'), document.createElement('i'), document.createElement('i'));
+
+      const text = document.createElement('span');
+      text.className = 'music-track-text';
       const name = document.createElement('span');
       name.className = 'music-track-name';
       name.textContent = track.title;
-      const searchButton = document.createElement('button');
-      searchButton.className = 'music-track-action';
-      searchButton.type = 'button';
-      searchButton.textContent = 'Tìm';
-      searchButton.setAttribute('aria-label', `Tìm ${track.title} trên SoundCloud`);
-      searchButton.addEventListener('click', () => openSoundCloudSearch(track.title));
-      row.append(name, searchButton);
+      name.title = track.title;
+      const meta = document.createElement('span');
+      meta.className = 'music-track-meta';
+      meta.textContent = track.url ? 'SoundCloud' : 'Chưa có link';
+      text.append(name, meta);
+
+      const actions = document.createElement('span');
+      actions.className = 'music-track-actions';
 
       const playButton = document.createElement('button');
-      playButton.className = 'music-track-action';
+      playButton.className = 'music-track-btn play';
       playButton.type = 'button';
-      playButton.textContent = track.url ? 'Phát' : 'Chưa có link';
       playButton.disabled = !track.url;
-      playButton.setAttribute('aria-label', track.url ? `Phát ${track.title}` : `Chưa có link cho ${track.title}`);
-      if (track.url) playButton.addEventListener('click', () => playSoundCloudTrack(track, true));
-      row.append(playButton);
+      playButton.innerHTML = playing ? ICON_PAUSE : ICON_PLAY;
+      playButton.title = track.url ? (playing ? 'Tạm dừng' : 'Phát') : 'Chưa có link';
+      playButton.setAttribute('aria-label', track.url
+        ? `${playing ? 'Tạm dừng' : 'Phát'} ${track.title}`
+        : `Chưa có link cho ${track.title}`);
+      if (track.url) {
+        playButton.addEventListener('click', () => {
+          if (isActiveTrack(track) && isPlaying) {
+            if (widget) widget.pause();
+            else syncUI(false);
+          } else {
+            playSoundCloudTrack(track, true);
+          }
+        });
+      }
+
+      const removeButton = document.createElement('button');
+      removeButton.className = 'music-track-btn remove';
+      removeButton.type = 'button';
+      removeButton.title = 'Xoá khỏi danh sách';
+      removeButton.setAttribute('aria-label', `Xoá ${track.title} khỏi danh sách`);
+      removeButton.innerHTML = ICON_REMOVE;
+      removeButton.addEventListener('click', () => removeTrack(track));
+
+      actions.append(playButton, removeButton);
+      row.append(index, eq, text, actions);
       trackList.append(row);
     });
   }
 
+  function removeTrack(track) {
+    if (isActiveTrack(track) && isPlaying) {
+      statusEl.textContent = 'Không thể xoá bài đang phát. Hãy tạm dừng bài trước.';
+      return;
+    }
+    const key = track.title.toLocaleLowerCase();
+    playlist = playlist.filter(item => item.title.toLocaleLowerCase() !== key);
+    persistPlaylist();
+    renderPlaylist();
+    statusEl.textContent = `Đã xoá “${track.title}” khỏi danh sách nhạc.`;
+  }
+
+  function setAddFormOpen(open) {
+    saveForm.hidden = !open;
+    addToggle.setAttribute('aria-expanded', String(open));
+    if (open) trackTitleInput.focus();
+  }
+
   function openSoundCloudSearch(query) {
-    const text = query.trim();
+    const text = (query || '').trim();
     if (!text) {
       statusEl.textContent = 'Nhập tên bài muốn tìm trước.';
+      setAddFormOpen(true);
       return;
     }
     const searchUrl = `https://soundcloud.com/search/sounds?q=${encodeURIComponent(text)}`;
@@ -639,8 +938,9 @@
     document.body.append(searchLink);
     searchLink.click();
     searchLink.remove();
-    statusEl.textContent = `Đã mở kết quả tìm “${text}”. Dán link bài vào ô bên dưới để lưu.`;
+    statusEl.textContent = `Đã mở kết quả tìm “${text}”. Dán link bài vào ô bên dưới rồi bấm Lưu.`;
     trackTitleInput.value = text;
+    setAddFormOpen(true);
   }
 
   function loadSoundCloudWidget() {
@@ -727,12 +1027,20 @@
     playSoundCloudTrack(nextTrack, true);
   }
 
-  player.querySelector('#musicSearchForm').addEventListener('submit', event => {
-    event.preventDefault();
-    openSoundCloudSearch(searchInput.value);
+  searchInput.addEventListener('input', () => {
+    musicFilter = searchInput.value;
+    renderPlaylist();
   });
 
-  player.querySelector('#musicSaveForm').addEventListener('submit', async event => {
+  cloudSearchButton.addEventListener('click', () => {
+    openSoundCloudSearch(searchInput.value || activeTrack?.title || '');
+  });
+
+  addToggle.addEventListener('click', () => {
+    setAddFormOpen(saveForm.hidden);
+  });
+
+  saveForm.addEventListener('submit', async event => {
     event.preventDefault();
     const title = trackTitleInput.value.trim();
     const url = trackUrlInput.value.trim();
@@ -774,9 +1082,12 @@
 
     mergePlaylistTracks([savedTrack]);
     persistPlaylist();
-    renderPlaylist();
-    trackUrlInput.value = '';
+    musicFilter = '';
     searchInput.value = '';
+    renderPlaylist();
+    trackTitleInput.value = '';
+    trackUrlInput.value = '';
+    setAddFormOpen(false);
     const saved = playlist.find(track => track.title.toLocaleLowerCase() === title.toLocaleLowerCase());
     playSoundCloudTrack(saved, true);
   });
