@@ -31,23 +31,23 @@
       z-index: 10000;
       width: min(370px, calc(100vw - 28px));
       padding: 12px 14px;
-      border: 1px solid rgba(212, 175, 55, 0.28);
+      border: 1px solid rgba(56, 189, 248, 0.28);
       border-radius: 14px;
       background: rgba(10, 10, 14, 0.96);
       color: #f7f7fa;
       font-family: 'Inter', sans-serif;
       backdrop-filter: blur(18px);
       -webkit-backdrop-filter: blur(18px);
-      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.65), 0 0 24px rgba(212, 175, 55, 0.12);
+      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.65), 0 0 24px rgba(56, 189, 248, 0.12);
       animation: musicIn 0.5s 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
     }
     .music-aura-border {
       position: fixed;
       inset: 8px;
       z-index: 9998;
-      border: 2px solid rgba(250, 227, 140, 0.9);
+      border: 2px solid rgba(56, 189, 248, 0.9);
       border-radius: 18px;
-      box-shadow: inset 0 0 18px rgba(212, 175, 55, 0.1), 0 0 14px rgba(212, 175, 55, 0.12);
+      box-shadow: inset 0 0 18px rgba(56, 189, 248, 0.1), 0 0 14px rgba(56, 189, 248, 0.12);
       opacity: 0;
       pointer-events: none;
     }
@@ -75,7 +75,7 @@
     .music-eq-bar {
       width: 3px;
       height: 6px;
-      background: linear-gradient(180deg, #ffd700, #d4af37);
+      background: linear-gradient(180deg, #38bdf8, #38bdf8);
       border-radius: 2px;
     }
     .music-player.playing .music-eq-bar:nth-child(1) { animation: eqBounce 0.85s infinite ease-in-out alternate; }
@@ -93,7 +93,7 @@
     }
     .music-kicker {
       margin: 0 0 2px;
-      color: #d4af37;
+      color: #38bdf8;
       font: 600 9px 'JetBrains Mono', monospace;
       letter-spacing: 0.12em;
       text-transform: uppercase;
@@ -117,22 +117,22 @@
       height: 34px;
       display: grid;
       place-items: center;
-      border: 1px solid rgba(212, 175, 55, 0.35);
+      border: 1px solid rgba(56, 189, 248, 0.35);
       border-radius: 9px;
-      background: rgba(212, 175, 55, 0.08);
-      color: #ffd700;
+      background: rgba(56, 189, 248, 0.08);
+      color: #38bdf8;
       cursor: pointer;
       transition: background 0.2s ease, transform 0.2s ease;
     }
     .music-control:hover {
-      background: rgba(212, 175, 55, 0.2);
+      background: rgba(56, 189, 248, 0.2);
       transform: translateY(-1px);
     }
     .music-library {
       display: none;
       margin-top: 12px;
       padding-top: 12px;
-      border-top: 1px solid rgba(212, 175, 55, 0.18);
+      border-top: 1px solid rgba(56, 189, 248, 0.18);
     }
     .music-player.library-open .music-library { display: block; }
     .music-lib-head {
@@ -149,7 +149,7 @@
       font-weight: 600;
     }
     .music-lib-count {
-      color: #d4af37;
+      color: #38bdf8;
       font: 600 9px 'JetBrains Mono', monospace;
       letter-spacing: 0.14em;
       text-transform: uppercase;
@@ -159,7 +159,7 @@
       width: 100%;
       height: 152px;
       margin-bottom: 10px;
-      border: 1px solid rgba(212, 175, 55, 0.18);
+      border: 1px solid rgba(56, 189, 248, 0.18);
       border-radius: 12px;
       background: #111;
     }
@@ -170,13 +170,13 @@
       gap: 8px;
       height: 38px;
       padding: 0 10px;
-      border: 1px solid rgba(212, 175, 55, 0.2);
+      border: 1px solid rgba(56, 189, 248, 0.2);
       border-radius: 10px;
       background: rgba(255, 255, 255, 0.05);
       transition: border-color 0.2s ease;
     }
-    .music-lib-search:focus-within { border-color: rgba(250, 227, 140, 0.6); }
-    .music-lib-search > svg { flex-shrink: 0; color: #d4af37; }
+    .music-lib-search:focus-within { border-color: rgba(56, 189, 248, 0.6); }
+    .music-lib-search > svg { flex-shrink: 0; color: #38bdf8; }
     .music-lib-search input {
       min-width: 0;
       flex: 1;
@@ -196,15 +196,15 @@
       flex-shrink: 0;
       height: 26px;
       padding: 0 9px;
-      border: 1px solid rgba(212, 175, 55, 0.32);
+      border: 1px solid rgba(56, 189, 248, 0.32);
       border-radius: 999px;
-      background: rgba(212, 175, 55, 0.12);
-      color: #fae38c;
+      background: rgba(56, 189, 248, 0.12);
+      color: #38bdf8;
       font: 600 10px 'Inter', sans-serif;
       cursor: pointer;
       transition: background 0.2s ease;
     }
-    .music-lib-cloud:hover { background: rgba(212, 175, 55, 0.24); }
+    .music-lib-cloud:hover { background: rgba(56, 189, 248, 0.24); }
     .music-track-list {
       display: grid;
       gap: 6px;
@@ -213,12 +213,12 @@
       overflow-y: auto;
       padding-right: 3px;
       scrollbar-width: thin;
-      scrollbar-color: rgba(212, 175, 55, 0.35) transparent;
+      scrollbar-color: rgba(56, 189, 248, 0.35) transparent;
     }
     .music-track-list::-webkit-scrollbar { width: 5px; }
     .music-track-list::-webkit-scrollbar-thumb {
       border-radius: 99px;
-      background: rgba(212, 175, 55, 0.35);
+      background: rgba(56, 189, 248, 0.35);
     }
     .music-track-row {
       display: flex;
@@ -232,13 +232,13 @@
       transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s ease;
     }
     .music-track-row:hover {
-      border-color: rgba(212, 175, 55, 0.3);
-      background: rgba(212, 175, 55, 0.07);
+      border-color: rgba(56, 189, 248, 0.3);
+      background: rgba(56, 189, 248, 0.07);
       transform: translateX(2px);
     }
     .music-track-row.is-playing {
-      border-color: rgba(250, 227, 140, 0.55);
-      background: linear-gradient(90deg, rgba(212, 175, 55, 0.18), rgba(212, 175, 55, 0.04));
+      border-color: rgba(56, 189, 248, 0.55);
+      background: linear-gradient(90deg, rgba(56, 189, 248, 0.18), rgba(56, 189, 248, 0.04));
     }
     .music-track-index {
       width: 16px;
@@ -261,7 +261,7 @@
       width: 2.5px;
       height: 4px;
       border-radius: 2px;
-      background: linear-gradient(180deg, #ffe27a, #d4af37);
+      background: linear-gradient(180deg, #7dd3fc, #38bdf8);
       animation: trackEq 0.9s infinite ease-in-out alternate;
     }
     .music-track-eq i:nth-child(2) { animation-duration: 0.7s; animation-delay: 0.15s; }
@@ -283,7 +283,7 @@
       text-overflow: ellipsis;
       white-space: nowrap;
     }
-    .music-track-row.is-playing .music-track-name { color: #ffe27a; }
+    .music-track-row.is-playing .music-track-name { color: #7dd3fc; }
     .music-track-meta {
       display: block;
       margin-top: 2px;
@@ -309,11 +309,11 @@
       cursor: pointer;
       transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
     }
-    .music-track-btn.play { color: #fae38c; }
+    .music-track-btn.play { color: #38bdf8; }
     .music-track-btn:hover {
-      border-color: rgba(212, 175, 55, 0.4);
-      background: rgba(212, 175, 55, 0.2);
-      color: #ffe27a;
+      border-color: rgba(56, 189, 248, 0.4);
+      background: rgba(56, 189, 248, 0.2);
+      color: #7dd3fc;
     }
     .music-track-btn.remove:hover {
       border-color: rgba(255, 99, 99, 0.4);
@@ -330,9 +330,9 @@
       color: #cfcfda;
     }
     .music-track-row.is-playing .music-track-btn.play {
-      border-color: rgba(250, 227, 140, 0.5);
-      background: rgba(212, 175, 55, 0.24);
-      color: #ffe27a;
+      border-color: rgba(56, 189, 248, 0.5);
+      background: rgba(56, 189, 248, 0.24);
+      color: #7dd3fc;
     }
     .music-empty {
       margin: 14px 0 4px;
@@ -348,15 +348,15 @@
       width: 100%;
       height: 36px;
       margin-top: 10px;
-      border: 1px dashed rgba(212, 175, 55, 0.35);
+      border: 1px dashed rgba(56, 189, 248, 0.35);
       border-radius: 10px;
-      background: rgba(212, 175, 55, 0.06);
-      color: #fae38c;
+      background: rgba(56, 189, 248, 0.06);
+      color: #38bdf8;
       font: 600 11px 'Inter', sans-serif;
       cursor: pointer;
       transition: background 0.2s ease;
     }
-    .music-add-toggle:hover { background: rgba(212, 175, 55, 0.16); }
+    .music-add-toggle:hover { background: rgba(56, 189, 248, 0.16); }
     .music-add-toggle svg { transition: transform 0.25s ease; }
     .music-add-toggle[aria-expanded="true"] svg { transform: rotate(45deg); }
     .music-save-form {
@@ -364,7 +364,7 @@
       gap: 7px;
       margin-top: 9px;
       padding: 10px;
-      border: 1px solid rgba(212, 175, 55, 0.16);
+      border: 1px solid rgba(56, 189, 248, 0.16);
       border-radius: 11px;
       background: rgba(255, 255, 255, 0.03);
     }
@@ -373,7 +373,7 @@
       min-width: 0;
       height: 36px;
       padding: 0 10px;
-      border: 1px solid rgba(212, 175, 55, 0.2);
+      border: 1px solid rgba(56, 189, 248, 0.2);
       border-radius: 8px;
       outline: 0;
       background: rgba(255, 255, 255, 0.05);
@@ -382,18 +382,18 @@
       user-select: text;
       -webkit-user-select: text;
     }
-    .music-save-form input:focus { border-color: rgba(250, 227, 140, 0.65); }
+    .music-save-form input:focus { border-color: rgba(56, 189, 248, 0.65); }
     .music-save-form button {
       height: 36px;
-      border: 1px solid rgba(212, 175, 55, 0.32);
+      border: 1px solid rgba(56, 189, 248, 0.32);
       border-radius: 8px;
-      background: rgba(212, 175, 55, 0.14);
-      color: #fae38c;
+      background: rgba(56, 189, 248, 0.14);
+      color: #38bdf8;
       font: 600 11px 'Inter', sans-serif;
       cursor: pointer;
       transition: background 0.2s ease;
     }
-    .music-save-form button:hover { background: rgba(212, 175, 55, 0.26); }
+    .music-save-form button:hover { background: rgba(56, 189, 248, 0.26); }
     .music-save-hint {
       margin: 0;
       color: #85858f;
@@ -402,7 +402,7 @@
     }
     .music-status {
       margin: 8px 0 0;
-      color: #fae38c;
+      color: #38bdf8;
       font-size: 10px;
       line-height: 1.45;
     }
@@ -801,8 +801,8 @@
     const glowSize = 8 + smoothedBassLevel * 34;
     const glowOpacity = 0.08 + smoothedBassLevel * 0.48;
     auraBorder.style.opacity = opacity.toFixed(2);
-    auraBorder.style.borderColor = `rgba(250, 227, 140, ${opacity.toFixed(2)})`;
-    auraBorder.style.boxShadow = `inset 0 0 ${Math.round(glowSize / 2)}px rgba(212, 175, 55, ${glowOpacity.toFixed(2)}), 0 0 ${Math.round(glowSize)}px rgba(255, 215, 0, ${glowOpacity.toFixed(2)})`;
+    auraBorder.style.borderColor = `rgba(56, 189, 248, ${opacity.toFixed(2)})`;
+    auraBorder.style.boxShadow = `inset 0 0 ${Math.round(glowSize / 2)}px rgba(56, 189, 248, ${glowOpacity.toFixed(2)}), 0 0 ${Math.round(glowSize)}px rgba(255, 215, 0, ${glowOpacity.toFixed(2)})`;
     bassAnimationFrame = requestAnimationFrame(updateBassReactiveBorder);
   }
 

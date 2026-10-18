@@ -57,7 +57,13 @@
     <!-- Toolbar -->
     <section class="store-toolbar reveal" aria-label="Lọc sản phẩm">
       <div class="toolbar-inner">
-        <span class="result-label">Hiển thị <b id="resultCount">00</b> bộ code</span>
+        <div class="toolbar-left">
+          <div class="search-wrap">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" id="searchInput" class="search-input" placeholder="Tìm kiếm bộ code, template, UI kit..." autocomplete="off">
+          </div>
+          <span class="result-label">Hiển thị <b id="resultCount">00</b> bộ code</span>
+        </div>
         <div class="filter-tabs" role="group" aria-label="Bộ lọc">
           <button class="filter-tab active" data-filter="all">Tổng hợp</button>
           <button class="filter-tab" data-filter="ui">UI kit</button>

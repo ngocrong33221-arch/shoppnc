@@ -1,14 +1,10 @@
 /* ============================================================
    CodeNest – admin.css (Admin Page)
-   Luxury Gold & Obsidian Black Theme
    Ultra-Modern Obsidian & Electric Azure Theme
    ============================================================ */
 
 .admin-grid {
   display: grid;
-  grid-template-columns: 1.3fr 0.7fr;
-  gap: 20px;
-  max-width: 1040px;
   grid-template-columns: 1.35fr 0.65fr;
   gap: 22px;
   max-width: 1080px;
@@ -18,32 +14,19 @@
 
 /* Upload Card */
 .upload-card {
-  padding: 36px;
   padding: 34px;
 }
 .upload-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 28px;
   margin-bottom: 26px;
 }
-.card-label {
-  font-size: 10px;
-  font-family: var(--mono);
-  letter-spacing: 0.16em;
-  color: var(--gold);
-  text-transform: uppercase;
-  font-weight: 500;
-}
 .live-badge {
-  font-size: 10px;
   font-size: 11px;
   font-family: var(--mono);
-  color: var(--gold-bright);
   color: #38bdf8;
   letter-spacing: 0.08em;
-  text-shadow: 0 0 10px var(--gold-glow);
   text-shadow: 0 0 10px rgba(56, 189, 248, 0.4);
   display: flex;
   align-items: center;
@@ -74,19 +57,14 @@
   align-items: center;
   gap: 16px;
   padding: 22px;
-  border: 1.5px dashed var(--gold-border);
   border: 1.5px dashed rgba(56, 189, 248, 0.3);
   border-radius: var(--radius-sm);
-  background: rgba(8, 8, 12, 0.5);
   background: rgba(10, 16, 28, 0.55);
   cursor: pointer;
   transition: var(--trans);
   margin-bottom: 22px;
 }
 .file-drop:hover, .file-drop.dragover {
-  border-color: var(--gold-border-focus);
-  background: rgba(212, 175, 55, 0.08);
-  box-shadow: 0 0 20px rgba(212, 175, 55, 0.12);
   border-color: #38bdf8;
   background: rgba(56, 189, 248, 0.08);
   box-shadow: 0 0 20px rgba(56, 189, 248, 0.15);
@@ -97,32 +75,24 @@
   height: 44px;
   display: grid;
   place-items: center;
-  border: 1px solid var(--gold-border);
   border: 1px solid rgba(56, 189, 248, 0.3);
   border-radius: var(--radius-sm);
-  color: var(--gold-bright);
-  background: rgba(212, 175, 55, 0.08);
   color: #38bdf8;
   background: rgba(56, 189, 248, 0.1);
   flex-shrink: 0;
   transition: var(--trans);
 }
 .file-drop:hover .file-icon {
-  border-color: var(--gold-bright);
-  box-shadow: 0 0 16px var(--gold-glow);
   border-color: #38bdf8;
   box-shadow: 0 0 16px rgba(56, 189, 248, 0.4);
 }
 .file-drop b {
   display: block;
-  font-size: 13px;
   font-size: 13.5px;
   margin-bottom: 4px;
-  color: var(--ink);
   color: #ffffff;
 }
 .file-drop small {
-  font-size: 10px;
   font-size: 11px;
   font-family: var(--mono);
   color: var(--muted);
@@ -138,8 +108,6 @@
   align-items: center;
   justify-content: center;
   height: 160px;
-  background: linear-gradient(135deg, #121008 0%, #26200c 50%, #171408 100%);
-  border: 1px solid var(--gold-border);
   background: linear-gradient(135deg, #091322 0%, #152238 50%, #091322 100%);
   border: 1px solid rgba(56, 189, 248, 0.25);
   border-radius: var(--radius-sm);
@@ -147,33 +115,25 @@
   font-family: var(--mono);
   font-size: 32px;
   font-weight: 700;
-  color: var(--gold-light);
-  text-shadow: 0 0 20px var(--gold-glow);
   color: #bae6fd;
   text-shadow: 0 0 20px rgba(56, 189, 248, 0.4);
 }
 .preview-tag {
-  font-size: 9px;
   font-size: 10px;
   font-family: var(--mono);
-  color: var(--gold);
   color: #38bdf8;
   letter-spacing: 0.1em;
   margin-bottom: 8px;
   text-transform: uppercase;
 }
 .preview-name {
-  font-size: 20px;
   font-size: 18px;
   font-weight: 700;
-  letter-spacing: -0.03em;
   letter-spacing: -0.02em;
   margin-bottom: 8px;
-  color: var(--ink);
   color: #ffffff;
 }
 .preview-desc {
-  font-size: 12px;
   font-size: 12.5px;
   color: var(--muted);
   line-height: 1.6;
@@ -184,15 +144,12 @@
   font-size: 22px;
   font-family: var(--mono);
   font-weight: 700;
-  color: var(--gold-bright);
-  text-shadow: 0 0 14px var(--gold-glow);
   color: #ffffff;
   text-shadow: 0 0 14px rgba(56, 189, 248, 0.3);
 }
 
 /* Inventory Section */
 .inventory {
-  max-width: 1040px;
   max-width: 1080px;
   margin: 0 auto 64px;
   padding: 0 6vw;
@@ -203,21 +160,16 @@
   align-items: flex-end;
   margin-bottom: 22px;
   padding-top: 36px;
-  border-top: 1px solid var(--border);
   border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 .inv-title {
-  font-size: 24px;
   font-size: 22px;
   font-weight: 700;
-  letter-spacing: -0.04em;
   letter-spacing: -0.03em;
   margin-top: 6px;
-  color: var(--ink);
   color: #ffffff;
 }
 .inv-count {
-  font-size: 11px;
   font-size: 11.5px;
   font-family: var(--mono);
   color: var(--muted);
@@ -234,13 +186,9 @@
   justify-content: space-between;
   gap: 20px;
   padding: 20px 24px;
-  border: 1px solid var(--border);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: var(--radius);
   background: var(--surface-card);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
@@ -249,9 +197,6 @@
   animation: cardFadeIn 0.4s ease both;
 }
 .inventory-item:hover {
-  border-color: var(--gold-border-focus);
-  background: rgba(18, 18, 24, 0.88);
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5), 0 0 20px rgba(212, 175, 55, 0.12);
   border-color: rgba(56, 189, 248, 0.4);
   background: rgba(14, 22, 38, 0.9);
   box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6), 0 0 20px rgba(56, 189, 248, 0.12);
@@ -267,11 +212,9 @@
   min-width: 0;
 }
 .inv-cat {
-  font-size: 9px;
   font-size: 10px;
   font-family: var(--mono);
   letter-spacing: 0.1em;
-  color: var(--gold);
   color: #38bdf8;
   text-transform: uppercase;
 }
@@ -282,11 +225,9 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: var(--ink);
   color: #ffffff;
 }
 .inv-desc {
-  font-size: 12px;
   font-size: 12.5px;
   color: var(--muted);
   overflow: hidden;
@@ -303,19 +244,14 @@
   font-size: 16px;
   font-family: var(--mono);
   font-weight: 700;
-  color: var(--gold-bright);
   color: #ffffff;
   white-space: nowrap;
-  text-shadow: 0 0 12px rgba(212, 175, 55, 0.25);
   text-shadow: 0 0 12px rgba(56, 189, 248, 0.25);
 }
 .delete-btn {
   padding: 8px 16px;
-  border: 1px solid rgba(255, 94, 94, 0.3);
   border: 1px solid rgba(244, 63, 94, 0.35);
   border-radius: var(--radius-sm);
-  background: rgba(255, 94, 94, 0.05);
-  color: #ff8080;
   background: rgba(244, 63, 94, 0.08);
   color: #fb7185;
   font-size: 12px;
@@ -325,10 +261,6 @@
   transition: var(--trans);
 }
 .delete-btn:hover {
-  border-color: rgba(255, 94, 94, 0.6);
-  background: rgba(255, 94, 94, 0.15);
-  color: #ff5252;
-  box-shadow: 0 0 12px rgba(255, 94, 94, 0.2);
   border-color: rgba(244, 63, 94, 0.7);
   background: rgba(244, 63, 94, 0.2);
   color: #ffffff;
@@ -342,24 +274,19 @@
   align-items: center;
   gap: 12px;
   padding: 52px;
-  border: 1px dashed var(--gold-border);
   border: 1px dashed rgba(56, 189, 248, 0.25);
   border-radius: var(--radius);
-  background: rgba(14, 14, 18, 0.5);
   background: rgba(12, 19, 34, 0.4);
   text-align: center;
 }
 .empty-inventory span {
   font-size: 32px;
   font-family: var(--mono);
-  color: var(--gold);
-  text-shadow: 0 0 20px var(--gold-glow);
   color: #38bdf8;
   text-shadow: 0 0 20px rgba(56, 189, 248, 0.4);
 }
 .empty-inventory strong {
   font-size: 16px;
-  color: var(--ink);
   color: #ffffff;
 }
 .empty-inventory p {
@@ -369,7 +296,6 @@
 
 /* Member management and site appearance */
 .admin-management {
-  max-width: 1040px;
   max-width: 1080px;
   margin: 0 auto 42px;
   padding: 0 6vw;
@@ -384,7 +310,6 @@
 .management-copy {
   margin-top: 8px;
   color: var(--muted);
-  font-size: 12px;
   font-size: 12.5px;
   line-height: 1.6;
   max-width: 640px;
@@ -395,14 +320,9 @@
   gap: 12px;
 }
 .admin-secondary-btn {
-  padding: 9px 14px;
-  border: 1px solid var(--gold-border);
   padding: 8px 16px;
   border: 1px solid rgba(56, 189, 248, 0.3);
   border-radius: var(--radius-sm);
-  color: var(--gold-bright);
-  background: var(--gold-subtle);
-  font: 500 12px var(--sans);
   color: #38bdf8;
   background: rgba(56, 189, 248, 0.08);
   font: 600 12px var(--sans);
@@ -410,8 +330,6 @@
   transition: var(--trans);
 }
 .admin-secondary-btn:hover {
-  border-color: var(--gold-border-focus);
-  background: rgba(212, 175, 55, 0.15);
   border-color: #38bdf8;
   color: #ffffff;
   background: rgba(56, 189, 248, 0.2);
@@ -421,7 +339,6 @@
   grid-template-columns: 1.1fr .8fr 1fr auto;
   align-items: end;
   gap: 14px;
-  padding: 20px;
   padding: 22px;
   margin-bottom: 14px;
 }
@@ -429,7 +346,6 @@
   margin: 0;
 }
 .balance-adjust-form .btn-primary {
-  min-height: 46px;
   min-height: 48px;
   white-space: nowrap;
 }
@@ -442,7 +358,6 @@
   grid-template-columns: 1.2fr 1fr 1fr auto;
   align-items: end;
   gap: 14px;
-  padding: 20px;
   padding: 22px;
   margin-bottom: 14px;
 }
@@ -450,7 +365,6 @@
   margin: 0;
 }
 .account-management-form .btn-primary {
-  min-height: 46px;
   min-height: 48px;
   white-space: nowrap;
 }
@@ -468,11 +382,9 @@
   align-items: center;
   gap: 16px;
   padding: 17px 20px;
-  border: 1px solid var(--border);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: var(--radius);
   background: var(--surface-card);
-  backdrop-filter: blur(12px);
   backdrop-filter: blur(14px);
 }
 .member-primary {
@@ -481,8 +393,6 @@
 .member-name {
   display: block;
   overflow: hidden;
-  color: var(--ink);
-  font-size: 13px;
   color: #ffffff;
   font-size: 13.5px;
   font-weight: 700;
@@ -495,21 +405,15 @@
 }
 .member-row-selectable:hover,
 .member-row-selectable:focus-visible {
-  border-color: var(--gold-border-focus);
-  background: rgba(212, 175, 55, 0.06);
   border-color: rgba(56, 189, 248, 0.45);
   background: rgba(56, 189, 248, 0.06);
   outline: none;
 }
 .member-manage-button {
   margin-top: 9px;
-  padding: 5px 9px;
-  border: 1px solid var(--gold-border);
   padding: 5px 10px;
   border: 1px solid rgba(56, 189, 248, 0.3);
   border-radius: var(--radius-sm);
-  color: var(--gold-bright);
-  background: var(--gold-subtle);
   color: #38bdf8;
   background: rgba(56, 189, 248, 0.08);
   font: 500 10px var(--sans);
@@ -518,7 +422,6 @@
 }
 .member-manage-button:hover,
 .member-manage-button:focus-visible {
-  border-color: var(--gold-border-focus);
   border-color: #38bdf8;
   color: #ffffff;
   background: rgba(56, 189, 248, 0.2);
@@ -538,19 +441,15 @@
 }
 .member-detail strong {
   color: var(--ink-dim);
-  font-size: 11px;
   font-size: 11.5px;
   font-weight: 500;
 }
 .member-balance {
-  color: var(--gold-bright) !important;
-  font: 600 12px var(--mono) !important;
   color: #38bdf8 !important;
   font: 700 13px var(--mono) !important;
 }
 .member-empty {
   padding: 30px;
-  border: 1px dashed var(--gold-border);
   border: 1px dashed rgba(56, 189, 248, 0.3);
   border-radius: var(--radius);
   color: var(--muted);
@@ -564,7 +463,6 @@
   grid-template-columns: minmax(240px, 1fr) auto;
   align-items: end;
   gap: 14px;
-  padding: 20px;
   padding: 22px;
   margin-bottom: 14px;
 }
@@ -576,7 +474,6 @@
   grid-column: 1 / -1;
 }
 .activity-controls .btn-primary {
-  min-height: 46px;
   min-height: 48px;
   white-space: nowrap;
 }
@@ -588,8 +485,6 @@
 }
 .activity-stat {
   display: grid;
-  gap: 9px;
-  padding: 17px 20px;
   gap: 8px;
   padding: 18px 22px;
 }
@@ -598,14 +493,11 @@
   font-size: 11px;
 }
 .activity-stat strong {
-  color: var(--gold-bright);
-  font: 600 18px var(--mono);
   color: #38bdf8;
   font: 700 20px var(--mono);
 }
 .activity-table-wrap {
   overflow-x: auto;
-  border: 1px solid var(--border);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: var(--radius);
   background: var(--surface-card);
@@ -617,10 +509,6 @@
 }
 .activity-table th,
 .activity-table td {
-  padding: 14px 16px;
-  border-bottom: 1px solid var(--border);
-  font-size: 11px;
-  vertical-align: top;
   padding: 14px 18px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.07);
   font-size: 12px;
@@ -650,13 +538,11 @@
 .activity-amount-positive,
 .activity-status-approved,
 .activity-status-completed {
-  color: var(--gold-bright) !important;
   color: #38bdf8 !important;
   font-family: var(--mono);
   white-space: nowrap;
 }
 .activity-amount-negative {
-  color: #ff8080 !important;
   color: #fb7185 !important;
   font-family: var(--mono);
   white-space: nowrap;
@@ -684,10 +570,8 @@
 }
 .color-field input {
   width: 100%;
-  height: 42px;
   height: 44px;
   padding: 4px;
-  border: 1px solid var(--gold-border);
   border: 1px solid rgba(56, 189, 248, 0.3);
   border-radius: var(--radius-sm);
   background: var(--surface2);
@@ -703,20 +587,16 @@
   display: inline-flex;
   align-items: center;
   gap: 7px;
-  padding: 10px 12px;
-  border: 1px solid var(--border);
   padding: 10px 14px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: var(--radius-sm);
   background: var(--surface2);
   color: var(--ink-dim);
-  font: 11px var(--sans);
   font: 500 12px var(--sans);
   cursor: pointer;
   transition: var(--trans);
 }
 .theme-preset:hover {
-  border-color: var(--gold-border-focus);
   border-color: #38bdf8;
   color: #ffffff;
   background: rgba(56, 189, 248, 0.1);
@@ -729,8 +609,6 @@
   box-shadow: 0 0 10px var(--swatch);
 }
 .appearance-form .btn-primary {
-  min-height: 42px;
-  padding: 0 18px;
   min-height: 44px;
   padding: 0 20px;
   white-space: nowrap;
@@ -749,11 +627,9 @@
     flex-direction: column;
   }
   .balance-adjust-form {
-    grid-template-columns: 1fr 1fr;
     grid-template-columns: 1fr;
   }
   .account-management-form {
-    grid-template-columns: 1fr 1fr;
     grid-template-columns: 1fr;
   }
   .activity-controls {

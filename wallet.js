@@ -155,3 +155,29 @@ function displayOrder(amount, content, expiresAt) {
 }
 
 loadBalance();
+
+/* ── Copy buttons logic ── */
+document.querySelectorAll('.copy-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    let text = btn.dataset.copy;
+    if (!text) {
+      if (btn.id === 'copyAmountBtn') text = String(selected.amount || transferAmt.textContent.replace(/\D/g, ''));
+      else if (btn.id === 'copyContentBtn') text = transferCt.textContent.trim();
+    }
+    if (!text) return;
+    navigator.clipboard.writeText(text).then(() => {
+      const origHtml = btn.innerHTML;
+      btn.classList.add('copied');
+      btn.innerHTML = `<span>✓ Đã chép</span>`;
+      setTimeout(() => {
+        btn.classList.remove('copied');
+        btn.innerHTML = origHtml;
+      }, 1800);
+      if (typeof showToast === 'function') {
+        showToast(`Đã sao chép: ${text}`);
+      }
+    }).catch(() => {
+      if (typeof showToast === 'function') showToast(`Sao chép thất bại`);
+    });
+  });
+});

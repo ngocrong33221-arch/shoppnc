@@ -62,13 +62,24 @@
 
       <!-- Topup card -->
       <div class="card topup-card reveal">
-        <span class="card-label">NẠP TIỀN</span>
-        <p class="card-sub-title">Chọn mệnh giá cần nạp</p>
+        <span class="card-label">NẠP TIỀN TỰ ĐỘNG</span>
+        <p class="card-sub-title">Chọn mệnh giá cần nạp vào tài khoản</p>
         <div class="amount-grid">
-          <button class="amount-btn" data-amount="50000" type="button">50.000đ</button>
-          <button class="amount-btn" data-amount="100000" type="button">100.000đ</button>
-          <button class="amount-btn" data-amount="200000" type="button">200.000đ</button>
-          <button class="amount-btn" data-amount="500000" type="button">500.000đ</button>
+          <button class="amount-btn" data-amount="50000" type="button">
+            <span>50.000đ</span>
+          </button>
+          <button class="amount-btn" data-amount="100000" type="button">
+            <span>100.000đ</span>
+            <span class="amt-tag">PHỔ BIẾN</span>
+          </button>
+          <button class="amount-btn" data-amount="200000" type="button">
+            <span>200.000đ</span>
+            <span class="amt-tag">KHUYÊN DÙNG</span>
+          </button>
+          <button class="amount-btn" data-amount="500000" type="button">
+            <span>500.000đ</span>
+            <span class="amt-tag vip">VIP</span>
+          </button>
         </div>
         <button class="btn-primary topup-btn" id="topupButton" type="button">
           <span>Tạo mã QR chuyển khoản</span>
@@ -81,20 +92,62 @@
     <!-- Transfer / QR card -->
     <section class="card transfer-card reveal" id="transferCard" hidden>
       <div class="transfer-info">
-        <p class="card-label">QUÉT ĐỂ CHUYỂN KHOẢN</p>
+        <p class="card-label">QUÉT MÃ ĐỂ CHUYỂN KHOẢN</p>
         <h2 class="transfer-title">Thanh toán qua MB Bank</h2>
-        <p class="transfer-note">Mở app ngân hàng và quét mã. Vui lòng chuyển đúng số tiền và nội dung bên dưới.</p>
+        <p class="transfer-note">Mở app ngân hàng bất kỳ để quét mã VietQR. Vui lòng giữ đúng nội dung chuyển khoản để được duyệt tự động.</p>
         <div class="transfer-details">
-          <div class="detail-row"><span>Ngân hàng</span><strong>MB Bank</strong></div>
-          <div class="detail-row"><span>Số tài khoản</span><strong>0832510710</strong></div>
-          <div class="detail-row"><span>Chủ tài khoản</span><strong>DO THANH TRUNG</strong></div>
-          <div class="detail-row"><span>Số tiền</span><strong id="transferAmount">0đ</strong></div>
-          <div class="detail-row"><span>Nội dung</span><strong id="transferContent">CN-000000</strong></div>
-          <div class="detail-row countdown-row"><span>Hiệu lực</span><strong id="transferCountdown" class="countdown">10:00</strong></div>
+          <div class="detail-row">
+            <span>Ngân hàng</span>
+            <strong>MB Bank (Quân Đội)</strong>
+          </div>
+          <div class="detail-row">
+            <span>Số tài khoản</span>
+            <div class="copy-cell">
+              <strong id="transferAccount">0832510710</strong>
+              <button class="copy-btn" type="button" data-copy="0832510710" title="Sao chép số tài khoản">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                <span>Chép</span>
+              </button>
+            </div>
+          </div>
+          <div class="detail-row">
+            <span>Chủ tài khoản</span>
+            <strong>DO THANH TRUNG</strong>
+          </div>
+          <div class="detail-row">
+            <span>Số tiền</span>
+            <div class="copy-cell">
+              <strong id="transferAmount">0đ</strong>
+              <button class="copy-btn" type="button" id="copyAmountBtn" title="Sao chép số tiền">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                <span>Chép</span>
+              </button>
+            </div>
+          </div>
+          <div class="detail-row">
+            <span>Nội dung chuyển khoản</span>
+            <div class="copy-cell">
+              <strong class="highlight-content" id="transferContent">CN-000000</strong>
+              <button class="copy-btn copy-btn-primary" type="button" id="copyContentBtn" title="Sao chép nội dung chuyển khoản">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                <span>Chép nội dung</span>
+              </button>
+            </div>
+          </div>
+          <div class="detail-row countdown-row">
+            <span>Hiệu lực giao dịch</span>
+            <div class="countdown-badge">
+              <span class="countdown-dot"></span>
+              <strong id="transferCountdown" class="countdown">10:00</strong>
+            </div>
+          </div>
         </div>
       </div>
       <div class="transfer-qr-wrap">
-        <img id="bankQr" class="transfer-qr" alt="Mã QR chuyển khoản MB Bank">
+        <div class="qr-box">
+          <img id="bankQr" class="transfer-qr" alt="Mã QR chuyển khoản MB Bank">
+          <p class="qr-guide">Quét bằng ứng dụng ngân hàng hoặc ví điện tử</p>
+        </div>
       </div>
     </section>
 

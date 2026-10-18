@@ -119,7 +119,7 @@ function navigate(url) {
       extraVy: 0,
       alpha: Math.random() * 0.65 + 0.35,
       glow: Math.random() * 16 + 6,
-      color: Math.random() > 0.35 ? '#ffd700' : (Math.random() > 0.5 ? '#fff3b0' : '#f59e0b'),
+      color: Math.random() > 0.35 ? '#38bdf8' : (Math.random() > 0.5 ? '#ffffff' : '#818cf8'),
       pulseSpeed: Math.random() * 0.03 + 0.015,
       pulseOffset: Math.random() * Math.PI * 2
     };
@@ -166,7 +166,7 @@ function navigate(url) {
         ctx.beginPath();
         ctx.moveTo(p.x, p.y);
         ctx.lineTo(mouse.x, mouse.y);
-        ctx.strokeStyle = `rgba(255, 215, 0, ${beamAlpha})`;
+        ctx.strokeStyle = `rgba(56, 189, 248, ${beamAlpha})`;
         ctx.lineWidth = (1 - mDist / 140) * 1.6 + 0.5;
         ctx.stroke();
       }
@@ -183,7 +183,7 @@ function navigate(url) {
           ctx.beginPath();
           ctx.moveTo(pts[i].x, pts[i].y);
           ctx.lineTo(pts[j].x, pts[j].y);
-          ctx.strokeStyle = `rgba(212, 175, 55, ${lineAlpha})`;
+          ctx.strokeStyle = `rgba(56, 189, 248, ${lineAlpha})`;
           ctx.lineWidth = 0.65;
           ctx.stroke();
         }
@@ -234,8 +234,8 @@ function navigate(url) {
       if (p.fallSpeed > 1.8) {
         const tailLength = p.fallSpeed * 5.5;
         const grad = ctx.createLinearGradient(p.x, p.y, p.x, p.y - tailLength);
-        grad.addColorStop(0, `rgba(255, 215, 0, ${currentAlpha * 0.7})`);
-        grad.addColorStop(1, 'rgba(212, 175, 55, 0)');
+        grad.addColorStop(0, `rgba(56, 189, 248, ${currentAlpha * 0.7})`);
+        grad.addColorStop(1, 'rgba(56, 189, 248, 0)');
         ctx.beginPath();
         ctx.moveTo(p.x, p.y);
         ctx.lineTo(p.x, p.y - tailLength);
@@ -245,7 +245,7 @@ function navigate(url) {
       }
 
       ctx.shadowBlur = currentGlow;
-      ctx.shadowColor = '#ffd700';
+      ctx.shadowColor = '#38bdf8';
       ctx.fillStyle = p.color;
       ctx.globalAlpha = currentAlpha;
 

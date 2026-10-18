@@ -1,13 +1,13 @@
 /* ============================================================
    CodeNest – account.css (Account Page)
-   Luxury Gold & Obsidian Black Theme
+   Ultra-Modern Obsidian & Electric Azure Theme
    ============================================================ */
 
 .account-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 20px;
-  max-width: 1040px;
+  gap: 22px;
+  max-width: 1080px;
   margin: 0 auto 64px;
   padding: 0 6vw;
 }
@@ -15,69 +15,62 @@
 /* Purchase history card spans both columns */
 .purchase-card {
   grid-column: 1 / -1;
-  padding: 36px;
+  padding: 34px;
 }
 
-/* Card Section Titles */
-.card-label {
-  font-size: 10px;
-  font-family: var(--mono);
-  letter-spacing: 0.16em;
-  color: var(--gold);
-  text-transform: uppercase;
-  font-weight: 500;
-}
 .card-section-title {
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 700;
-  letter-spacing: -0.04em;
-  margin: 10px 0 6px;
-  color: var(--ink);
+  letter-spacing: -0.03em;
+  margin: 8px 0 6px;
+  color: #ffffff;
 }
 .card-copy {
-  font-size: 13px;
+  font-size: 13.5px;
   color: var(--muted);
-  margin-bottom: 26px;
+  margin-bottom: 24px;
   line-height: 1.6;
 }
 
 /* Profile Card */
 .profile-card {
-  padding: 36px;
+  padding: 34px;
 }
 .profile-avatar-wrap {
   display: flex;
   align-items: center;
   gap: 18px;
-  margin-bottom: 30px;
+  margin-bottom: 28px;
 }
 .profile-avatar {
+  position: relative;
   width: 64px;
   height: 64px;
   display: grid;
   place-items: center;
-  border: 2px solid var(--gold);
-  border-radius: 16px;
+  border: 2px solid rgba(56, 189, 248, 0.5);
+  border-radius: 18px;
   font-size: 26px;
   font-family: var(--mono);
   font-weight: 800;
-  color: var(--gold-bright);
-  background: rgba(212, 175, 55, 0.08);
-  box-shadow: 0 0 28px rgba(212, 175, 55, 0.25);
+  color: #ffffff;
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(99, 102, 241, 0.2));
+  box-shadow: 0 0 24px rgba(56, 189, 248, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2);
   flex-shrink: 0;
   transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1),
               box-shadow 0.3s ease;
 }
 .profile-card:hover .profile-avatar {
   transform: scale(1.05) rotate(2deg);
-  box-shadow: 0 0 35px rgba(212, 175, 55, 0.4);
+  border-color: #38bdf8;
+  box-shadow: 0 0 32px rgba(56, 189, 248, 0.45);
 }
 .profile-name {
   font-size: 24px;
   font-weight: 700;
-  letter-spacing: -0.04em;
+  letter-spacing: -0.03em;
   margin-top: 4px;
-  color: var(--ink);
+  color: #ffffff;
 }
 
 /* Detail Rows */
@@ -90,18 +83,18 @@
   justify-content: space-between;
   align-items: center;
   padding: 13px 0;
-  border-bottom: 1px solid var(--border);
-  font-size: 13px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  font-size: 13.5px;
   color: var(--muted);
 }
 .detail-row:last-child {
   border-bottom: 0;
 }
 .detail-row strong {
-  color: var(--ink);
-  font-weight: 500;
+  color: #ffffff;
+  font-weight: 600;
   font-family: var(--mono);
-  font-size: 13px;
+  font-size: 13.5px;
 }
 .detail-row-end {
   display: flex;
@@ -109,28 +102,34 @@
   gap: 10px;
 }
 .purchase-download {
-  padding: 6px 12px;
-  border: 1px solid var(--gold-border-focus);
+  padding: 6px 14px;
+  border: 1px solid rgba(56, 189, 248, 0.4);
   border-radius: var(--radius-sm);
-  background: rgba(212, 175, 55, 0.12);
-  color: var(--gold-bright);
-  font-size: 11px;
+  background: rgba(56, 189, 248, 0.12);
+  color: #38bdf8;
+  font-size: 11.5px;
   font-family: var(--mono);
+  font-weight: 600;
   cursor: pointer;
   transition: var(--trans);
 }
 .purchase-download:hover {
-  background: rgba(212, 175, 55, 0.24);
+  background: var(--gold-btn);
+  color: #ffffff;
+  border-color: transparent;
+  box-shadow: 0 0 16px rgba(56, 189, 248, 0.35);
+  transform: translateY(-1px);
 }
 .purchase-download:disabled {
-  opacity: 0.6;
-  cursor: default;
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
 }
 .balance-val {
-  color: var(--gold-bright) !important;
+  color: #38bdf8 !important;
   font-size: 15px !important;
   font-weight: 700 !important;
-  text-shadow: 0 0 12px var(--gold-glow);
+  text-shadow: 0 0 12px rgba(56, 189, 248, 0.4);
 }
 
 /* Goto Wallet Link */
@@ -138,21 +137,22 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-top: 26px;
-  padding: 14px 18px;
-  border: 1px solid var(--gold-border);
+  margin-top: 24px;
+  padding: 14px 20px;
+  border: 1px solid rgba(56, 189, 248, 0.3);
   border-radius: var(--radius-sm);
-  background: rgba(212, 175, 55, 0.06);
-  color: var(--gold-bright);
-  font-size: 13px;
+  background: rgba(56, 189, 248, 0.08);
+  color: #38bdf8;
+  font-size: 13.5px;
   font-weight: 600;
   text-decoration: none;
   transition: var(--trans);
 }
 .goto-wallet:hover {
-  border-color: var(--gold-border-focus);
-  background: rgba(212, 175, 55, 0.14);
-  box-shadow: 0 6px 20px rgba(212, 175, 55, 0.2);
+  border-color: #38bdf8;
+  background: rgba(56, 189, 248, 0.18);
+  box-shadow: 0 6px 20px rgba(56, 189, 248, 0.25);
+  color: #ffffff;
   transform: translateY(-2px);
 }
 .goto-wallet:active {
@@ -161,7 +161,7 @@
 
 /* Password Card */
 .password-card {
-  padding: 36px;
+  padding: 34px;
 }
 .pw-field {
   display: flex;
@@ -192,11 +192,11 @@
   transition: color 0.2s;
 }
 .pw-toggle:hover {
-  color: var(--gold-bright);
+  color: #38bdf8;
 }
 
 .btn-primary {
-  margin-top: 10px;
+  margin-top: 8px;
 }
 .form-status {
   margin-top: 12px;

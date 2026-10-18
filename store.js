@@ -62,15 +62,34 @@ function renderProducts(list) {
   window.refreshHoverTargets?.();
 }
 
-/* Filter tabs */
+/* Filter tabs & Search */
+const searchInput = document.getElementById('searchInput');
+
+function applyFilters() {
+  const activeTab = document.querySelector('.filter-tab.active');
+  const cat = activeTab ? activeTab.dataset.filter : 'all';
+  const query = (searchInput?.value || '').trim().toLowerCase();
+
+  let filtered = cat === 'all' ? customProducts : customProducts.filter(p => p.category === cat);
+  if (query) {
+    filtered = filtered.filter(p => 
+      (p.name || '').toLowerCase().includes(query) ||
+      (p.description || '').toLowerCase().includes(query) ||
+      (p.category || '').toLowerCase().includes(query) ||
+      (p.fileName || '').toLowerCase().includes(query)
+    );
+  }
+  resultCount.textContent = String(filtered.length).padStart(2, '0');
+  renderProducts(filtered);
+}
+
+searchInput?.addEventListener('input', applyFilters);
+
 document.querySelectorAll('.filter-tab').forEach(btn => {
   btn.addEventListener('click', () => {
-    document.querySelector('.filter-tab.active').classList.remove('active');
+    document.querySelector('.filter-tab.active')?.classList.remove('active');
     btn.classList.add('active');
-    const cat = btn.dataset.filter;
-    const filtered = cat === 'all' ? customProducts : customProducts.filter(p => p.category === cat);
-    resultCount.textContent = String(filtered.length).padStart(2, '0');
-    renderProducts(filtered);
+    applyFilters();
   });
 });
 
@@ -79,7 +98,7 @@ async function loadProducts() {
   const countStr = String(customProducts.length).padStart(2, '0');
   statCount.textContent = countStr;
   resultCount.textContent = countStr;
-  renderProducts(customProducts);
+  applyFilters();
 }
 
 loadProducts();
