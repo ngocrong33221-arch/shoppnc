@@ -178,17 +178,17 @@
 .product-card::after {
   content: '';
   position: absolute;
-  inset: -1px;
-  padding: 1.5px;
+  inset: 0;
+  padding: 2.5px;
   border-radius: inherit;
-  background: conic-gradient(from 0deg, transparent 0deg, transparent 285deg, var(--card-beam, #ffffff) 330deg, var(--card-beam, #ffffff) 352deg, transparent 360deg);
+  background: conic-gradient(from 0deg, transparent 0deg, transparent 270deg, var(--card-beam, #ffffff) 320deg, var(--card-beam, #ffffff) 350deg, transparent 360deg);
   animation: borderSpin 4.5s linear infinite;
   mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   mask-composite: exclude;
   -webkit-mask-composite: xor;
   pointer-events: none;
-  z-index: 0;
-  opacity: 0.55;
+  z-index: 2;
+  opacity: 0.7;
   transition: opacity 0.3s ease;
 }
 .product-card:hover::after {
@@ -677,6 +677,22 @@
   background: radial-gradient(circle at 50% 118%, var(--art-glow, rgba(var(--gold-light-rgb), 0.2)), transparent 62%);
   pointer-events: none;
 }
+/* Vệt sáng chạy quanh khung ảnh lớn ở trang chi tiết (màu Admin đặt) */
+.detail-art::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  padding: 3px;
+  border-radius: inherit;
+  background: conic-gradient(from 0deg, transparent 0deg, transparent 260deg, var(--card-beam, #ffffff) 320deg, var(--card-beam, #ffffff) 352deg, transparent 360deg);
+  animation: borderSpin 5s linear infinite;
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  -webkit-mask-composite: xor;
+  pointer-events: none;
+  z-index: 2;
+  opacity: 0.85;
+}
 .detail-art .art-topic {
   left: 20px;
   bottom: 18px;
@@ -815,6 +831,20 @@ html[data-perf="off"] .product-card::after {
 }
 @media (prefers-reduced-motion: reduce) {
   .product-card::after {
+    animation: none;
+    opacity: 0;
+  }
+}
+/* Vệt sáng khung ảnh lớn: giảm hoặc tắt khi máy yếu / người dùng giảm chuyển động */
+html[data-perf="low"] .detail-art::after {
+  animation-duration: 10s;
+}
+html[data-perf="off"] .detail-art::after,
+html[data-perf="off"] .product-card::after {
+  animation: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .detail-art::after {
     animation: none;
     opacity: 0;
   }

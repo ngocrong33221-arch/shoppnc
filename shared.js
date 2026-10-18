@@ -812,15 +812,17 @@ function resolveProductTheme(product) {
 
 /* Đổ hoạ tiết + màu vào style inline của khung trưng bày.
    Mặc định màu lấy từ theme hiện tại (store.css dùng --gold, --surface2, --bg-deep).
-   Nếu Admin đặt màu riêng cho sản phẩm thì dùng màu đó cho ảnh của sản phẩm ấy. */
+   Nếu Admin đặt màu riêng (hoặc màu mặc định) thì ảnh sản phẩm đổi hẳn sang màu đó. */
 function productThemeStyle(theme, product) {
   const pattern = ART_PATTERNS[theme.pattern] || ART_PATTERNS.grid;
   let style = `--art-pattern:${pattern.image};--art-pattern-size:${pattern.size}`;
   const color = productArtColor(product);
   if (color) {
     const [red, green, blue] = [1, 3, 5].map(offset => parseInt(color.slice(offset, offset + 2), 16));
-    style += `;--art-accent:${color};--art-soft:rgba(${red}, ${green}, ${blue}, 0.32);`
-      + `--art-glow:rgba(${red}, ${green}, ${blue}, 0.26)`;
+    const tint = alpha => `rgba(${red}, ${green}, ${blue}, ${alpha})`;
+    style += `;--art-accent:${color};--art-soft:${tint(0.32)};--art-glow:${tint(0.3)}`
+      + `;--art-bg:linear-gradient(135deg, ${tint(0.5)} 0%, ${tint(0.16)} 50%, ${tint(0.42)} 100%),`
+      + 'linear-gradient(135deg, var(--surface2) 0%, var(--bg-deep) 50%, var(--surface2) 100%)';
   }
   return style;
 }
