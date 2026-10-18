@@ -59,7 +59,12 @@
       display: flex;
       align-items: center;
       gap: 12px;
+      cursor: grab;
+      touch-action: none;
+      user-select: none;
+      -webkit-user-select: none;
     }
+    .music-player.dragging .music-bar { cursor: grabbing; }
     .music-eq {
       display: flex;
       align-items: flex-end;
@@ -285,6 +290,81 @@
     </audio>
   `;
   document.body.append(player);
+
+  /* ── Kéo thả khung nhạc đi bất kỳ đâu trên màn hình ── */
+  const MUSIC_POS_KEY = 'cn_music_pos';
+  const dragHandle = player.querySelector('.music-bar');
+
+  function clampPosition(value, max) {
+    return Math.min(Math.max(value, 0), Math.max(max, 0));
+  }
+
+  function placePlayer(left, top) {
+    const rect = player.getBoundingClientRect();
+    player.style.left = `${clampPosition(left, window.innerWidth - rect.width)}px`;
+    player.style.top = `${clampPosition(top, window.innerHeight - rect.height)}px`;
+    player.style.right = 'auto';
+    player.style.bottom = 'auto';
+  }
+
+  function savePlayerPosition() {
+    try {
+      localStorage.setItem(MUSIC_POS_KEY, JSON.stringify({
+        left: parseInt(player.style.left, 10) || 0,
+        top: parseInt(player.style.top, 10) || 0,
+      }));
+    } catch (error) {
+      console.warn('Không lưu được vị trí khung nhạc:', error);
+    }
+  }
+
+  try {
+    const savedPosition = JSON.parse(localStorage.getItem(MUSIC_POS_KEY) || 'null');
+    if (savedPosition && Number.isFinite(savedPosition.left) && Number.isFinite(savedPosition.top)) {
+      placePlayer(savedPosition.left, savedPosition.top);
+    }
+  } catch (error) {
+    console.warn('Không đọc được vị trí khung nhạc đã lưu:', error);
+  }
+
+  (function enablePlayerDragging() {
+    let pointerId = null;
+    let grabOffsetX = 0;
+    let grabOffsetY = 0;
+
+    dragHandle.addEventListener('pointerdown', event => {
+      // Bỏ qua khi bấm vào nút điều khiển để không chặn phát nhạc.
+      if (event.target.closest('button, a, input, select, textarea')) return;
+      const rect = player.getBoundingClientRect();
+      pointerId = event.pointerId;
+      grabOffsetX = event.clientX - rect.left;
+      grabOffsetY = event.clientY - rect.top;
+      player.classList.add('dragging');
+      dragHandle.setPointerCapture(pointerId);
+      event.preventDefault();
+    });
+
+    dragHandle.addEventListener('pointermove', event => {
+      if (pointerId === null || event.pointerId !== pointerId) return;
+      placePlayer(event.clientX - grabOffsetX, event.clientY - grabOffsetY);
+    });
+
+    function stopDragging(event) {
+      if (pointerId === null || event.pointerId !== pointerId) return;
+      pointerId = null;
+      player.classList.remove('dragging');
+      savePlayerPosition();
+    }
+
+    dragHandle.addEventListener('pointerup', stopDragging);
+    dragHandle.addEventListener('pointercancel', stopDragging);
+
+    window.addEventListener('resize', () => {
+      if (!player.style.left) return;
+      placePlayer(parseInt(player.style.left, 10) || 0, parseInt(player.style.top, 10) || 0);
+      savePlayerPosition();
+    });
+  })();
 
   const audio = player.querySelector('#localMusic');
   const toggle = player.querySelector('#musicToggle');
@@ -746,6 +826,11 @@
     const expanded = player.classList.toggle('library-open');
     libraryToggle.setAttribute('aria-label', expanded ? 'Đóng danh sách nhạc' : 'Mở danh sách nhạc');
     if (expanded) searchInput.focus();
+    // Khung nhạc cao lên khi mở danh sách nên cần đưa lại vào trong màn hình.
+    if (player.style.left) {
+      placePlayer(parseInt(player.style.left, 10) || 0, parseInt(player.style.top, 10) || 0);
+      savePlayerPosition();
+    }
   });
 
   audio.addEventListener('play', () => {
