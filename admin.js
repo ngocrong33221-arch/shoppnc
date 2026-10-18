@@ -73,7 +73,7 @@ function uploadFile(file, path) {
 
   return new Promise((resolve, reject) => {
     const upload = new tus.Upload(file, {
-      endpoint: `${SUPABASE_URL}/storage/v1/upload/resumable`,
+      endpoint: `${SUPABASE_URL}/storage/v1/upload/resumable?apikey=${SUPABASE_ANON_KEY}`,
       retryDelays: [0, 3000, 5000, 10000, 20000],
       headers: {
         authorization: `Bearer ${SUPABASE_ANON_KEY}`,
@@ -94,7 +94,21 @@ function uploadFile(file, path) {
         statusEl.textContent = `Đang tải file... ${percent}%`;
       },
       onSuccess: () => resolve({ path }),
-      onError: reject
+      onError: error => {
+        console.error('Tus upload error:', error);
+        let msg = 'Lỗi tải file: ';
+        if (error.originalResponse) {
+          try {
+            const body = JSON.parse(error.originalResponse.getBody());
+            msg += body.message || body.error || error.message;
+          } catch {
+            msg += error.message;
+          }
+        } else {
+          msg += error.message;
+        }
+        reject(new Error(msg));
+      }
     });
     upload.start();
   });
