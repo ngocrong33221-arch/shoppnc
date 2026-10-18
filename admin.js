@@ -740,6 +740,21 @@ document.querySelectorAll('.theme-preset').forEach(button => {
   });
 });
 
+/* Phát theme dùng chung cho mọi khách hàng qua Supabase Storage (host tĩnh).
+   Bucket chặn ghi đè nên mỗi lần lưu tạo 1 file mới "cn_theme-<thời gian>.json";
+   theme.js ở phía khách sẽ tự đọc file mới nhất. */
+async function publishThemeToCloud(theme) {
+  const client = window.supabase;
+  if (!client || !client.storage) return { ok: false, message: 'Supabase chưa sẵn sàng.' };
+  const name = `cn_theme-${Date.now()}.json`;
+  const { error } = await client.storage.from(STORAGE_BUCKET).upload(
+    name,
+    new Blob([JSON.stringify(theme)], { type: 'application/json' }),
+    { contentType: 'application/json', upsert: false }
+  );
+  return error ? { ok: false, message: error.message } : { ok: true };
+}
+
 document.getElementById('themeForm').addEventListener('submit', async event => {
   event.preventDefault();
   const background = document.getElementById('themeBackground').value;
@@ -755,8 +770,11 @@ document.getElementById('themeForm').addEventListener('submit', async event => {
       const theme = { background, accent };
       localStorage.setItem(THEME_KEY, JSON.stringify(theme));
       window.applyCodeNestTheme?.(theme);
-      status.textContent = 'Đã cập nhật giao diện cho toàn trang.';
-      status.className = 'form-status ok';
+      const publish = await publishThemeToCloud(theme);
+      status.textContent = publish.ok
+        ? 'Đã cập nhật giao diện và phát cho tất cả khách hàng.'
+        : `Đã đổi giao diện trên máy này, nhưng chưa phát được cho khách (${publish.message}).`;
+      status.className = publish.ok ? 'form-status ok' : 'form-status err';
       return;
     }
     const response = await fetch(`${API_BASE}/api/admin/theme`, {

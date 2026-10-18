@@ -77,12 +77,43 @@
     }
   }
 
+  /* Trên host tĩnh (GitHub Pages) theme dùng chung được phát qua Supabase Storage:
+     mỗi lần admin lưu sẽ tạo 1 file "cn_theme-<thời gian>.json" mới trong bucket
+     (bucket chặn ghi đè nên luôn tạo file mới). Khách đọc file mới nhất rồi áp dụng
+     để tất cả mọi người thấy cùng một giao diện. */
+  async function loadCloudTheme() {
+    const client = window.supabase;
+    if (!client || !client.storage) return;
+    try {
+      const { data: files, error } = await client.storage
+        .from('products')
+        .list('', { limit: 100, search: 'cn_theme-' });
+      if (error || !Array.isArray(files) || !files.length) return;
+      const latest = files
+        .filter(file => file.name && file.name.startsWith('cn_theme-'))
+        .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
+      if (!latest) return;
+      const { data: publicUrl } = client.storage.from('products').getPublicUrl(latest.name);
+      if (!publicUrl || !publicUrl.publicUrl) return;
+      const response = await fetch(publicUrl.publicUrl, { cache: 'no-store' });
+      if (!response.ok) return;
+      const theme = await response.json();
+      if (theme) {
+        localStorage.setItem('cn_theme', JSON.stringify(theme));
+        applyCodeNestTheme(theme);
+      }
+    } catch (error) {
+      console.warn('Could not load the shared site theme:', error);
+    }
+  }
+
   const isStaticHost = window.location.protocol === 'file:' || 
                        window.location.hostname.includes('github.io') || 
                        window.location.hostname.includes('localhost') || 
                        window.location.hostname === '127.0.0.1';
   if (isStaticHost) {
     loadSavedTheme();
+    loadCloudTheme();
     return;
   }
   fetch(`${apiBase}/api/site/theme`)

@@ -34,6 +34,7 @@ function navigate(url) {
 
 /* ── 3. Golden Falling Particle Rain & Interactive Mouse Physics Engine ── */
 (function initGoldenParticles() {
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   let canvas = document.getElementById('bgParticles') || document.getElementById('particles');
   if (!canvas) {
     canvas = document.createElement('canvas');
@@ -46,40 +47,59 @@ function navigate(url) {
   const ctx = canvas.getContext('2d');
   let W = 0, H = 0;
   const pts = [];
-  const mouse = { x: -9999, y: -9999, prevX: -9999, prevY: -9999, vx: 0, vy: 0 };
+  const mouse = { x: -9999, y: -9999, vx: 0, vy: 0 };
+
+  /* Halo sáng được vẽ sẵn 1 lần cho mỗi màu rồi tái sử dụng bằng drawImage().
+     Cách này thay cho shadowBlur từng hạt — phép toán canvas đắt nhất. */
+  function makeGlowSprite(color) {
+    const size = 64;
+    const sprite = document.createElement('canvas');
+    sprite.width = sprite.height = size;
+    const sctx = sprite.getContext('2d');
+    const grad = sctx.createRadialGradient(size / 2, size / 2, 0, size / 2, size / 2, size / 2);
+    grad.addColorStop(0, color);
+    grad.addColorStop(0.3, color);
+    grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+    sctx.fillStyle = grad;
+    sctx.beginPath();
+    sctx.arc(size / 2, size / 2, size / 2, 0, Math.PI * 2);
+    sctx.fill();
+    return sprite;
+  }
+  const GLOW_SPRITES = {
+    '#38bdf8': makeGlowSprite('rgba(56, 189, 248, 0.9)'),
+    '#ffffff': makeGlowSprite('rgba(255, 255, 255, 0.85)'),
+    '#818cf8': makeGlowSprite('rgba(129, 140, 248, 0.9)')
+  };
+
+  /* Màn hình nhỏ dùng ít hạt hơn để giữ 60fps trên điện thoại. */
+  function targetCount() {
+    const cap = window.innerWidth < 768 ? 34 : 68;
+    const byArea = Math.round((window.innerWidth * window.innerHeight) / 26000);
+    return reduceMotion ? 0 : Math.max(16, Math.min(cap, byArea));
+  }
+  let COUNT = targetCount();
+
+  function syncCount() {
+    while (pts.length > COUNT) pts.pop();
+    while (pts.length < COUNT) pts.push(createFallingParticle(false));
+  }
 
   function resize() {
     W = canvas.width = window.innerWidth;
     H = canvas.height = window.innerHeight;
+    COUNT = targetCount();
+    syncCount();
   }
   resize();
   window.addEventListener('resize', resize);
 
   window.addEventListener('mousemove', e => {
-    if (mouse.prevX !== -9999) {
-      mouse.vx = e.clientX - mouse.prevX;
-      mouse.vy = e.clientY - mouse.prevY;
-    }
-    mouse.prevX = e.clientX;
-    mouse.prevY = e.clientY;
+    if (mouse.x === -9999) { mouse.x = e.clientX; mouse.y = e.clientY; }
+    mouse.vx = e.clientX - mouse.x;
+    mouse.vy = e.clientY - mouse.y;
     mouse.x = e.clientX;
     mouse.y = e.clientY;
-
-    // Apply wind turbulence to nearby particles
-    const speed = Math.sqrt(mouse.vx * mouse.vx + mouse.vy * mouse.vy);
-    if (speed > 1.2) {
-      for (let i = 0; i < pts.length; i++) {
-        const p = pts[i];
-        const dx = p.x - mouse.x;
-        const dy = p.y - mouse.y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist < 150 && dist > 0) {
-          const wind = (1 - dist / 150) * Math.min(speed * 0.28, 7);
-          p.extraVx += (mouse.vx / speed) * wind * 0.7 + (dx / dist) * wind * 0.3;
-          p.extraVy += (mouse.vy / speed) * wind * 0.7 + (dy / dist) * wind * 0.3;
-        }
-      }
-    }
   });
 
   // On Click: Radial Shockwave Blast pushing particles outward
@@ -102,6 +122,8 @@ function navigate(url) {
     const isEmber = Math.random() < 0.5;
     const isFast = Math.random() < 0.35;
     const fallSpeed = isFast ? (Math.random() * 2.5 + 2.2) : (Math.random() * 1.5 + 0.9);
+    const roll = Math.random();
+    const particleColor = roll > 0.62 ? '#38bdf8' : (roll > 0.35 ? '#ffffff' : '#818cf8');
 
     return {
       x: Math.random() * W,
@@ -118,8 +140,8 @@ function navigate(url) {
       extraVx: 0,
       extraVy: 0,
       alpha: Math.random() * 0.65 + 0.35,
-      glow: Math.random() * 16 + 6,
-      color: Math.random() > 0.35 ? '#38bdf8' : (Math.random() > 0.5 ? '#ffffff' : '#818cf8'),
+      color: particleColor,
+      sprite: GLOW_SPRITES[particleColor],
       pulseSpeed: Math.random() * 0.03 + 0.015,
       pulseOffset: Math.random() * Math.PI * 2
     };
@@ -140,10 +162,7 @@ function navigate(url) {
     c.fill();
   }
 
-  // Populate 200 falling particles continuously
-  for (let i = 0; i < 200; i++) {
-    pts.push(createFallingParticle(false));
-  }
+  syncCount();
 
   let tick = 0;
   function animate() {
@@ -153,42 +172,6 @@ function navigate(url) {
     // Mouse velocity decay
     mouse.vx *= 0.88;
     mouse.vy *= 0.88;
-
-    // Draw connecting gold laser/lightning beams to cursor when particles are near mouse
-    for (let i = 0; i < pts.length; i++) {
-      const p = pts[i];
-      const mdx = p.x - mouse.x;
-      const mdy = p.y - mouse.y;
-      const mDist = Math.sqrt(mdx * mdx + mdy * mdy);
-
-      if (mDist < 140) {
-        const beamAlpha = (1 - mDist / 140) * 0.48;
-        ctx.beginPath();
-        ctx.moveTo(p.x, p.y);
-        ctx.lineTo(mouse.x, mouse.y);
-        ctx.strokeStyle = `rgba(56, 189, 248, ${beamAlpha})`;
-        ctx.lineWidth = (1 - mDist / 140) * 1.6 + 0.5;
-        ctx.stroke();
-      }
-    }
-
-    // Connect close falling particles with subtle golden threads
-    for (let i = 0; i < pts.length; i += 2) {
-      for (let j = i + 1; j < pts.length; j += 2) {
-        const dx = pts[i].x - pts[j].x;
-        const dy = pts[i].y - pts[j].y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist < 80) {
-          const lineAlpha = (1 - dist / 80) * 0.12 * pts[i].alpha;
-          ctx.beginPath();
-          ctx.moveTo(pts[i].x, pts[i].y);
-          ctx.lineTo(pts[j].x, pts[j].y);
-          ctx.strokeStyle = `rgba(56, 189, 248, ${lineAlpha})`;
-          ctx.lineWidth = 0.65;
-          ctx.stroke();
-        }
-      }
-    }
 
     // Update and draw falling particles
     for (let i = 0; i < pts.length; i++) {
@@ -220,43 +203,30 @@ function navigate(url) {
       if (p.x < -35) p.x = W + 25;
       if (p.x > W + 35) p.x = -25;
 
-      // Pulse alpha + enhanced glow when near mouse
+      // Pulse alpha + halo lớn hơn khi gần chuột
       let currentAlpha = Math.max(0.15, p.alpha + Math.sin(tick * p.pulseSpeed + p.pulseOffset) * 0.22);
-      let currentGlow = p.glow;
+      let scale = 1;
       if (mDist < 140) {
-        currentAlpha = Math.min(1, currentAlpha + (1 - mDist / 140) * 0.5);
-        currentGlow += (1 - mDist / 140) * 16;
+        const near = 1 - mDist / 140;
+        currentAlpha = Math.min(1, currentAlpha + near * 0.5);
+        scale = 1 + near * 0.9;
       }
 
-      ctx.save();
+      // Halo phát sáng được vẽ sẵn rồi drawImage — thay cho shadowBlur từng hạt (rất chậm)
+      const haloSize = p.radius * 7 * scale;
+      ctx.globalAlpha = currentAlpha * 0.85;
+      ctx.drawImage(p.sprite, p.x - haloSize / 2, p.y - haloSize / 2, haloSize, haloSize);
 
-      // Draw luminous falling light streak/tail for fast moving particles
-      if (p.fallSpeed > 1.8) {
-        const tailLength = p.fallSpeed * 5.5;
-        const grad = ctx.createLinearGradient(p.x, p.y, p.x, p.y - tailLength);
-        grad.addColorStop(0, `rgba(56, 189, 248, ${currentAlpha * 0.7})`);
-        grad.addColorStop(1, 'rgba(56, 189, 248, 0)');
-        ctx.beginPath();
-        ctx.moveTo(p.x, p.y);
-        ctx.lineTo(p.x, p.y - tailLength);
-        ctx.strokeStyle = grad;
-        ctx.lineWidth = Math.min(p.radius * 0.8, 2);
-        ctx.stroke();
-      }
-
-      ctx.shadowBlur = currentGlow;
-      ctx.shadowColor = '#38bdf8';
-      ctx.fillStyle = p.color;
       ctx.globalAlpha = currentAlpha;
-
+      ctx.fillStyle = p.color;
       if (p.isStar) {
-        drawStar(ctx, p.x, p.y, p.radius * 2, p.radius * 0.45, p.rotation);
+        drawStar(ctx, p.x, p.y, p.radius * 2 * scale, p.radius * 0.45, p.rotation);
       } else {
         ctx.beginPath();
-        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+        ctx.arc(p.x, p.y, p.radius * scale, 0, Math.PI * 2);
         ctx.fill();
 
-        // Extra glowing center core for embers
+        // Lõi sáng cho hạt than
         if (p.isEmber) {
           ctx.beginPath();
           ctx.arc(p.x, p.y, p.radius * 0.45, 0, Math.PI * 2);
@@ -264,12 +234,12 @@ function navigate(url) {
           ctx.fill();
         }
       }
-      ctx.restore();
     }
+    ctx.globalAlpha = 1;
 
     requestAnimationFrame(animate);
   }
-  animate();
+  if (!reduceMotion) animate();
 })();
 
 /* ── 4. Luxury Custom Cursor & Mouse Move Trail ── */
