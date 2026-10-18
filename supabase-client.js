@@ -2,8 +2,8 @@
    supabase-client.js — Supabase Connection Configuration
    ============================================================ */
 
-const SUPABASE_URL = 'https://vhdszynyfactpnofdrtz.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_uyqzNoDfKJzffQCMJO71Jg_KYyrdMeS';
+var SUPABASE_URL = 'https://vhdszynyfactpnofdrtz.supabase.co';
+var SUPABASE_ANON_KEY = 'sb_publishable_uyqzNoDfKJzffQCMJO71Jg_KYyrdMeS';
 
 // The CDN already declares the SDK namespace as a global named `supabase`.
 // We must NOT redeclare it with let/const (that would throw
