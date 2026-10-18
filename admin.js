@@ -971,7 +971,23 @@ document.getElementById('refreshOrders').addEventListener('click', loadOrders);
 loadOrders();
 
 /* ── Duyệt đơn bằng lệnh Telegram /duyet ── */
-const TG_OFFSET_KEY = 'cn_tg_offset';
+const TG_HANDLED_KEY = 'cn_tg_handled';
+const TG_HANDLED_MAX = 300;
+
+function readHandledUpdates() {
+  try {
+    const list = JSON.parse(localStorage.getItem(TG_HANDLED_KEY) || '[]');
+    return Array.isArray(list) ? list.map(Number) : [];
+  } catch {
+    return [];
+  }
+}
+
+function markUpdateHandled(updateId) {
+  const list = readHandledUpdates();
+  if (!list.includes(updateId)) list.push(updateId);
+  localStorage.setItem(TG_HANDLED_KEY, JSON.stringify(list.slice(-TG_HANDLED_MAX)));
+}
 const telegramStatus = document.getElementById('telegramStatus');
 
 function normalizeOrderCode(value) {
@@ -1078,7 +1094,11 @@ async function telegramPollLoop() {
     console.warn('Không kiểm tra được webhook Telegram:', error);
   }
 
-  let offset = Number(localStorage.getItem(TG_OFFSET_KEY) || 0) || undefined;
+  // Không lưu offset vào localStorage: mỗi lần mở trang sẽ đọc lại toàn bộ tin
+  // nhắn Telegram còn chờ (gồm cả lệnh gửi lúc trang Quản trị chưa mở).
+  // Tin nào đã xử lý thì bỏ qua để không duyệt trùng.
+  let offset;
+  const handledUpdates = new Set(readHandledUpdates());
   while (true) {
     try {
       const updates = await telegramGetUpdates(offset);
@@ -1086,7 +1106,9 @@ async function telegramPollLoop() {
       telegramStatus.className = 'form-status ok';
       for (const update of updates) {
         offset = update.update_id + 1;
-        localStorage.setItem(TG_OFFSET_KEY, String(offset));
+        if (handledUpdates.has(update.update_id)) continue;
+        handledUpdates.add(update.update_id);
+        markUpdateHandled(update.update_id);
         try {
           await handleTelegramUpdate(update);
         } catch (error) {
