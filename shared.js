@@ -35,6 +35,9 @@ function navigate(url) {
 /* ── 3. Golden Falling Particle Rain & Interactive Mouse Physics Engine ── */
 (function initGoldenParticles() {
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  /* Mức hiệu ứng do performance governor (theme.js) điều khiển:
+     high = đầy đủ, low = bớt hiệu ứng, off = tắt hẳn. */
+  let quality = (window.CN_PERF && window.CN_PERF.level) || (reduceMotion ? 'off' : 'high');
   let canvas = document.getElementById('bgParticles') || document.getElementById('particles');
   if (!canvas) {
     canvas = document.createElement('canvas');
@@ -74,9 +77,11 @@ function navigate(url) {
 
   /* Màn hình nhỏ dùng ít hạt hơn để giữ 60fps trên điện thoại. */
   function targetCount() {
+    if (quality === 'off') return 0;
     const cap = window.innerWidth < 768 ? 34 : 68;
     const byArea = Math.round((window.innerWidth * window.innerHeight) / 26000);
-    return reduceMotion ? 0 : Math.max(16, Math.min(cap, byArea));
+    const base = Math.max(16, Math.min(cap, byArea));
+    return quality === 'low' ? Math.max(12, Math.round(base * 0.5)) : base;
   }
   let COUNT = targetCount();
 
@@ -165,7 +170,10 @@ function navigate(url) {
   syncCount();
 
   let tick = 0;
+  let running = false;
+  let rafId = 0;
   function animate() {
+    if (!running) return;
     ctx.clearRect(0, 0, W, H);
     tick++;
 
@@ -212,10 +220,13 @@ function navigate(url) {
         scale = 1 + near * 0.9;
       }
 
-      // Halo phát sáng được vẽ sẵn rồi drawImage — thay cho shadowBlur từng hạt (rất chậm)
-      const haloSize = p.radius * 7 * scale;
-      ctx.globalAlpha = currentAlpha * 0.85;
-      ctx.drawImage(p.sprite, p.x - haloSize / 2, p.y - haloSize / 2, haloSize, haloSize);
+      // Halo phát sáng được vẽ sẵn rồi drawImage — thay cho shadowBlur từng hạt (rất chậm).
+      // Mức "low" bỏ halo để giảm tải cho máy yếu.
+      if (quality === 'high') {
+        const haloSize = p.radius * 7 * scale;
+        ctx.globalAlpha = currentAlpha * 0.85;
+        ctx.drawImage(p.sprite, p.x - haloSize / 2, p.y - haloSize / 2, haloSize, haloSize);
+      }
 
       ctx.globalAlpha = currentAlpha;
       ctx.fillStyle = p.color;
@@ -237,13 +248,40 @@ function navigate(url) {
     }
     ctx.globalAlpha = 1;
 
-    requestAnimationFrame(animate);
+    rafId = requestAnimationFrame(animate);
   }
-  if (!reduceMotion) animate();
+
+  function start() {
+    if (running || quality === 'off') return;
+    running = true;
+    rafId = requestAnimationFrame(animate);
+  }
+  function stop() {
+    running = false;
+    if (rafId) cancelAnimationFrame(rafId);
+    rafId = 0;
+    ctx.clearRect(0, 0, W, H);
+  }
+
+  /* Nhận mức hiệu ứng từ performance governor (theme.js). */
+  if (window.CN_PERF) {
+    window.CN_PERF.onChange(level => {
+      quality = level;
+      COUNT = targetCount();
+      syncCount();
+      if (level === 'off') stop(); else start();
+    });
+  } else if (!reduceMotion) {
+    start();
+  }
 })();
 
 /* ── 4. Luxury Custom Cursor & Mouse Move Trail ── */
 (function initLuxuryCursor() {
+  /* Trên thiết bị cảm ứng, con trỏ tùy biến bị ẩn bằng CSS và không có chuột,
+     nên bỏ hẳn engine để khỏi tốn một vòng requestAnimationFrame liên tục. */
+  if (window.matchMedia('(pointer: coarse)').matches) return;
+
   let cursor = document.getElementById('cursor');
   let cursorDot = document.getElementById('cursorDot');
 
@@ -330,6 +368,8 @@ function navigate(url) {
 
 /* ── 5. Click Burst & Ripple Shockwave ── */
 document.addEventListener('mousedown', e => {
+  // Máy yếu ở mức "off" thì bỏ hẳn hiệu ứng click cho đỡ giật.
+  if (window.CN_PERF && window.CN_PERF.level === 'off') return;
   const cursor = document.getElementById('cursor');
   cursor?.classList.add('clicking');
   createClickRipple(e.clientX, e.clientY);
@@ -352,7 +392,8 @@ function createClickRipple(x, y) {
 }
 
 function createClickBurst(x, y) {
-  const count = 14;
+  // Mức "low" giảm số tia bắn ra để nhẹ hơn cho điện thoại.
+  const count = window.CN_PERF && window.CN_PERF.level === 'low' ? 7 : 14;
   for (let i = 0; i < count; i++) {
     const spark = document.createElement('div');
     spark.className = 'click-spark';
@@ -769,11 +810,13 @@ function resolveProductTheme(product) {
   return matchTheme(artKey(info.description)) || PRODUCT_THEMES[PRODUCT_THEMES.length - 1];
 }
 
-/* Đổ màu – hoạ tiết của chủ đề vào style inline của khung trưng bày */
+/* Đổ hoạ tiết của chủ đề vào style inline của khung trưng bày.
+   Màu sắc (--art-accent/--art-soft/--art-glow/--art-bg) không đặt cứng nữa mà để
+   store.css dùng biến theme hiện tại (--gold, --gold-rgb, --gold-light-rgb,
+   --surface2, --bg-deep) nên ảnh sản phẩm tự đổi màu theo theme và theo sáng/tối. */
 function productThemeStyle(theme) {
   const pattern = ART_PATTERNS[theme.pattern] || ART_PATTERNS.grid;
-  return `--art-accent:${theme.accent};--art-soft:${theme.soft};--art-glow:${theme.glow};`
-    + `--art-bg:${theme.bg};--art-pattern:${pattern.image};--art-pattern-size:${pattern.size}`;
+  return `--art-pattern:${pattern.image};--art-pattern-size:${pattern.size}`;
 }
 
 function productThemeIcon(theme) {

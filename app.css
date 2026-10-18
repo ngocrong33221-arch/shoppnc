@@ -1073,3 +1073,31 @@ body.page-out .page-sweep {
   .auth-card { padding: 32px 22px 28px; }
   .card-title { font-size: 26px; }
 }
+
+/* ====== ADAPTIVE PERFORMANCE ======
+   theme.js gắn html[data-perf] theo FPS thực tế: "low" giảm hiệu ứng nặng,
+   "off" tắt hẳn hiệu ứng nền để máy yếu (đặc biệt điện thoại) đỡ lag. */
+html[data-perf="low"] .glow,
+html[data-perf="off"] .glow {
+  animation: none;
+}
+html[data-perf="low"] .glow {
+  filter: blur(70px);
+}
+html[data-perf="low"] .auth-card,
+html[data-perf="low"] .code-float {
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+html[data-perf="off"] #particles,
+html[data-perf="off"] .bg-grid,
+html[data-perf="off"] .glow,
+html[data-perf="off"] .cursor,
+html[data-perf="off"] .cursor-dot {
+  display: none;
+}
+html[data-perf="off"] .auth-card,
+html[data-perf="off"] .code-float {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}

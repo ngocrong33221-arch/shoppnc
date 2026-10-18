@@ -1023,3 +1023,36 @@ body::before {
   .page-hero { padding: 32px 16px 24px; }
   .page-h1 { font-size: 34px; }
 }
+
+/* ====== ADAPTIVE PERFORMANCE ======
+   theme.js gắn html[data-perf] theo FPS thực tế: "low" giảm hiệu ứng nặng,
+   "off" tắt hẳn hiệu ứng nền để máy yếu (đặc biệt điện thoại) đỡ lag. */
+html[data-perf="low"] .page-glow,
+html[data-perf="off"] .page-glow {
+  animation: none;
+}
+html[data-perf="low"] .page-glow {
+  filter: blur(64px);
+}
+html[data-perf="low"] .topbar,
+html[data-perf="low"] .mobile-nav,
+html[data-perf="low"] .card,
+html[data-perf="low"] .toast,
+html[data-perf="low"] .theme-menu-dropdown {
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+html[data-perf="off"] .bg-particles,
+html[data-perf="off"] .page-glow,
+html[data-perf="off"] .cursor,
+html[data-perf="off"] .cursor-dot {
+  display: none;
+}
+html[data-perf="off"] .topbar,
+html[data-perf="off"] .mobile-nav,
+html[data-perf="off"] .card,
+html[data-perf="off"] .toast,
+html[data-perf="off"] .theme-menu-dropdown {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}

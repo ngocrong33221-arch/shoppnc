@@ -210,3 +210,89 @@
     })
     .catch(error => console.error('Could not load the saved site theme:', error));
 })();
+
+/* Đo FPS thực tế trên thiết bị nhỏ / cảm ứng. Nếu máy bị lag, tự hạ mức hiệu ứng
+   để giao diện mượt lại: "low" giảm hiệu ứng nặng, "off" tắt hẳn hiệu ứng nền.
+   Mức hiện tại nằm ở thuộc tính html[data-perf] và window.CN_PERF. */
+(function performanceGovernor() {
+  const root = document.documentElement;
+  const listeners = [];
+  const state = { level: 'high', fps: 60, mobile: false };
+
+  let prefersReduced = false;
+  try {
+    prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    state.mobile = window.matchMedia('(max-width: 900px)').matches ||
+      (navigator.maxTouchPoints > 0 && window.innerWidth < 1100);
+  } catch { /* môi trường không hỗ trợ matchMedia */ }
+
+  function setLevel(level) {
+    if (state.level === level) return;
+    state.level = level;
+    root.setAttribute('data-perf', level);
+    listeners.forEach(fn => {
+      try { fn(level, state); } catch { /* bỏ qua lỗi từ bên đăng ký */ }
+    });
+  }
+
+  state.level = prefersReduced ? 'off' : 'high';
+  root.setAttribute('data-perf', state.level);
+
+  window.CN_PERF = {
+    get level() { return state.level; },
+    get mobile() { return state.mobile; },
+    get fps() { return state.fps; },
+    onChange(fn) {
+      listeners.push(fn);
+      try { fn(state.level, state); } catch { /* bỏ qua */ }
+    }
+  };
+
+  // Chỉ đo trên thiết bị nhỏ / cảm ứng; máy để bàn gần như không lag.
+  if (prefersReduced || !state.mobile) return;
+
+  const history = [];
+  let frames = 0;
+  let windowStart = 0;
+
+  // Khi ẩn tab, requestAnimationFrame dừng nên số liệu sẽ sai — bỏ qua nhịp đó.
+  document.addEventListener('visibilitychange', () => {
+    frames = 0;
+    windowStart = 0;
+  });
+
+  function sample(now) {
+    if (document.hidden) {
+      frames = 0;
+      windowStart = 0;
+      return requestAnimationFrame(sample);
+    }
+    if (!windowStart) {
+      windowStart = now;
+      return requestAnimationFrame(sample);
+    }
+    frames++;
+    const elapsed = now - windowStart;
+    if (elapsed < 1000) return requestAnimationFrame(sample);
+
+    const fps = (frames * 1000) / elapsed;
+    frames = 0;
+    windowStart = now;
+    state.fps = Math.round(fps);
+    history.push(fps);
+    if (history.length > 8) history.shift();
+
+    // Bỏ 2 mẫu đầu vì trang còn đang dựng layout / tải dữ liệu.
+    if (history.length < 3) return requestAnimationFrame(sample);
+
+    const recent = history.slice(-4);
+    const avg = recent.reduce((sum, value) => sum + value, 0) / recent.length;
+
+    if (avg < 28) { setLevel('off'); return; }
+    if (avg < 42) { setLevel('low'); return; }
+    // Vẫn tiếp tục đo để xử lý trường hợp máy lag về sau (cuộn trang, dữ liệu nặng).
+    requestAnimationFrame(sample);
+  }
+
+  requestAnimationFrame(sample);
+})();

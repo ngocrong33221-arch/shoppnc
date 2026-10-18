@@ -108,9 +108,22 @@ let W = 0, H = 0;
 const pts = [];
 const mousePos = { x: -9999, y: -9999, prevX: -9999, prevY: -9999, vx: 0, vy: 0 };
 
+/* Mức hiệu ứng do performance governor (theme.js) quyết định theo FPS thực tế:
+   high = đầy đủ, low = bớt hiệu ứng nặng, off = tắt hẳn. */
+let quality = (window.CN_PERF && window.CN_PERF.level) || 'high';
+
+function particleCount() {
+  if (quality === 'off') return 0;
+  const cap = window.innerWidth < 768 ? 60 : 145;
+  const byArea = Math.round((window.innerWidth * window.innerHeight) / 12000);
+  const base = Math.max(30, Math.min(cap, byArea));
+  return quality === 'low' ? Math.max(20, Math.round(base * 0.45)) : base;
+}
+
 function resize() {
   W = canvas.width = window.innerWidth;
   H = canvas.height = window.innerHeight;
+  syncCount();
 }
 resize();
 window.addEventListener('resize', resize);
@@ -154,9 +167,7 @@ function drawStar(c, x, y, outerR, innerR, rot) {
   c.fill();
 }
 
-for (let i = 0; i < 145; i++) {
-  pts.push(createFallingParticle(false));
-}
+// Số hạt được tạo theo mức hiệu ứng hiện tại (xem syncCount bên dưới).
 
 // On Click: Radial Shockwave Blast pushing falling particles
 window.addEventListener('mousedown', e => {
@@ -173,46 +184,59 @@ window.addEventListener('mousedown', e => {
   }
 });
 
+function syncCount() {
+  const target = particleCount();
+  while (pts.length > target) pts.pop();
+  while (pts.length < target) pts.push(createFallingParticle(false));
+}
+
 let tickCount = 0;
+let running = false;
+let rafId = 0;
 function animateParticles() {
+  if (!running) return;
   ctx.clearRect(0, 0, W, H);
   tickCount++;
 
   mousePos.vx *= 0.88;
   mousePos.vy *= 0.88;
 
-  // Draw connecting gold laser/lightning beams to cursor when particles are near mouse
-  for (let i = 0; i < pts.length; i++) {
-    const p = pts[i];
-    const mdx = p.x - mousePos.x;
-    const mdy = p.y - mousePos.y;
-    const mDist = Math.sqrt(mdx * mdx + mdy * mdy);
+  // Tia nối tới con trỏ và chỉ nối giữa các hạt: chỉ vẽ ở mức "high"
+  // vì đây là phần tốn kém nhất (đặc biệt vòng lặp nối hạt O(n²)).
+  if (quality === 'high') {
+    // Draw connecting gold laser/lightning beams to cursor when particles are near mouse
+    for (let i = 0; i < pts.length; i++) {
+      const p = pts[i];
+      const mdx = p.x - mousePos.x;
+      const mdy = p.y - mousePos.y;
+      const mDist = Math.sqrt(mdx * mdx + mdy * mdy);
 
-    if (mDist < 135) {
-      const beamAlpha = (1 - mDist / 135) * 0.45;
-      ctx.beginPath();
-      ctx.moveTo(p.x, p.y);
-      ctx.lineTo(mousePos.x, mousePos.y);
-      ctx.strokeStyle = `rgba(255, 215, 0, ${beamAlpha})`;
-      ctx.lineWidth = (1 - mDist / 135) * 1.5 + 0.5;
-      ctx.stroke();
-    }
-  }
-
-  // Draw connecting gold threads between close particles
-  for (let i = 0; i < pts.length; i++) {
-    for (let j = i + 1; j < pts.length; j++) {
-      const dx = pts[i].x - pts[j].x;
-      const dy = pts[i].y - pts[j].y;
-      const dist = Math.sqrt(dx * dx + dy * dy);
-      if (dist < 85) {
-        const lineAlpha = (1 - dist / 85) * 0.1 * pts[i].alpha;
+      if (mDist < 135) {
+        const beamAlpha = (1 - mDist / 135) * 0.45;
         ctx.beginPath();
-        ctx.moveTo(pts[i].x, pts[i].y);
-        ctx.lineTo(pts[j].x, pts[j].y);
-        ctx.strokeStyle = `rgba(212, 175, 55, ${lineAlpha})`;
-        ctx.lineWidth = 0.65;
+        ctx.moveTo(p.x, p.y);
+        ctx.lineTo(mousePos.x, mousePos.y);
+        ctx.strokeStyle = `rgba(255, 215, 0, ${beamAlpha})`;
+        ctx.lineWidth = (1 - mDist / 135) * 1.5 + 0.5;
         ctx.stroke();
+      }
+    }
+
+    // Draw connecting gold threads between close particles
+    for (let i = 0; i < pts.length; i++) {
+      for (let j = i + 1; j < pts.length; j++) {
+        const dx = pts[i].x - pts[j].x;
+        const dy = pts[i].y - pts[j].y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < 85) {
+          const lineAlpha = (1 - dist / 85) * 0.1 * pts[i].alpha;
+          ctx.beginPath();
+          ctx.moveTo(pts[i].x, pts[i].y);
+          ctx.lineTo(pts[j].x, pts[j].y);
+          ctx.strokeStyle = `rgba(212, 175, 55, ${lineAlpha})`;
+          ctx.lineWidth = 0.65;
+          ctx.stroke();
+        }
       }
     }
   }
@@ -253,9 +277,12 @@ function animateParticles() {
       currentGlow += (1 - mDist / 135) * 14;
     }
 
+    // Ở mức "high" mới dùng shadowBlur (rất tốn GPU) cho hiệu ứng phát sáng.
     ctx.save();
-    ctx.shadowBlur = currentGlow;
-    ctx.shadowColor = '#ffd700';
+    if (quality === 'high') {
+      ctx.shadowBlur = currentGlow;
+      ctx.shadowColor = '#ffd700';
+    }
     ctx.fillStyle = p.color;
     ctx.globalAlpha = currentAlpha;
 
@@ -276,9 +303,32 @@ function animateParticles() {
     ctx.restore();
   }
 
-  requestAnimationFrame(animateParticles);
+  rafId = requestAnimationFrame(animateParticles);
 }
-animateParticles();
+
+function startParticles() {
+  if (running || quality === 'off') return;
+  running = true;
+  rafId = requestAnimationFrame(animateParticles);
+}
+function stopParticles() {
+  running = false;
+  if (rafId) cancelAnimationFrame(rafId);
+  rafId = 0;
+  ctx.clearRect(0, 0, W, H);
+}
+
+/* Nhận mức hiệu ứng từ performance governor (theme.js). */
+if (window.CN_PERF) {
+  window.CN_PERF.onChange(level => {
+    quality = level;
+    syncCount();
+    if (level === 'off') stopParticles(); else startParticles();
+  });
+} else {
+  syncCount();
+  startParticles();
+}
 
 /* ── 2. Luxury Custom Cursor & Mouse Move Trail ── */
 const cursor = document.getElementById('cursor');
@@ -334,7 +384,10 @@ document.addEventListener('pointermove', e => {
   }
 });
 
+/* Trên thiết bị cảm ứng, con trỏ tùy biến bị ẩn bằng CSS nên không cần vòng lặp vẽ. */
+const hasPointerCursor = !window.matchMedia('(pointer: coarse)').matches;
 (function renderCursor() {
+  if (!hasPointerCursor) return;
   cx += (mx - cx) * 0.18;
   cy += (my - cy) * 0.18;
   if (cursor) {
@@ -379,6 +432,8 @@ updateHoverTargets();
 
 /* ── 3. Click Burst Effect & Ripple Wave ── */
 document.addEventListener('mousedown', e => {
+  // Máy yếu ở mức "off" thì bỏ hẳn hiệu ứng click cho đỡ giật.
+  if (window.CN_PERF && window.CN_PERF.level === 'off') return;
   cursor?.classList.add('clicking');
   createClickRipple(e.clientX, e.clientY);
   createClickBurst(e.clientX, e.clientY);
@@ -399,7 +454,8 @@ function createClickRipple(x, y) {
 }
 
 function createClickBurst(x, y) {
-  const count = 14;
+  // Mức "low" giảm số tia bắn ra để nhẹ hơn cho điện thoại.
+  const count = window.CN_PERF && window.CN_PERF.level === 'low' ? 7 : 14;
   for (let i = 0; i < count; i++) {
     const spark = document.createElement('div');
     spark.className = 'click-spark';
