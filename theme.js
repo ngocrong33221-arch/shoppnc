@@ -47,8 +47,60 @@
 
   /* Màu ảnh do Admin đặt, gửi kèm trong file theme (không cần thêm cột Supabase):
      - artColors: màu riêng cho từng sản phẩm, dạng { "<id sản phẩm>": "#màu" }
-     - artDefault: màu mặc định cho mọi sản phẩm không có màu riêng (rỗng = theo màu nhấn) */
+     - artDefault: màu mặc định cho mọi sản phẩm không có màu riêng (rỗng = màu tự động) */
   const artState = { colors: {}, default: '' };
+
+  /* Dải 7 màu cho ảnh trưng bày, chia theo phân loại sản phẩm (dò từ khoá tên/mô tả):
+     - danger (DDoS, hack/crack, spam, bot, buff, proxy…): tông nóng, cảnh báo
+     - safe (source code, APK, thiết kế, media, data…): tông lạnh, dịu mắt
+     Màu chọn theo tên sản phẩm nên mỗi sản phẩm luôn giữ nguyên một màu. */
+  const ART_AUTO_PALETTES = {
+    danger: ['#dc2626', '#ea580c', '#d97706', '#db2777', '#c026d3', '#e11d48', '#f59e0b'],
+    safe:   ['#0284c7', '#0d9488', '#16a34a', '#4f46e5', '#7c3aed', '#0891b2', '#2563eb'],
+  };
+  const ART_DANGER_KEYWORDS = [
+    'ddos', 'flood', 'stress', 'attack', 'tan cong', 'nuke', 'crash', 'syn', 'lay ip',
+    'hack', 'crack', 'bypass', 'keygen', 'cheat', 'aim', 'esp', 'unlock', 'vuot',
+    'spam', 'bot', 'treo', 'farm', 'scrape', 'craw', 'mailer', 'sms', 'gui tin',
+    'buff', 'boost', 'seeding', 'tuong tac', 'mat', 'proxy', 'vpn', 'socks', 'ssh',
+    'tunnel', 'dcom', 'clone', 'via', 'acc', 'nick', 'brute', 'exploit',
+  ];
+
+  /* Bỏ dấu tiếng Việt để dò từ khoá đơn giản hơn */
+  function artSlug(text) {
+    return String(text || '')
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/đ/g, 'd');
+  }
+
+  /* Sản phẩm nguy hiểm hay an toàn, dựa vào tên + mô tả + tên file */
+  function classifyArt(product) {
+    const info = product || {};
+    const text = artSlug([info.name, info.description, info.fileName || info.file_name].filter(Boolean).join(' '));
+    const isDanger = ART_DANGER_KEYWORDS.some(word => (word.length <= 3
+      ? new RegExp(`(^|[^a-z0-9])${word}([^a-z0-9]|$)`).test(text)
+      : text.includes(word)));
+    return isDanger ? 'danger' : 'safe';
+  }
+
+  /* Băm tên sản phẩm để chọn màu cố định trong dải 7 màu */
+  function artSeed(product) {
+    const info = product || {};
+    const text = artSlug(info.name || info.fileName || info.file_name || info.id || '');
+    let hash = 0;
+    for (let index = 0; index < text.length; index += 1) {
+      hash = (hash * 31 + text.charCodeAt(index)) >>> 0;
+    }
+    return hash;
+  }
+
+  function autoArtColor(product) {
+    if (!product) return '';
+    const palette = ART_AUTO_PALETTES[classifyArt(product)];
+    return palette[artSeed(product) % palette.length];
+  }
 
   function applyCodeNestTheme(theme) {
     if (!theme || !/^#[0-9a-f]{6}$/i.test(theme.background) || !/^#[0-9a-f]{6}$/i.test(theme.accent)) return;
@@ -160,10 +212,18 @@
       const value = artState.colors[String(id)];
       return /^#[0-9a-f]{6}$/i.test(value || '') ? value : '';
     },
-    /* Màu ảnh dùng cho sản phẩm: ưu tiên màu riêng, rồi tới màu mặc định Admin đặt,
-       cuối cùng trả về rỗng để ảnh dùng màu nhấn của theme. */
-    resolve(id) {
-      return this.colorOf(id) || artState.default || '';
+    /* Phân loại sản phẩm: 'danger' (nguy hiểm) hoặc 'safe' (an toàn). */
+    classify(product) {
+      return classifyArt(product);
+    },
+    /* Màu tự động của sản phẩm theo phân loại an toàn / nguy hiểm. */
+    autoColor(product) {
+      return autoArtColor(product);
+    },
+    /* Màu ảnh dùng cho sản phẩm: ưu tiên màu riêng Admin đặt, rồi tới màu mặc định,
+       rồi tới màu tự động theo phân loại; cuối cùng trả về rỗng để ảnh dùng màu nhấn theme. */
+    resolve(id, product) {
+      return this.colorOf(id) || artState.default || autoArtColor(product) || '';
     }
   };
 

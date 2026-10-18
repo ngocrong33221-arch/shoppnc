@@ -315,8 +315,9 @@ async function renderInventory() {
       </div>
       <div class="inv-actions">
         <span class="inv-price">${Number(p.price).toLocaleString('vi-VN')}đ</span>
-        <input class="inv-color" type="color" title="Màu ảnh sản phẩm"
-               value="${readArtColors()[String(p.id)] || '#38bdf8'}">
+        <input class="inv-color" type="color"
+               title="Màu ảnh sản phẩm (đang tự động theo phân loại an toàn / nguy hiểm — chọn màu để ghi đè)"
+               value="${window.CN_ART?.resolve(p.id, p) || '#38bdf8'}">
         <button class="delete-btn" type="button">Xóa</button>
       </div>`;
     item.querySelector('.inv-name').textContent = p.name;
