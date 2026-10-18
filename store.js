@@ -31,7 +31,7 @@ function renderProducts(list) {
     card.dataset.category = product.category || 'web';
     card.style.animationDelay = (i * 0.07) + 's';
     card.innerHTML = `
-      <div class="product-art" style="${productThemeStyle(theme)}">
+      <div class="product-art" style="${productThemeStyle(theme, product)}">
         <div class="art-pattern"></div>
         <span class="art-badge">${productThemeIcon(theme)}</span>
         <span class="art-topic">${theme.label}</span>
@@ -100,5 +100,10 @@ async function loadProducts() {
   resultCount.textContent = countStr;
   applyFilters();
 }
+
+/* Màu ảnh riêng của sản phẩm nằm trong file theme nên có thể về sau khi đã vẽ xong. */
+window.addEventListener('codenest:themechange', () => {
+  if (customProducts.length) applyFilters();
+});
 
 loadProducts();

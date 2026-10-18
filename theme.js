@@ -45,8 +45,15 @@
     { id: 'amber',    name: 'Amber Gold',   background: '#0f0c05', accent: '#f59e0b', icon: '⚡' },
   ];
 
+  /* Màu ảnh riêng cho từng sản phẩm do Admin đặt, được gửi kèm trong file theme
+     dưới dạng { "<id sản phẩm>": "#màu" }. Không cần thêm cột vào bảng Supabase. */
+  const artState = { colors: {} };
+
   function applyCodeNestTheme(theme) {
     if (!theme || !/^#[0-9a-f]{6}$/i.test(theme.background) || !/^#[0-9a-f]{6}$/i.test(theme.accent)) return;
+    if (theme.artColors && typeof theme.artColors === 'object') {
+      artState.colors = theme.artColors;
+    }
     const root = document.documentElement;
     const background = theme.background.toLowerCase();
     const accent = theme.accent.toLowerCase();
@@ -107,7 +114,7 @@
     }
 
     try {
-      window.dispatchEvent(new CustomEvent('codenest:themechange', { detail: { theme, isLight } }));
+      window.dispatchEvent(new CustomEvent('codenest:themechange', { detail: { theme, isLight, artColors: artState.colors } }));
     } catch {
       // Ignored in non-DOM/older environments
     }
@@ -139,6 +146,15 @@
       setCodeNestTheme({ background: '#f8fafc', accent: '#0284c7' });
     }
   }
+
+  /* Cho các trang đọc màu ảnh riêng của sản phẩm (xem productThemeStyle trong shared.js). */
+  window.CN_ART = {
+    get colors() { return artState.colors; },
+    colorOf(id) {
+      const value = artState.colors[String(id)];
+      return /^#[0-9a-f]{6}$/i.test(value || '') ? value : '';
+    }
+  };
 
   window.CODE_NEST_PRESETS = CODE_NEST_PRESETS;
   window.applyCodeNestTheme = applyCodeNestTheme;

@@ -16,6 +16,13 @@ const previewPrc  = document.getElementById('previewPrice');
 const nameInput   = document.getElementById('productName');
 const descInput   = document.getElementById('productDescription');
 const priceInput  = document.getElementById('productPrice');
+const productColor     = document.getElementById('productColor');
+const productColorAuto = document.getElementById('productColorAuto');
+
+/* Ô chọn màu chỉ bật khi Admin bỏ chọn "Theo màu theme" */
+productColorAuto.addEventListener('change', () => {
+  productColor.disabled = productColorAuto.checked;
+});
 
 const API_BASE = window.location.protocol === 'file:' ? 'http://127.0.0.1:5000' : window.location.origin;
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB — giới hạn upload của Supabase Storage (gói free)
@@ -100,7 +107,7 @@ form.addEventListener('submit', async e => {
       const { data: urlData } = supabase.storage.from(STORAGE_BUCKET).getPublicUrl(path);
 
       // 2. Lưu thông tin sản phẩm kèm link file thật cho khách tải
-      const { error } = await supabase
+      const { data: inserted, error } = await supabase
         .from('products')
         .insert([{
           name: product.name,
@@ -109,13 +116,21 @@ form.addEventListener('submit', async e => {
           category: product.category,
           file_name: product.fileName,
           file_url: urlData?.publicUrl || null
-        }]);
+        }])
+        .select()
+        .single();
 
       if (error) throw error;
+
+      // 3. Nếu Admin đặt màu riêng cho ảnh sản phẩm thì lưu kèm vào file theme
+      if (!productColorAuto.checked && inserted && inserted.id !== undefined) {
+        await setProductArtColor(inserted.id, productColor.value);
+      }
 
       statusEl.textContent = '✓ Đã đăng sản phẩm thành công!';
       statusEl.className = 'form-status ok';
       form.reset();
+      productColor.disabled = true;
       fileLabel.textContent = 'Chọn hoặc kéo thả file vào đây';
       previewName.textContent = 'Tên sản phẩm của bạn';
       previewDesc.textContent = 'Mô tả ngắn sẽ xuất hiện ở đây.';
@@ -207,10 +222,19 @@ async function renderInventory() {
       </div>
       <div class="inv-actions">
         <span class="inv-price">${Number(p.price).toLocaleString('vi-VN')}đ</span>
+        <input class="inv-color" type="color" title="Màu ảnh sản phẩm"
+               value="${readArtColors()[String(p.id)] || '#38bdf8'}">
         <button class="delete-btn" type="button">Xóa</button>
       </div>`;
     item.querySelector('.inv-name').textContent = p.name;
     item.querySelector('.inv-desc').textContent = p.description;
+
+    item.querySelector('.inv-color').addEventListener('change', async event => {
+      const result = await setProductArtColor(p.id, event.target.value);
+      showToast(result && result.ok === false
+        ? `Chưa phát được màu cho khách (${result.message})`
+        : 'Đã đổi màu ảnh sản phẩm');
+    });
 
     item.querySelector('.delete-btn').addEventListener('click', async () => {
       if (!confirm(`Xóa sản phẩm "${p.name}"?`)) return;
@@ -755,6 +779,31 @@ document.querySelectorAll('.theme-preset').forEach(button => {
   });
 });
 
+/* ── Màu ảnh riêng cho từng sản phẩm ──
+   Không cần thêm cột vào bảng Supabase: màu lưu trong file theme trên Storage
+   dưới dạng { "<id sản phẩm>": "#màu" } nên tự phát cho khách cùng lúc với theme. */
+function readArtColors() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(THEME_KEY) || 'null');
+    return saved && saved.artColors && typeof saved.artColors === 'object' ? saved.artColors : {};
+  } catch {
+    return {};
+  }
+}
+
+async function setProductArtColor(productId, color) {
+  const colors = readArtColors();
+  const key = String(productId);
+  if (color) colors[key] = color;
+  else delete colors[key];
+
+  const base = readLocalTheme() || window.getCurrentCodeNestTheme?.() || { background: '#080b11', accent: '#38bdf8' };
+  const theme = { background: base.background, accent: base.accent, artColors: colors };
+  localStorage.setItem(THEME_KEY, JSON.stringify(theme));
+  window.applyCodeNestTheme?.(theme);
+  return isStaticHost ? publishThemeToCloud(theme) : { ok: true };
+}
+
 /* Phát theme dùng chung cho mọi khách hàng qua Supabase Storage (host tĩnh).
    Bucket chặn ghi đè nên mỗi lần lưu tạo 1 file mới "cn_theme-<thời gian>.json";
    theme.js ở phía khách sẽ tự đọc file mới nhất. */
@@ -782,7 +831,8 @@ document.getElementById('themeForm').addEventListener('submit', async event => {
   submitButton.disabled = true;
   try {
     if (isStaticHost) {
-      const theme = { background, accent };
+      // Giữ nguyên màu ảnh riêng của từng sản phẩm khi đổi giao diện
+      const theme = { background, accent, artColors: readArtColors() };
       localStorage.setItem(THEME_KEY, JSON.stringify(theme));
       window.applyCodeNestTheme?.(theme);
       const publish = await publishThemeToCloud(theme);

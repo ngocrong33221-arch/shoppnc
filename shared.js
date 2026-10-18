@@ -810,13 +810,26 @@ function resolveProductTheme(product) {
   return matchTheme(artKey(info.description)) || PRODUCT_THEMES[PRODUCT_THEMES.length - 1];
 }
 
-/* Đổ hoạ tiết của chủ đề vào style inline của khung trưng bày.
-   Màu sắc (--art-accent/--art-soft/--art-glow/--art-bg) không đặt cứng nữa mà để
-   store.css dùng biến theme hiện tại (--gold, --gold-rgb, --gold-light-rgb,
-   --surface2, --bg-deep) nên ảnh sản phẩm tự đổi màu theo theme và theo sáng/tối. */
-function productThemeStyle(theme) {
+/* Đổ hoạ tiết + màu vào style inline của khung trưng bày.
+   Mặc định màu lấy từ theme hiện tại (store.css dùng --gold, --surface2, --bg-deep).
+   Nếu Admin đặt màu riêng cho sản phẩm thì dùng màu đó cho ảnh của sản phẩm ấy. */
+function productThemeStyle(theme, product) {
   const pattern = ART_PATTERNS[theme.pattern] || ART_PATTERNS.grid;
-  return `--art-pattern:${pattern.image};--art-pattern-size:${pattern.size}`;
+  let style = `--art-pattern:${pattern.image};--art-pattern-size:${pattern.size}`;
+  const color = productArtColor(product);
+  if (color) {
+    const [red, green, blue] = [1, 3, 5].map(offset => parseInt(color.slice(offset, offset + 2), 16));
+    style += `;--art-accent:${color};--art-soft:rgba(${red}, ${green}, ${blue}, 0.32);`
+      + `--art-glow:rgba(${red}, ${green}, ${blue}, 0.26)`;
+  }
+  return style;
+}
+
+/* Màu ảnh riêng của sản phẩm do Admin đặt (gửi kèm file theme qua window.CN_ART).
+   Không có thì trả về rỗng để ảnh dùng màu theme hiện tại. */
+function productArtColor(product) {
+  if (!product || !window.CN_ART) return '';
+  return window.CN_ART.colorOf(product.id);
 }
 
 function productThemeIcon(theme) {

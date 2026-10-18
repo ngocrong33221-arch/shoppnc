@@ -42,15 +42,24 @@ function renderDetailSpecs(product) {
   });
 }
 
-function renderDetail(product) {
+let currentDetailProduct = null;
+
+/* Khung ảnh + biểu tượng: vẽ riêng để cập nhật lại khi màu ảnh của sản phẩm
+   (nằm trong file theme) tải xong sau khi trang đã hiển thị. */
+function renderDetailArt(product) {
   const theme = resolveProductTheme(product);
   const art = document.getElementById('detailArt');
-  if (art) art.setAttribute('style', productThemeStyle(theme));
-
-  const extension = detailExtension(product.fileName || product.file_name);
+  if (art) art.setAttribute('style', productThemeStyle(theme, product));
   const iconEl = document.getElementById('detailIcon');
   if (iconEl) iconEl.innerHTML = productThemeIcon(theme);
   detailText('detailTopic', theme.label);
+}
+
+function renderDetail(product) {
+  currentDetailProduct = product;
+  renderDetailArt(product);
+
+  const extension = detailExtension(product.fileName || product.file_name);
   detailText('detailTag', `${detailCategoryLabel(product.category)} · ${extension}`);
   detailText('detailName', product.name || 'Sản phẩm');
   detailText('detailDesc', product.description || 'Sản phẩm này chưa có mô tả.');
@@ -77,5 +86,9 @@ async function initProductDetail() {
 
   renderDetail(catalog[index]);
 }
+
+window.addEventListener('codenest:themechange', () => {
+  if (currentDetailProduct) renderDetailArt(currentDetailProduct);
+});
 
 initProductDetail();
