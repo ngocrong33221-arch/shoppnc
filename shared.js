@@ -449,6 +449,51 @@ function createClickBurst(x, y) {
   });
 })();
 
+/* ── 6b. Mobile Bottom Navigation (tự tạo cho mọi trang) ── */
+(function setupMobileNav() {
+  const nav = document.querySelector('.topbar-nav');
+  if (!nav) return;
+
+  const ICONS = {
+    'store.html':   '<path d="M4 7.5h16l-1.2 11a2 2 0 0 1-2 1.75H7.2a2 2 0 0 1-2-1.75L4 7.5Z"/><path d="M9 7.5V5.8a3 3 0 0 1 6 0v1.7"/>',
+    'wallet.html':  '<rect x="3" y="6" width="18" height="12.5" rx="2.6"/><path d="M3 10.2h18"/><path d="M16.2 14.2h1.6"/>',
+    'account.html': '<circle cx="12" cy="8.4" r="3.4"/><path d="M5.2 19.6a6.8 6.8 0 0 1 13.6 0"/>',
+    'support.html': '<circle cx="12" cy="12" r="8.4"/><path d="M9.7 9.6a2.5 2.5 0 1 1 3.4 2.3c-.8.4-1.1.9-1.1 1.7"/><path d="M12 16.4h.01"/>',
+    'admin.html':   '<path d="M12 3.4 5.2 6.4v4.9c0 4.1 2.8 7.5 6.8 8.9 4-1.4 6.8-4.8 6.8-8.9V6.4L12 3.4Z"/><path d="m9.3 11.9 2 2 3.5-3.7"/>'
+  };
+
+  const bar = document.createElement('nav');
+  bar.className = 'mobile-nav';
+  bar.id = 'mobileNav';
+  bar.setAttribute('aria-label', 'Điều hướng nhanh');
+
+  nav.querySelectorAll('a[href]').forEach(link => {
+    if (link.style.display === 'none') return;
+
+    const href = link.getAttribute('href');
+    const file = href.split('?')[0].split('/').pop();
+    const icon = ICONS[file] || '<circle cx="12" cy="12" r="8"/>';
+
+    const item = document.createElement('a');
+    item.className = 'mobile-nav-item';
+    item.href = href;
+    if (link.classList.contains('active')) item.classList.add('active');
+    item.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true">${icon}</svg><span></span>`;
+    item.querySelector('span').textContent = link.textContent.trim();
+
+    item.addEventListener('click', e => {
+      if (item.classList.contains('active')) return;
+      e.preventDefault();
+      navigate(href);
+    });
+
+    bar.appendChild(item);
+  });
+
+  if (!bar.children.length) return;
+  document.body.appendChild(bar);
+})();
+
 /* ── 7. Scroll Reveal ── */
 (function initReveal() {
   const io = new IntersectionObserver((entries) => {

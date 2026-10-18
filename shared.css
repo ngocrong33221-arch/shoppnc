@@ -633,13 +633,85 @@ body::before {
   transform: translateY(0);
 }
 
+/* ====== MOBILE BOTTOM NAV ====== */
+.mobile-nav {
+  display: none;
+}
+
 /* Responsive */
 @media (max-width: 900px) {
   .topbar-nav { display: none; }
   .page-hero { padding: 52px 5vw 36px; }
+
+  body { padding-bottom: calc(68px + env(safe-area-inset-bottom, 0px)); }
+
+  .mobile-nav {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 120;
+    display: flex;
+    align-items: stretch;
+    gap: 2px;
+    padding: 6px 8px calc(6px + env(safe-area-inset-bottom, 0px));
+    border-top: 1px solid var(--gold-border);
+    background: rgba(6, 6, 8, 0.94);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    box-shadow: 0 -8px 28px rgba(0, 0, 0, 0.55);
+  }
+  .mobile-nav-item {
+    flex: 1 1 0;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    padding: 6px 2px;
+    border-radius: 12px;
+    color: var(--muted);
+    text-decoration: none;
+    font-size: 10px;
+    font-weight: 500;
+    font-family: var(--sans);
+    transition: var(--trans);
+  }
+  .mobile-nav-item span {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .mobile-nav-item svg {
+    width: 21px;
+    height: 21px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.7;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .mobile-nav-item.active {
+    color: var(--gold-bright);
+    background: rgba(212, 175, 55, 0.1);
+  }
+  .mobile-nav-item.active svg {
+    stroke-width: 2;
+    filter: drop-shadow(0 0 8px var(--gold-glow));
+  }
+  .mobile-nav-item:active {
+    transform: scale(0.94);
+  }
 }
 @media (max-width: 520px) {
   .topbar { padding: 0 16px; }
+  .topbar-user { gap: 8px; }
+  .user-badge { padding: 5px 10px 5px 6px; }
+  .logout-btn { padding: 8px 12px; font-size: 11px; }
   .page-hero { padding: 36px 16px 28px; }
   .page-h1 { font-size: 38px; }
+  .mobile-nav-item { font-size: 9.5px; }
+  .mobile-nav-item svg { width: 20px; height: 20px; }
 }
