@@ -851,7 +851,7 @@ function renderOrders(serverOrders) {
     }
   });
   const orders = [...merged.values()]
-    .sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+    .sort((a, b) => new Date(b.createdAt || b.created_at || 0) - new Date(a.createdAt || a.created_at || 0));
 
   orderCount.textContent = `${orders.length} đơn`;
   orderRows.replaceChildren();
@@ -871,7 +871,7 @@ function renderOrders(serverOrders) {
     const row = document.createElement('tr');
 
     const time = document.createElement('td');
-    time.textContent = formatOrderTime(order.createdAt);
+    time.textContent = formatOrderTime(order.createdAt || order.created_at);
 
     const user = document.createElement('td');
     user.textContent = order.username || '—';
@@ -978,9 +978,27 @@ function normalizeOrderCode(value) {
   return String(value || '').toUpperCase().replace(/\s+/g, '');
 }
 
-function findOrderByCode(code) {
+async function findOrderByCode(code) {
   const target = normalizeOrderCode(code);
   if (!target) return null;
+
+  // Đơn nạp được tạo trên Supabase (wallet.js), nên phải tìm ở đó trước.
+  if (typeof supabase !== 'undefined' && supabase) {
+    try {
+      const { data, error } = await supabase
+        .from('orders')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(300);
+      if (!error && data) {
+        const found = data.find(order => normalizeOrderCode(order.content) === target);
+        if (found) return found;
+      }
+    } catch (error) {
+      console.warn('Không tìm được đơn trên Supabase:', error);
+    }
+  }
+
   return readLocalOrders().find(order => normalizeOrderCode(order.content) === target) || null;
 }
 
@@ -993,6 +1011,12 @@ async function handleTelegramUpdate(update) {
 
   const text = String(message.text || '').trim();
   const command = (text.split(/\s+/)[0] || '').split('@')[0].toLowerCase();
+
+  if (command === '/start' || command === '/help' || command === '/trogiup') {
+    await notifyAdminTelegram('Lệnh quản trị CodeNest:\n/duyet <mã đơn> - duyệt đơn nạp và cộng tiền vào ví\n/help - xem hướng dẫn này');
+    return;
+  }
+
   if (command !== '/duyet') return;
 
   const code = text.replace(/^\/duyet(@[A-Za-z0-9_]+)?/i, '').trim();
@@ -1001,9 +1025,9 @@ async function handleTelegramUpdate(update) {
     return;
   }
 
-  const order = findOrderByCode(code);
+  const order = await findOrderByCode(code);
   if (!order) {
-    await notifyAdminTelegram(`Không tìm thấy đơn ${code} trên trình duyệt này.\nKiểm tra lại mã đơn hoặc mở lại trang quản trị đúng máy đã tạo đơn.`);
+    await notifyAdminTelegram(`Không tìm thấy đơn ${code}.\nKiểm tra lại mã đơn trên trang Ví tiền của khách.`);
     return;
   }
   if (order.status === 'approved') {
@@ -1011,7 +1035,7 @@ async function handleTelegramUpdate(update) {
     return;
   }
 
-  const newBalance = applyOrderApproval(order);
+  const newBalance = await applyOrderApproval(order);
   await loadOrders();
   await renderUsers();
   await notifyAdminTelegram(
@@ -1040,6 +1064,20 @@ async function telegramPollLoop() {
   telegramStatus.textContent = 'Telegram: đang lắng nghe lệnh /duyet...';
   telegramStatus.className = 'form-status ok';
 
+  // Nếu bot đã gắn webhook (Supabase Edge Function) thì bot tự chạy 24/7.
+  // Telegram không cho dùng getUpdates song song với webhook (lỗi 409), nên dừng polling.
+  try {
+    const infoResponse = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/getWebhookInfo`, { cache: 'no-store' });
+    const info = await infoResponse.json();
+    if (info && info.ok && info.result && info.result.url) {
+      telegramStatus.textContent = 'Telegram: bot đang chạy 24/7 qua webhook, bạn không cần mở trang này.';
+      telegramStatus.className = 'form-status ok';
+      return;
+    }
+  } catch (error) {
+    console.warn('Không kiểm tra được webhook Telegram:', error);
+  }
+
   let offset = Number(localStorage.getItem(TG_OFFSET_KEY) || 0) || undefined;
   while (true) {
     try {
@@ -1056,7 +1094,13 @@ async function telegramPollLoop() {
         }
       }
     } catch (error) {
-      telegramStatus.textContent = `Telegram: ${error.message || 'không kết nối được'}. Đang thử lại...`;
+      const message = String(error && error.message ? error.message : '');
+      if (/webhook/i.test(message)) {
+        telegramStatus.textContent = 'Telegram: bot đang chạy 24/7 qua webhook, bạn không cần mở trang này.';
+        telegramStatus.className = 'form-status ok';
+        return;
+      }
+      telegramStatus.textContent = `Telegram: ${message || 'không kết nối được'}. Đang thử lại...`;
       telegramStatus.className = 'form-status err';
       await new Promise(resolve => setTimeout(resolve, 8000));
     }
