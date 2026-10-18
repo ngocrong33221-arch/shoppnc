@@ -171,16 +171,33 @@
   overflow: hidden;
   border-bottom: 1px solid var(--border);
 }
-.art-code {
-  font-family: var(--mono);
-  font-size: 32px;
-  font-weight: 700;
-  color: var(--gold-light);
-  text-shadow: 0 0 24px var(--gold-glow);
-  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+.art-badge {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 68px;
+  height: 68px;
+  border-radius: 20px;
+  border: 1px solid var(--art-soft, rgba(212, 175, 55, 0.35));
+  background: linear-gradient(150deg, var(--art-soft, rgba(212, 175, 55, 0.18)), rgba(255, 255, 255, 0.02));
+  color: var(--art-accent, var(--gold-light));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07), 0 12px 28px rgba(0, 0, 0, 0.45);
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 0.35s ease,
+              color 0.35s ease;
 }
-.product-card:hover .art-code {
-  transform: scale(1.15) rotate(4deg);
+.art-badge svg {
+  width: 30px;
+  height: 30px;
+  filter: drop-shadow(0 0 10px var(--art-glow, rgba(212, 175, 55, 0.45)));
+}
+.product-card:hover .art-badge {
+  transform: translateY(-4px) scale(1.08) rotate(-3deg);
+  color: #fff;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12),
+              0 18px 36px rgba(0, 0, 0, 0.55),
+              0 0 28px var(--art-glow, rgba(212, 175, 55, 0.3));
 }
 
 .art-pattern {
@@ -194,10 +211,30 @@
 }
 
 /* Luxury Color Themes for Art */
-.art-lime   { background: linear-gradient(135deg, #121008 0%, #26200c 50%, #171408 100%); }
-.art-blue   { background: linear-gradient(135deg, #0a0b12 0%, #131726 50%, #0a0d14 100%); }
-.art-purple { background: linear-gradient(135deg, #100b17 0%, #1e122a 50%, #100b17 100%); }
-.art-orange { background: linear-gradient(135deg, #140d07 0%, #29180b 50%, #140d07 100%); }
+.art-lime {
+  --art-accent: #ffe27a;
+  --art-soft: rgba(255, 226, 122, 0.18);
+  --art-glow: rgba(255, 226, 122, 0.4);
+  background: linear-gradient(135deg, #121008 0%, #26200c 50%, #171408 100%);
+}
+.art-blue {
+  --art-accent: #9fc9ff;
+  --art-soft: rgba(159, 201, 255, 0.18);
+  --art-glow: rgba(159, 201, 255, 0.4);
+  background: linear-gradient(135deg, #0a0b12 0%, #131726 50%, #0a0d14 100%);
+}
+.art-purple {
+  --art-accent: #d5abff;
+  --art-soft: rgba(213, 171, 255, 0.18);
+  --art-glow: rgba(213, 171, 255, 0.4);
+  background: linear-gradient(135deg, #100b17 0%, #1e122a 50%, #100b17 100%);
+}
+.art-orange {
+  --art-accent: #ffba82;
+  --art-soft: rgba(255, 186, 130, 0.18);
+  --art-glow: rgba(255, 186, 130, 0.4);
+  background: linear-gradient(135deg, #140d07 0%, #29180b 50%, #140d07 100%);
+}
 
 /* Product Meta */
 .product-meta {
@@ -542,10 +579,15 @@
   overflow: hidden;
   box-shadow: 0 30px 70px rgba(0, 0, 0, 0.45);
 }
-.detail-art .art-code {
-  position: relative;
-  font-size: clamp(52px, 7vw, 96px);
-  color: var(--gold-light);
+.detail-art .art-badge-lg {
+  width: clamp(104px, 12vw, 148px);
+  height: clamp(104px, 12vw, 148px);
+  border-radius: 32px;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 24px 55px rgba(0, 0, 0, 0.5);
+}
+.detail-art .art-badge-lg svg {
+  width: clamp(46px, 5.4vw, 66px);
+  height: clamp(46px, 5.4vw, 66px);
 }
 
 .detail-info {

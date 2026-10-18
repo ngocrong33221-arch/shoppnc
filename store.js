@@ -9,7 +9,6 @@ const resultCount= document.getElementById('resultCount');
 
 /* Art color themes */
 const artThemes = ['art-lime', 'art-blue', 'art-purple', 'art-orange'];
-const artIcons  = ['&lt;/&gt;', '{ }', '( )', '#[]'];
 
 function productUrl(product) {
   return `product.html?id=${encodeURIComponent(product.id)}`;
@@ -26,9 +25,10 @@ function renderProducts(list) {
       </div>`;
     return;
   }
+  const usedIcons = new Set();
   list.forEach((product, i) => {
     const theme = artThemes[i % artThemes.length];
-    const icon  = artIcons[i % artIcons.length];
+    const icon  = productIconSvg(product, usedIcons);
     const card  = document.createElement('article');
     card.className = 'product-card';
     card.dataset.category = product.category || 'web';
@@ -36,7 +36,7 @@ function renderProducts(list) {
     card.innerHTML = `
       <div class="product-art ${theme}">
         <div class="art-pattern"></div>
-        <span class="art-code">${icon}</span>
+        <span class="art-badge">${icon}</span>
       </div>
       <div class="product-meta">
         <span class="product-tag">${PRODUCT_CATEGORY_LABELS[product.category] || product.category || 'web'} · ${product.fileName || 'CODE FILE'}</span>

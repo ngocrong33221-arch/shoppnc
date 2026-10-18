@@ -625,7 +625,56 @@ async function loadProductCatalog() {
   return getLocalProducts();
 }
 
-/* ── 11. Tải file sản phẩm đã lưu ── */
+/* ── 11. Biểu tượng riêng cho từng sản phẩm ── */
+const PRODUCT_ICONS = [
+  { key: 'code',     svg: '<polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>' },
+  { key: 'terminal', svg: '<polyline points="4 17 10 11 4 5"/><line x1="13" y1="19" x2="20" y2="19"/>' },
+  { key: 'layout',   svg: '<rect x="3" y="3" width="7" height="7" rx="1.6"/><rect x="14" y="3" width="7" height="7" rx="1.6"/><rect x="3" y="14" width="7" height="7" rx="1.6"/><rect x="14" y="14" width="7" height="7" rx="1.6"/>' },
+  { key: 'motion',   svg: '<polygon points="6.5 4.2 19.5 12 6.5 19.8 6.5 4.2"/>' },
+  { key: 'android',  svg: '<rect x="5" y="2" width="14" height="20" rx="3.4"/><line x1="10" y1="18.4" x2="14" y2="18.4"/>' },
+  { key: 'archive',  svg: '<rect x="2.5" y="3.5" width="19" height="5" rx="1.4"/><path d="M4.5 8.5V19a1.5 1.5 0 0 0 1.5 1.5h12a1.5 1.5 0 0 0 1.5-1.5V8.5"/><line x1="10" y1="13" x2="14" y2="13"/>' },
+  { key: 'app',      svg: '<rect x="3" y="4" width="18" height="16" rx="2.6"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="6.6" y1="6.5" x2="6.61" y2="6.5"/>' },
+  { key: 'audio',    svg: '<path d="M9.5 18V5.6l10-1.8V16"/><circle cx="6.5" cy="18" r="3"/><circle cx="16.5" cy="16" r="3"/>' },
+  { key: 'palette',  svg: '<circle cx="12" cy="12" r="9"/><circle cx="8.6" cy="9.8" r="1.15"/><circle cx="15.4" cy="9.8" r="1.15"/><circle cx="12" cy="15.8" r="1.15"/>' },
+  { key: 'spark',    svg: '<polygon points="12 2.4 14.7 9.3 21.6 12 14.7 14.7 12 21.6 9.3 14.7 2.4 12 9.3 9.3"/>' },
+];
+
+const PRODUCT_ICON_HINTS = {
+  apk: 'android',
+  zip: 'archive', rar: 'archive', '7z': 'archive', tar: 'archive', gz: 'archive', xz: 'archive',
+  exe: 'app', msi: 'app', dmg: 'app', bat: 'app',
+  mp3: 'audio', wav: 'audio', m4a: 'audio', flac: 'audio',
+  mp4: 'motion', avi: 'motion', mkv: 'motion', gif: 'motion',
+  ai: 'palette', psd: 'palette', fig: 'palette', sketch: 'palette', svg: 'palette',
+  sh: 'terminal', bash: 'terminal',
+  web: 'code', ui: 'layout', motion: 'motion', other: 'spark',
+};
+
+/* Chọn biểu tượng theo loại file/danh mục; nếu bị trùng với sản phẩm trước đó
+   trong cùng danh sách thì lấy biểu tượng kế tiếp để mỗi mặt hàng một kiểu. */
+function productIconSvg(product, usedKeys) {
+  const fileName = String((product && (product.fileName || product.file_name)) || '');
+  const extension = (fileName.match(/\.([a-z0-9]+)$/i) || [])[1];
+  const category = String((product && product.category) || '').toLowerCase();
+  const hint = (extension && PRODUCT_ICON_HINTS[extension.toLowerCase()])
+    || PRODUCT_ICON_HINTS[category]
+    || 'code';
+
+  const start = Math.max(PRODUCT_ICONS.findIndex(icon => icon.key === hint), 0);
+  let shape = PRODUCT_ICONS[start].svg;
+  for (let step = 0; step < PRODUCT_ICONS.length; step++) {
+    const icon = PRODUCT_ICONS[(start + step) % PRODUCT_ICONS.length];
+    if (!usedKeys || !usedKeys.has(icon.key)) {
+      if (usedKeys) usedKeys.add(icon.key);
+      shape = icon.svg;
+      break;
+    }
+  }
+
+  return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${shape}</svg>`;
+}
+
+/* ── 12. Tải file sản phẩm đã lưu ── */
 async function downloadProductFile(url, fileName) {
   if (!url) return false;
   const name = fileName || url.split('/').pop() || 'san-pham';
@@ -659,7 +708,7 @@ async function downloadProductFile(url, fileName) {
   return true;
 }
 
-/* ── 12. Page In Animation ── */
+/* ── 13. Page In Animation ── */
 document.addEventListener('DOMContentLoaded', () => {
   document.body.style.opacity = '0';
   requestAnimationFrame(() => {

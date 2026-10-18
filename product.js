@@ -3,7 +3,6 @@
    ============================================================ */
 
 const DETAIL_THEMES = ['art-lime', 'art-blue', 'art-purple', 'art-orange'];
-const DETAIL_ICONS  = ['</>', '{ }', '( )', '#[]'];
 
 const detailId = new URLSearchParams(window.location.search).get('id');
 
@@ -51,7 +50,8 @@ function renderDetail(product, index) {
   art.classList.add(DETAIL_THEMES[index % DETAIL_THEMES.length]);
 
   const extension = detailExtension(product.fileName || product.file_name);
-  detailText('detailIcon', DETAIL_ICONS[index % DETAIL_ICONS.length]);
+  const iconEl = document.getElementById('detailIcon');
+  if (iconEl) iconEl.innerHTML = productIconSvg(product);
   detailText('detailTag', `${detailCategoryLabel(product.category)} · ${extension}`);
   detailText('detailName', product.name || 'Sản phẩm');
   detailText('detailDesc', product.description || 'Sản phẩm này chưa có mô tả.');
