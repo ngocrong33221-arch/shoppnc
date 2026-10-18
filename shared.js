@@ -526,7 +526,6 @@ async function fetchBalance(username) {
   try {
     // Online check first
     if (typeof supabase !== 'undefined' && supabase) {
-      if (username === 'ADM') return 9999999;
       const { data, error } = await supabase
         .from('users')
         .select('balance')
@@ -545,9 +544,8 @@ async function fetchBalance(username) {
   const key = `cn_balance_${username}`;
   const saved = localStorage.getItem(key);
   if (saved !== null) return Number(saved);
-  const defaultAmt = username === 'ADM' ? 9999999 : 0;
-  localStorage.setItem(key, defaultAmt);
-  return defaultAmt;
+  localStorage.setItem(key, 0);
+  return 0;
 }
 
 /* ── 10. Product Catalog (dùng chung cho store.html và product.html) ── */
