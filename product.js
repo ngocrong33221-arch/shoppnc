@@ -2,8 +2,6 @@
    product.js — Trang chi tiết sản phẩm
    ============================================================ */
 
-const DETAIL_THEMES = ['art-lime', 'art-blue', 'art-purple', 'art-orange'];
-
 const detailId = new URLSearchParams(window.location.search).get('id');
 
 function detailText(id, text) {
@@ -44,14 +42,15 @@ function renderDetailSpecs(product) {
   });
 }
 
-function renderDetail(product, index) {
+function renderDetail(product) {
+  const theme = resolveProductTheme(product);
   const art = document.getElementById('detailArt');
-  DETAIL_THEMES.forEach(theme => art.classList.remove(theme));
-  art.classList.add(DETAIL_THEMES[index % DETAIL_THEMES.length]);
+  if (art) art.setAttribute('style', productThemeStyle(theme));
 
   const extension = detailExtension(product.fileName || product.file_name);
   const iconEl = document.getElementById('detailIcon');
-  if (iconEl) iconEl.innerHTML = productIconSvg(product);
+  if (iconEl) iconEl.innerHTML = productThemeIcon(theme);
+  detailText('detailTopic', theme.label);
   detailText('detailTag', `${detailCategoryLabel(product.category)} · ${extension}`);
   detailText('detailName', product.name || 'Sản phẩm');
   detailText('detailDesc', product.description || 'Sản phẩm này chưa có mô tả.');
@@ -76,7 +75,7 @@ async function initProductDetail() {
   const index = catalog.findIndex(product => String(product.id) === String(detailId));
   if (index === -1) { showMissingProduct(); return; }
 
-  renderDetail(catalog[index], index);
+  renderDetail(catalog[index]);
 }
 
 initProductDetail();

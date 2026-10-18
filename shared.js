@@ -625,53 +625,190 @@ async function loadProductCatalog() {
   return getLocalProducts();
 }
 
-/* ── 11. Biểu tượng riêng cho từng sản phẩm ── */
-const PRODUCT_ICONS = [
-  { key: 'code',     svg: '<polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>' },
-  { key: 'terminal', svg: '<polyline points="4 17 10 11 4 5"/><line x1="13" y1="19" x2="20" y2="19"/>' },
-  { key: 'layout',   svg: '<rect x="3" y="3" width="7" height="7" rx="1.6"/><rect x="14" y="3" width="7" height="7" rx="1.6"/><rect x="3" y="14" width="7" height="7" rx="1.6"/><rect x="14" y="14" width="7" height="7" rx="1.6"/>' },
-  { key: 'motion',   svg: '<polygon points="6.5 4.2 19.5 12 6.5 19.8 6.5 4.2"/>' },
-  { key: 'android',  svg: '<rect x="5" y="2" width="14" height="20" rx="3.4"/><line x1="10" y1="18.4" x2="14" y2="18.4"/>' },
-  { key: 'archive',  svg: '<rect x="2.5" y="3.5" width="19" height="5" rx="1.4"/><path d="M4.5 8.5V19a1.5 1.5 0 0 0 1.5 1.5h12a1.5 1.5 0 0 0 1.5-1.5V8.5"/><line x1="10" y1="13" x2="14" y2="13"/>' },
-  { key: 'app',      svg: '<rect x="3" y="4" width="18" height="16" rx="2.6"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="6.6" y1="6.5" x2="6.61" y2="6.5"/>' },
-  { key: 'audio',    svg: '<path d="M9.5 18V5.6l10-1.8V16"/><circle cx="6.5" cy="18" r="3"/><circle cx="16.5" cy="16" r="3"/>' },
-  { key: 'palette',  svg: '<circle cx="12" cy="12" r="9"/><circle cx="8.6" cy="9.8" r="1.15"/><circle cx="15.4" cy="9.8" r="1.15"/><circle cx="12" cy="15.8" r="1.15"/>' },
-  { key: 'spark',    svg: '<polygon points="12 2.4 14.7 9.3 21.6 12 14.7 14.7 12 21.6 9.3 14.7 2.4 12 9.3 9.3"/>' },
-];
+/* ── 11. Ảnh trưng bày riêng cho từng mặt hàng (dựa vào tên) ── */
 
-const PRODUCT_ICON_HINTS = {
-  apk: 'android',
-  zip: 'archive', rar: 'archive', '7z': 'archive', tar: 'archive', gz: 'archive', xz: 'archive',
-  exe: 'app', msi: 'app', dmg: 'app', bat: 'app',
-  mp3: 'audio', wav: 'audio', m4a: 'audio', flac: 'audio',
-  mp4: 'motion', avi: 'motion', mkv: 'motion', gif: 'motion',
-  ai: 'palette', psd: 'palette', fig: 'palette', sketch: 'palette', svg: 'palette',
-  sh: 'terminal', bash: 'terminal',
-  web: 'code', ui: 'layout', motion: 'motion', other: 'spark',
+/* Hoạ tiết nền dùng chung, mỗi chủ đề chọn một kiểu */
+const ART_PATTERNS = {
+  diag:   { image: 'repeating-linear-gradient(48deg, currentColor 0 1px, transparent 1px 11px)', size: 'auto' },
+  diag2:  { image: 'repeating-linear-gradient(-48deg, currentColor 0 1px, transparent 1px 14px)', size: 'auto' },
+  grid:   { image: 'linear-gradient(currentColor 1px, transparent 1px), linear-gradient(90deg, currentColor 1px, transparent 1px)', size: '22px 22px' },
+  gridLg: { image: 'linear-gradient(currentColor 1px, transparent 1px), linear-gradient(90deg, currentColor 1px, transparent 1px)', size: '32px 32px' },
+  dots:   { image: 'radial-gradient(currentColor 1.5px, transparent 1.6px)', size: '18px 18px' },
+  dotsLg: { image: 'radial-gradient(currentColor 2px, transparent 2.1px)', size: '28px 28px' },
+  scan:   { image: 'repeating-linear-gradient(0deg, currentColor 0 1px, transparent 1px 9px)', size: 'auto' },
+  scanV:  { image: 'repeating-linear-gradient(90deg, currentColor 0 1px, transparent 1px 12px)', size: 'auto' },
 };
 
-/* Chọn biểu tượng theo loại file/danh mục; nếu bị trùng với sản phẩm trước đó
-   trong cùng danh sách thì lấy biểu tượng kế tiếp để mỗi mặt hàng một kiểu. */
-function productIconSvg(product, usedKeys) {
-  const fileName = String((product && (product.fileName || product.file_name)) || '');
-  const extension = (fileName.match(/\.([a-z0-9]+)$/i) || [])[1];
-  const category = String((product && product.category) || '').toLowerCase();
-  const hint = (extension && PRODUCT_ICON_HINTS[extension.toLowerCase()])
-    || PRODUCT_ICON_HINTS[category]
-    || 'code';
+/* Mỗi chủ đề là một bộ giao diện trưng bày: màu, hoạ tiết, hình minh hoạ, nhãn */
+const PRODUCT_THEMES = [
+  {
+    key: 'ddos', label: 'DDoS / Attack',
+    keywords: ['ddos', 'flood', 'stress', 'tan cong', 'attack', 'packet', 'boot', 'nuke', 'crash', 'lay ip', 'cc', 'syn'],
+    accent: '#ff8f7a', soft: 'rgba(255, 143, 122, 0.18)', glow: 'rgba(255, 110, 80, 0.45)',
+    bg: 'linear-gradient(135deg, #1b0b0b 0%, #3a1512 48%, #190a0a 100%)', pattern: 'diag',
+    icon: '<path d="M12 2.8l6.6 2.7v5.3c0 4.2-2.8 7.4-6.6 8.7-3.8-1.3-6.6-4.5-6.6-8.7V5.5z"/><path d="M1.4 8.2h2.4M1.4 12h2.4M1.4 15.8h2.4"/><path d="M12 9v3.2"/><path d="M12 15.7h.01"/>',
+  },
+  {
+    key: 'buff', label: 'Buff / Tăng tương tác',
+    keywords: ['buff', 'boost', 'like', 'follow', 'view', 'sub', 'share', 'seeding', 'tuong tac', 'mat', 'tang', 'record', 'live'],
+    accent: '#8dffb0', soft: 'rgba(141, 255, 176, 0.18)', glow: 'rgba(120, 255, 160, 0.4)',
+    bg: 'linear-gradient(135deg, #08170f 0%, #10361f 48%, #08170f 100%)', pattern: 'dots',
+    icon: '<polyline points="22 7.4 13.6 15.8 8.6 10.8 2 17.4"/><polyline points="15.8 7.4 22 7.4 22 13.6"/>',
+  },
+  {
+    key: 'bot', label: 'Bot / Tool tự động',
+    keywords: ['bot', 'auto', 'treo', 'tool', 'farm', 'craw', 'scrape', 'spam tool', 'tu dong'],
+    accent: '#c9a6ff', soft: 'rgba(201, 166, 255, 0.18)', glow: 'rgba(190, 150, 255, 0.45)',
+    bg: 'linear-gradient(135deg, #120b1e 0%, #241240 48%, #120b1e 100%)', pattern: 'grid',
+    icon: '<rect x="4" y="7.6" width="16" height="12.2" rx="3"/><path d="M12 3.4v4.2"/><circle cx="12" cy="2.6" r="1.1"/><path d="M9.2 12.4v1.8M14.8 12.4v1.8"/><path d="M9.8 16.8h4.4"/>',
+  },
+  {
+    key: 'hack', label: 'Hack / Cheat',
+    keywords: ['hack', 'crack', 'bypass', 'ban quyen', 'license', 'keygen', 'cheat', 'mod', 'menu', 'aim', 'esp', 'unlock', 'vuot'],
+    accent: '#ffd479', soft: 'rgba(255, 212, 121, 0.18)', glow: 'rgba(255, 205, 110, 0.45)',
+    bg: 'linear-gradient(135deg, #181206 0%, #33260d 48%, #181206 100%)', pattern: 'scan',
+    icon: '<rect x="4.2" y="10.8" width="15.6" height="10" rx="2.6"/><path d="M8.2 10.8V7.6a4 4 0 0 1 7.7-1.5"/><circle cx="12" cy="15.9" r="1.3"/>',
+  },
+  {
+    key: 'acc', label: 'Tài khoản / Nick',
+    keywords: ['acc', 'account', 'nick', 'tai khoan', 'mail', 'email', 'clone', 'via', 'reg', 'gmail', 'outlook'],
+    accent: '#8fc4ff', soft: 'rgba(143, 196, 255, 0.18)', glow: 'rgba(130, 180, 255, 0.42)',
+    bg: 'linear-gradient(135deg, #080d18 0%, #12203a 48%, #080d18 100%)', pattern: 'gridLg',
+    categories: ['account'],
+    icon: '<rect x="2.8" y="4.6" width="18.4" height="14.8" rx="3"/><circle cx="9" cy="10.6" r="2.3"/><path d="M5.2 16.8c.8-1.9 2-2.8 3.8-2.8s3 .9 3.8 2.8"/><path d="M15.2 9.8h3.6M15.2 13.4h2.4"/>',
+  },
+  {
+    key: 'proxy', label: 'Proxy / VPN / IP',
+    keywords: ['proxy', 'vpn', 'socks', 'ssh', 'tunnel', '4g', 'dcom', 'ip', 'ip tinh', 'ip sach', 'dns', 'mac'],
+    accent: '#79e6e0', soft: 'rgba(121, 230, 224, 0.18)', glow: 'rgba(110, 230, 220, 0.4)',
+    bg: 'linear-gradient(135deg, #06151a 0%, #0c2c31 48%, #06151a 100%)', pattern: 'dotsLg',
+    icon: '<circle cx="12" cy="12" r="8.8"/><path d="M3.4 9.4h17.2M3.4 14.6h17.2"/><path d="M12 3.2c2.3 2.5 3.5 5.4 3.5 8.8s-1.2 6.3-3.5 8.8c-2.3-2.5-3.5-5.4-3.5-8.8S9.7 5.7 12 3.2z"/>',
+  },
+  {
+    key: 'spam', label: 'Spam / Gửi tin',
+    keywords: ['spam', 'gui tin', 'send', 'sms', 'mess', 'inbox', 'mailer', 'zalo', 'tele', 'telegram', 'messen'],
+    accent: '#ff9ec7', soft: 'rgba(255, 158, 199, 0.18)', glow: 'rgba(255, 150, 195, 0.42)',
+    bg: 'linear-gradient(135deg, #190a13 0%, #341326 48%, #190a13 100%)', pattern: 'scanV',
+    icon: '<path d="M21.4 2.8L10.8 13.4"/><path d="M21.4 2.8l-6.9 18.4-3.7-7.8-7.8-3.7z"/>',
+  },
+  {
+    key: 'apk', label: 'APK / Ứng dụng',
+    keywords: ['apk', 'android', 'ios', 'ipa', 'ung dung', 'app mod', 'gioi han'],
+    accent: '#7ee787', soft: 'rgba(126, 231, 135, 0.18)', glow: 'rgba(120, 230, 135, 0.4)',
+    bg: 'linear-gradient(135deg, #08160d 0%, #11331b 48%, #08160d 100%)', pattern: 'dots',
+    extensions: ['apk', 'ipa'], categories: ['apk', 'app', 'mobile'],
+    icon: '<rect x="6" y="4.4" width="12" height="17" rx="3"/><path d="M9.3 4.4l.9-1.7M14.7 4.4l-.9-1.7"/><path d="M10.2 9.6v1.4M13.8 9.6v1.4"/><path d="M10.4 18h3.2"/>',
+  },
+  {
+    key: 'source', label: 'Source code / Web',
+    keywords: ['web', 'html', 'css', 'js', 'javascript', 'source', 'code', 'giao dien', 'source code', 'landing', 'wordpress', 'laravel', 'php', 'react', 'node', 'api', 'script'],
+    accent: '#ffe27a', soft: 'rgba(255, 226, 122, 0.18)', glow: 'rgba(255, 226, 122, 0.4)',
+    bg: 'linear-gradient(135deg, #141006 0%, #2a2110 48%, #141006 100%)', pattern: 'grid',
+    extensions: ['html', 'css', 'js', 'ts', 'php', 'py', 'sh'], categories: ['web', 'code', 'source', 'frontend', 'backend'],
+    icon: '<polyline points="15.8 18 21.6 12 15.8 6"/><polyline points="8.2 6 2.4 12 8.2 18"/><line x1="13.8" y1="4.6" x2="10.2" y2="19.4"/>',
+  },
+  {
+    key: 'ai', label: 'AI / GPT',
+    keywords: ['ai', 'gpt', 'chatgpt', 'prompt', 'midjourney', 'gemini', 'claude', 'tool ai'],
+    accent: '#a5b4ff', soft: 'rgba(165, 180, 255, 0.18)', glow: 'rgba(160, 180, 255, 0.42)',
+    bg: 'linear-gradient(135deg, #0b0d1c 0%, #1a1e3c 48%, #0b0d1c 100%)', pattern: 'dotsLg',
+    icon: '<path d="M10.6 3.2l1.9 5 5 1.9-5 1.9-1.9 5-1.9-5-5-1.9 5-1.9z"/><path d="M18.4 15.2l.8 2.1 2.1.8-2.1.8-.8 2.1-.8-2.1-2.1-.8 2.1-.8z"/>',
+  },
+  {
+    key: 'seo', label: 'SEO / Quảng cáo',
+    keywords: ['seo', 'backlink', 'google', 'index', 'traffic', 'ads', 'quang cao', 'marketing', 'pages', 'dieu huong'],
+    accent: '#ffb070', soft: 'rgba(255, 176, 112, 0.18)', glow: 'rgba(255, 175, 110, 0.42)',
+    bg: 'linear-gradient(135deg, #1a1006 0%, #35200d 48%, #1a1006 100%)', pattern: 'diag2',
+    icon: '<circle cx="10.6" cy="10.6" r="6.6"/><path d="M15.5 15.5L21 21"/><path d="M8.4 12.8V9.6M10.6 12.8V7.4M12.8 12.8v-2.4"/>',
+  },
+  {
+    key: 'game', label: 'Game / Mod game',
+    keywords: ['game', 'lien quan', 'free fire', 'gunny', 'pubg', 'roblox', 'minecraft', 'mod game', 'acc game', 'pixel', 'au mobile'],
+    accent: '#ff9d6b', soft: 'rgba(255, 157, 107, 0.18)', glow: 'rgba(255, 155, 105, 0.42)',
+    bg: 'linear-gradient(135deg, #170d08 0%, #30160c 48%, #170d08 100%)', pattern: 'gridLg',
+    categories: ['game'], extensions: ['unity', 'pak', 'obb'],
+    icon: '<path d="M7.8 7.4h8.4a5 5 0 0 1 4.9 4.1l.5 3.4a2.7 2.7 0 0 1-4.9 1.9l-.9-1.3H8.2l-.9 1.3A2.7 2.7 0 0 1 2.4 15l.5-3.4a5 5 0 0 1 4.9-4.2z"/><path d="M8.6 10.4v2.6M7.3 11.7h2.6"/><circle cx="15.6" cy="11.7" r="1"/><circle cx="17.9" cy="13.9" r="1"/>',
+  },
+  {
+    key: 'design', label: 'Thiết kế / Đồ hoạ',
+    keywords: ['design', 'thiet ke', 'psd', 'figma', 'logo', 'font', 'mockup', 'canva', 'banner', 'template mo', 'anh'],
+    accent: '#e0a3ff', soft: 'rgba(224, 163, 255, 0.18)', glow: 'rgba(220, 160, 255, 0.42)',
+    bg: 'linear-gradient(135deg, #150b1d 0%, #2b1236 48%, #150b1d 100%)', pattern: 'grid',
+    extensions: ['psd', 'ai', 'fig', 'sketch', 'svg'], categories: ['design', 'ui', 'graphic'],
+    icon: '<path d="M12 3.2c-4.9 0-8.8 3.6-8.8 8.1a3.7 3.7 0 0 0 3.7 3.7h1.6c1.1 0 1.9.8 1.9 1.7 0 .8-.6 1.4-.6 2.2 0 1 .7 1.9 2.2 1.9 4.9 0 8.8-3.9 8.8-8.8S16.9 3.2 12 3.2z"/><circle cx="8.4" cy="10.6" r="1.2"/><circle cx="12" cy="7.8" r="1.2"/><circle cx="15.6" cy="10.6" r="1.2"/>',
+  },
+  {
+    key: 'media', label: 'Nhạc / Video',
+    keywords: ['mp3', 'mp4', 'nhac', 'video', 'edit', 'capcut', 'render', 'phim', 'tiktok', 'youtube', 'gif'],
+    accent: '#7fe0ff', soft: 'rgba(127, 224, 255, 0.18)', glow: 'rgba(125, 225, 255, 0.42)',
+    bg: 'linear-gradient(135deg, #06141c 0%, #0d2a3a 48%, #06141c 100%)', pattern: 'scan',
+    extensions: ['mp3', 'wav', 'm4a', 'flac', 'mp4', 'avi', 'mkv', 'gif', 'mov'], categories: ['audio', 'video', 'media'],
+    icon: '<circle cx="12" cy="12" r="8.8"/><polygon points="10.1 8.5 16.6 12 10.1 15.5"/>',
+  },
+  {
+    key: 'data', label: 'Data / Danh sách',
+    keywords: ['data', 'database', 'dump', 'list', 'danh sach', 'excel', 'csv', 'json', 'thong tin', 'leads', 'backup'],
+    accent: '#9fe6b0', soft: 'rgba(159, 230, 176, 0.18)', glow: 'rgba(155, 230, 175, 0.4)',
+    bg: 'linear-gradient(135deg, #071610 0%, #103025 48%, #071610 100%)', pattern: 'gridLg',
+    extensions: ['zip', 'rar', '7z', 'tar', 'gz', 'xz', 'sql', 'csv', 'xlsx', 'json', 'txt'], categories: ['other', 'data'],
+    icon: '<ellipse cx="12" cy="6" rx="7.4" ry="3.1"/><path d="M4.6 6v5.6c0 1.7 3.3 3.1 7.4 3.1s7.4-1.4 7.4-3.1V6"/><path d="M4.6 11.6v6c0 1.7 3.3 3.1 7.4 3.1s7.4-1.4 7.4-3.1v-6"/>',
+  },
+  {
+    key: 'tool', label: 'Công cụ',
+    keywords: [],
+    accent: '#ffe27a', soft: 'rgba(255, 226, 122, 0.18)', glow: 'rgba(255, 226, 122, 0.4)',
+    bg: 'linear-gradient(135deg, #141008 0%, #2c2410 48%, #141008 100%)', pattern: 'diag',
+    extensions: ['exe', 'msi', 'dmg', 'bat'],
+    icon: '<path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>',
+  },
+];
 
-  const start = Math.max(PRODUCT_ICONS.findIndex(icon => icon.key === hint), 0);
-  let shape = PRODUCT_ICONS[start].svg;
-  for (let step = 0; step < PRODUCT_ICONS.length; step++) {
-    const icon = PRODUCT_ICONS[(start + step) % PRODUCT_ICONS.length];
-    if (!usedKeys || !usedKeys.has(icon.key)) {
-      if (usedKeys) usedKeys.add(icon.key);
-      shape = icon.svg;
-      break;
-    }
-  }
+/* Bỏ dấu tiếng Việt để so khớp từ khoá dễ hơn */
+function artKey(text) {
+  return String(text || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'd');
+}
 
-  return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${shape}</svg>`;
+/* Từ khoá ngắn (≤ 3 ký tự) phải khớp theo cả từ để tránh dính vào từ khác */
+function themeHasKeyword(theme, text) {
+  return theme.keywords.some(word => (word.length <= 3
+    ? new RegExp(`(^|[^a-z0-9])${word}([^a-z0-9]|$)`).test(text)
+    : text.includes(word)));
+}
+
+/* Chọn bộ giao diện trưng bày: tên sản phẩm trước, rồi loại file/danh mục, cuối cùng là mô tả */
+function resolveProductTheme(product) {
+  const info = product || {};
+  const matchTheme = text => PRODUCT_THEMES.find(theme => themeHasKeyword(theme, text));
+
+  const byName = matchTheme(artKey(info.name));
+  if (byName) return byName;
+
+  const fileName = artKey(info.fileName || info.file_name);
+  const extension = (fileName.match(/\.([a-z0-9]+)$/) || [])[1];
+  const byFile = PRODUCT_THEMES.find(theme => theme.extensions && theme.extensions.includes(extension));
+  if (byFile) return byFile;
+
+  const category = artKey(info.category).trim();
+  const byCategory = PRODUCT_THEMES.find(theme => theme.categories && theme.categories.includes(category));
+  if (byCategory) return byCategory;
+
+  return matchTheme(artKey(info.description)) || PRODUCT_THEMES[PRODUCT_THEMES.length - 1];
+}
+
+/* Đổ màu – hoạ tiết của chủ đề vào style inline của khung trưng bày */
+function productThemeStyle(theme) {
+  const pattern = ART_PATTERNS[theme.pattern] || ART_PATTERNS.grid;
+  return `--art-accent:${theme.accent};--art-soft:${theme.soft};--art-glow:${theme.glow};`
+    + `--art-bg:${theme.bg};--art-pattern:${pattern.image};--art-pattern-size:${pattern.size}`;
+}
+
+function productThemeIcon(theme) {
+  return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.65"`
+    + ` stroke-linecap="round" stroke-linejoin="round">${theme.icon}</svg>`;
 }
 
 /* ── 12. Tải file sản phẩm đã lưu ── */

@@ -7,8 +7,7 @@ const grid = document.getElementById('productGrid');
 const statCount  = document.getElementById('statCount');
 const resultCount= document.getElementById('resultCount');
 
-/* Art color themes */
-const artThemes = ['art-lime', 'art-blue', 'art-purple', 'art-orange'];
+/* Art cover themes dựa theo tên mặt hàng */
 
 function productUrl(product) {
   return `product.html?id=${encodeURIComponent(product.id)}`;
@@ -25,18 +24,17 @@ function renderProducts(list) {
       </div>`;
     return;
   }
-  const usedIcons = new Set();
   list.forEach((product, i) => {
-    const theme = artThemes[i % artThemes.length];
-    const icon  = productIconSvg(product, usedIcons);
+    const theme = resolveProductTheme(product);
     const card  = document.createElement('article');
     card.className = 'product-card';
     card.dataset.category = product.category || 'web';
     card.style.animationDelay = (i * 0.07) + 's';
     card.innerHTML = `
-      <div class="product-art ${theme}">
+      <div class="product-art" style="${productThemeStyle(theme)}">
         <div class="art-pattern"></div>
-        <span class="art-badge">${icon}</span>
+        <span class="art-badge">${productThemeIcon(theme)}</span>
+        <span class="art-topic">${theme.label}</span>
       </div>
       <div class="product-meta">
         <span class="product-tag">${PRODUCT_CATEGORY_LABELS[product.category] || product.category || 'web'} · ${product.fileName || 'CODE FILE'}</span>

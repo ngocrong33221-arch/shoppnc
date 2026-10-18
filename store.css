@@ -170,6 +170,14 @@
   position: relative;
   overflow: hidden;
   border-bottom: 1px solid var(--border);
+  background: var(--art-bg, linear-gradient(135deg, #141008 0%, #2c2410 48%, #141008 100%));
+}
+.product-art::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 115%, var(--art-glow, transparent), transparent 62%);
+  pointer-events: none;
 }
 .art-badge {
   position: relative;
@@ -203,37 +211,34 @@
 .art-pattern {
   position: absolute;
   inset: 0;
-  opacity: 0.08;
-  background-image:
-    linear-gradient(var(--gold) 1px, transparent 1px),
-    linear-gradient(90deg, var(--gold) 1px, transparent 1px);
-  background-size: 20px 20px;
+  opacity: 0.14;
+  color: var(--art-accent, var(--gold));
+  background-image: var(--art-pattern, linear-gradient(var(--gold) 1px, transparent 1px), linear-gradient(90deg, var(--gold) 1px, transparent 1px));
+  background-size: var(--art-pattern-size, 20px 20px);
+  pointer-events: none;
 }
 
-/* Luxury Color Themes for Art */
-.art-lime {
-  --art-accent: #ffe27a;
-  --art-soft: rgba(255, 226, 122, 0.18);
-  --art-glow: rgba(255, 226, 122, 0.4);
-  background: linear-gradient(135deg, #121008 0%, #26200c 50%, #171408 100%);
+/* Nhãn chủ đề của mặt hàng */
+.art-topic {
+  position: absolute;
+  left: 14px;
+  bottom: 12px;
+  z-index: 2;
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--art-accent, var(--gold-light));
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--art-soft, rgba(212, 175, 55, 0.35));
+  background: rgba(6, 8, 12, 0.55);
+  backdrop-filter: blur(6px);
+  transition: var(--trans);
 }
-.art-blue {
-  --art-accent: #9fc9ff;
-  --art-soft: rgba(159, 201, 255, 0.18);
-  --art-glow: rgba(159, 201, 255, 0.4);
-  background: linear-gradient(135deg, #0a0b12 0%, #131726 50%, #0a0d14 100%);
-}
-.art-purple {
-  --art-accent: #d5abff;
-  --art-soft: rgba(213, 171, 255, 0.18);
-  --art-glow: rgba(213, 171, 255, 0.4);
-  background: linear-gradient(135deg, #100b17 0%, #1e122a 50%, #100b17 100%);
-}
-.art-orange {
-  --art-accent: #ffba82;
-  --art-soft: rgba(255, 186, 130, 0.18);
-  --art-glow: rgba(255, 186, 130, 0.4);
-  background: linear-gradient(135deg, #140d07 0%, #29180b 50%, #140d07 100%);
+.product-card:hover .art-topic {
+  color: #fff;
+  border-color: var(--art-accent, var(--gold-light));
 }
 
 /* Product Meta */
@@ -577,7 +582,21 @@
   border: 1px solid var(--gold-border);
   border-radius: 22px;
   overflow: hidden;
+  background: var(--art-bg, linear-gradient(135deg, #141008 0%, #2c2410 48%, #141008 100%));
   box-shadow: 0 30px 70px rgba(0, 0, 0, 0.45);
+}
+.detail-art::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 118%, var(--art-glow, transparent), transparent 62%);
+  pointer-events: none;
+}
+.detail-art .art-topic {
+  left: 20px;
+  bottom: 18px;
+  font-size: 11px;
+  padding: 6px 15px;
 }
 .detail-art .art-badge-lg {
   width: clamp(104px, 12vw, 148px);
