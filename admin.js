@@ -26,9 +26,12 @@ productColorAuto.addEventListener('change', () => {
 
 const API_BASE = window.location.protocol === 'file:' ? 'http://127.0.0.1:5000' : window.location.origin;
 const STORAGE_BUCKET = 'products';
-/* File được chia nhỏ khi tải lên để không đứt giữa đường. Phía trình duyệt không giới hạn dung lượng;
-   giới hạn (nếu có) là do cấu hình bucket trên Supabase. */
-const UPLOAD_CHUNK_SIZE = 2 * 1024 * 1024; // Giảm xuống 2MB để tránh lỗi 413 Payload Too Large
+/* Supabase yêu cầu chunk đúng 6MB cho upload resumable (TUS); đặt khác đi sẽ lỗi khi tải file. */
+const UPLOAD_CHUNK_SIZE = 6 * 1024 * 1024;
+/* Gói Supabase Free chặn mọi file > 50MB (lỗi 413 Payload Too Large), nên file vượt ngưỡng này
+   được đẩy lên GoFile (miễn phí, không giới hạn dung lượng). */
+const SUPABASE_MAX_FILE_SIZE = 45 * 1024 * 1024;
+const GOFILE_UPLOAD_URL = 'https://upload.gofile.io/uploadfile';
 const THEME_KEY = 'cn_theme';
 const isStaticHost = window.location.protocol === 'file:' || 
                      window.location.hostname.includes('github.io') || 
@@ -114,6 +117,41 @@ function uploadFile(file, path) {
   });
 }
 
+/* ── Tải file lớn lên GoFile ──
+   Không dùng token nên mỗi lần tải lên GoFile tự tạo một tài khoản khách + thư mục công khai,
+   phản hồi trả về trang tải (downloadPage) để lưu vào sản phẩm cho khách tải về. */
+function uploadToGoFile(file) {
+  return new Promise((resolve, reject) => {
+    const body = new FormData();
+    body.append('file', file, file.name);
+
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', GOFILE_UPLOAD_URL, true);
+
+    xhr.upload.addEventListener('progress', event => {
+      if (!event.lengthComputable) return;
+      const percent = Math.round((event.loaded / event.total) * 100);
+      statusEl.textContent = `File lớn — đang tải lên GoFile... ${percent}%`;
+    });
+
+    xhr.addEventListener('load', () => {
+      let payload = null;
+      try { payload = JSON.parse(xhr.responseText); } catch { payload = null; }
+      const data = payload && payload.status === 'ok' ? payload.data : null;
+      const url = data && (data.downloadPage || (data.code ? `https://gofile.io/d/${data.code}` : ''));
+      if (!url) {
+        reject(new Error(`GoFile từ chối tải lên (${payload?.status || `HTTP ${xhr.status}`}).`));
+        return;
+      }
+      resolve({ url });
+    });
+
+    xhr.addEventListener('error', () => reject(new Error('Không kết nối được GoFile. Kiểm tra mạng rồi thử lại.')));
+    xhr.addEventListener('abort', () => reject(new Error('Đã huỷ tải lên GoFile.')));
+    xhr.send(body);
+  });
+}
+
 /* ── Live preview ── */
 nameInput.addEventListener('input',  () => { previewName.textContent = nameInput.value  || 'Tên sản phẩm của bạn'; });
 descInput.addEventListener('input',  () => { previewDesc.textContent = descInput.value  || 'Mô tả ngắn sẽ xuất hiện ở đây.'; });
@@ -142,12 +180,24 @@ form.addEventListener('submit', async e => {
 
   try {
     if (typeof supabase !== 'undefined' && supabase && supabase.storage) {
-      // 1. Tải file gốc (apk, zip, exe...) lên Supabase Storage — không giới hạn dung lượng
+      // 1. Tải file gốc (apk, zip, exe...) lên: Supabase Storage nếu ≤45MB, ngược lại GoFile
       const safeName = file.name.replace(/[^\w.\-]+/g, '_');
-      const path = `${Date.now()}-${safeName}`;
-      await uploadFile(file, path);
+      let fileUrl = null;
 
-      const { data: urlData } = supabase.storage.from(STORAGE_BUCKET).getPublicUrl(path);
+      if (file.size > SUPABASE_MAX_FILE_SIZE) {
+        fileUrl = (await uploadToGoFile(file)).url;
+      } else {
+        const path = `${Date.now()}-${safeName}`;
+        try {
+          await uploadFile(file, path);
+          const { data: urlData } = supabase.storage.from(STORAGE_BUCKET).getPublicUrl(path);
+          fileUrl = urlData?.publicUrl || null;
+        } catch (uploadError) {
+          // Bucket Supabase có thể bị đặt hạn mức nhỏ hơn 50MB → chuyển file sang GoFile
+          if (!/413|too large|maximum allowed size/i.test(String(uploadError.message || ''))) throw uploadError;
+          fileUrl = (await uploadToGoFile(file)).url;
+        }
+      }
 
       // 2. Lưu thông tin sản phẩm kèm link file thật cho khách tải
       const { data: inserted, error } = await supabase
@@ -158,7 +208,7 @@ form.addEventListener('submit', async e => {
           price: product.price,
           category: product.category,
           file_name: product.fileName,
-          file_url: urlData?.publicUrl || null
+          file_url: fileUrl
         }])
         .select()
         .single();

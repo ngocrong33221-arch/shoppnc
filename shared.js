@@ -845,6 +845,20 @@ async function downloadProductFile(url, fileName) {
   if (!url) return false;
   const name = fileName || url.split('/').pop() || 'san-pham';
 
+  // File lớn lưu ở GoFile: url là trang tải chứ không phải file trực tiếp → mở tab mới
+  if (/gofile\.io/i.test(url)) {
+    if (!window.open(url, '_blank', 'noopener')) {
+      const link = document.createElement('a');
+      link.href = url;
+      link.target = '_blank';
+      link.rel = 'noopener';
+      document.body.append(link);
+      link.click();
+      link.remove();
+    }
+    return true;
+  }
+
   // File trên Supabase Storage là khác miền nên thuộc tính download của thẻ <a>
   // bị trình duyệt bỏ qua. Tải về dạng blob để giữ đúng tên file gốc.
   try {
