@@ -702,8 +702,18 @@ document.getElementById('accountManagementForm').addEventListener('submit', asyn
   submitButton.disabled = true;
 
   /* Web chạy trên GitHub Pages không có máy chủ Flask, nên phải cập nhật thẳng
-     bảng "users" trên Supabase (giống form cộng/trừ số dư bên dưới). */
-  if (typeof supabase !== 'undefined' && supabase) {
+     bảng "users" trên Supabase (giống form cộng/trừ số dư bên dưới).
+     Trên host tĩnh thì luôn đi đường Supabase, kể cả lúc SDK chưa kịp nạp. */
+  if (isStaticHost || (typeof supabase !== 'undefined' && supabase)) {
+    if ((typeof supabase === 'undefined' || !supabase) && typeof initSupabase === 'function') {
+      initSupabase();
+    }
+    if (typeof supabase === 'undefined' || !supabase) {
+      accountManagementStatus.textContent = 'Chưa nạp được Supabase. Hãy tải lại trang (Ctrl + Shift + R) rồi thử lại.';
+      accountManagementStatus.className = 'form-status err';
+      submitButton.disabled = false;
+      return;
+    }
     try {
       if (nextUsername !== account.username) {
         const { data: existing, error: lookupError } = await supabase
