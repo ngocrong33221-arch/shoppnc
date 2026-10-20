@@ -65,11 +65,25 @@ async function findOrder(code: string): Promise<Order | null> {
   return rows.find((row) => normalizeCode(row.content) === target) ?? null;
 }
 
+// Thưởng nạp theo ngưỡng: từ 200.000đ +20.000đ, từ 500.000đ +50.000đ.
+// Xếp giảm dần để lấy mức cao nhất khớp trước; dưới 200.000đ không thưởng.
+const TOPUP_BONUS_TIERS: { min: number; bonus: number }[] = [
+  { min: 500_000, bonus: 50_000 },
+  { min: 200_000, bonus: 20_000 },
+];
+
+function topupBonus(amount: unknown): number {
+  const value = Number(amount) || 0;
+  const tier = TOPUP_BONUS_TIERS.find((item) => value >= item.min);
+  return tier ? tier.bonus : 0;
+}
+
 async function approveOrder(order: Order): Promise<number> {
   const filter = `username=eq.${encodeURIComponent(order.username)}`;
   const userResponse = await db(`users?select=balance&${filter}`);
   const users = userResponse.ok ? ((await userResponse.json()) as { balance: number }[]) : [];
-  const newBalance = Number(users[0]?.balance ?? 0) + Number(order.amount || 0);
+  const credit = Number(order.amount || 0) + topupBonus(order.amount);
+  const newBalance = Number(users[0]?.balance ?? 0) + credit;
 
   await db(`users?${filter}`, {
     method: 'PATCH',
@@ -127,11 +141,13 @@ Deno.serve(async (request: Request): Promise<Response> => {
           await sendMessage(chatId, `Đơn ${order.content} đã được duyệt trước đó.`);
         } else {
           const newBalance = await approveOrder(order);
+          const bonus = topupBonus(order.amount);
           await sendMessage(
             chatId,
             `Đã duyệt đơn ${order.content}\n` +
               `Khách hàng: ${order.username}\n` +
               `Số tiền: ${money(order.amount)}\n` +
+              (bonus ? `Thưởng nạp: ${money(bonus)}\n` : '') +
               `Số dư mới: ${money(newBalance)}`,
           );
         }

@@ -1127,7 +1127,24 @@ function renderOrders(serverOrders) {
   });
 }
 
+/* Thưởng nạp tiền theo ngưỡng: từ 200.000đ +20.000đ, từ 500.000đ +50.000đ.
+   Dưới 200.000đ không thưởng. Xếp giảm dần để lấy mức cao nhất khớp trước. */
+const TOPUP_BONUS_TIERS = [
+  { min: 500000, bonus: 50000 },
+  { min: 200000, bonus: 20000 },
+];
+
+function topupBonus(amount) {
+  const value = Number(amount) || 0;
+  const tier = TOPUP_BONUS_TIERS.find(item => value >= item.min);
+  return tier ? tier.bonus : 0;
+}
+
 async function applyOrderApproval(order) {
+  const amount = Number(order.amount || 0);
+  const bonus = topupBonus(amount);
+  const credit = amount + bonus;
+
   try {
     if (typeof supabase !== 'undefined' && supabase) {
       // 1. Get current balance
@@ -1137,7 +1154,7 @@ async function applyOrderApproval(order) {
         .eq('username', order.username)
         .maybeSingle();
       
-      const newBalance = (Number(user?.balance) || 0) + Number(order.amount || 0);
+      const newBalance = (Number(user?.balance) || 0) + credit;
 
       // 2. Update balance
       await supabase
@@ -1160,7 +1177,7 @@ async function applyOrderApproval(order) {
   // Local fallback
   const balanceKey = `cn_balance_${order.username}`;
   const current = Number(localStorage.getItem(balanceKey) || 0);
-  const newBalance = current + Number(order.amount || 0);
+  const newBalance = current + credit;
   localStorage.setItem(balanceKey, newBalance);
 
   const list = readLocalOrders();
@@ -1285,10 +1302,13 @@ async function handleTelegramUpdate(update) {
   }
 
   const newBalance = await applyOrderApproval(order);
+  const bonus = topupBonus(order.amount);
   await loadOrders();
   await renderUsers();
   await notifyAdminTelegram(
-    `Đã duyệt đơn ${order.content}\nKhách hàng: ${order.username}\nSố tiền: ${formatAdminMoney(order.amount)}\nSố dư mới: ${formatAdminMoney(newBalance)}`
+    `Đã duyệt đơn ${order.content}\nKhách hàng: ${order.username}\nSố tiền: ${formatAdminMoney(order.amount)}`
+    + (bonus ? `\nThưởng nạp: ${formatAdminMoney(bonus)}` : '')
+    + `\nSố dư mới: ${formatAdminMoney(newBalance)}`
   );
 }
 

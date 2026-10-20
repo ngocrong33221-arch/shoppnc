@@ -416,6 +416,19 @@ def telegram_api(method, params=None, timeout=10):
         return json.loads(response.read().decode('utf-8'))
 
 
+# Thưởng nạp theo ngưỡng: từ 200.000đ +20.000đ, từ 500.000đ +50.000đ.
+# Xếp giảm dần để lấy mức cao nhất khớp trước; dưới 200.000đ không thưởng.
+TOPUP_BONUS_TIERS = ((500000, 50000), (200000, 20000))
+
+
+def topup_bonus(amount):
+    value = int(amount or 0)
+    for minimum, bonus in TOPUP_BONUS_TIERS:
+        if value >= minimum:
+            return bonus
+    return 0
+
+
 def approve_topup_by_content(content):
     with db() as connection:
         topup = connection.execute('SELECT * FROM topups WHERE content = ?', (content.upper(),)).fetchone()
@@ -423,6 +436,7 @@ def approve_topup_by_content(content):
             return None, 'not_found'
         if topup['status'] == 'approved':
             return topup, 'already_approved'
+        credit = int(topup['amount'] or 0) + topup_bonus(topup['amount'])
         connection.execute(
             'UPDATE topups SET status = ?, approved_at = ? WHERE id = ?',
             ('approved', utc_now(), topup['id']),
@@ -430,12 +444,12 @@ def approve_topup_by_content(content):
         connection.execute(
             'INSERT INTO balances(username, amount) VALUES (?, ?) '
             'ON CONFLICT(username) DO UPDATE SET amount = amount + excluded.amount',
-            (topup['username'], topup['amount']),
+            (topup['username'], credit),
         )
         connection.execute(
             'INSERT INTO balance_transactions(username, amount, reason, admin_username, created_at) '
             'VALUES (?, ?, ?, ?, ?)',
-            (topup['username'], topup['amount'], f'Duyệt nạp tiền {topup["content"]}', 'telegram', utc_now()),
+            (topup['username'], credit, f'Duyệt nạp tiền {topup["content"]}', 'telegram', utc_now()),
         )
         return topup, 'approved'
 
@@ -477,9 +491,12 @@ def telegram_handle_update(update):
         elif result == 'already_approved':
             telegram_message(f'Đơn {content} đã được duyệt trước đó.')
         else:
+            bonus = topup_bonus(topup['amount'])
             telegram_message(
                 f'Đã duyệt đơn {content}.\nKhách hàng: {topup["username"]}\n'
-                f'Số tiền: {topup["amount"]:,} VNĐ\nSố dư đã được cộng.'
+                f'Số tiền: {topup["amount"]:,} VNĐ\n'
+                + (f'Thưởng nạp: {bonus:,} VNĐ\n' if bonus else '')
+                + 'Số dư đã được cộng.'
             )
 
 
