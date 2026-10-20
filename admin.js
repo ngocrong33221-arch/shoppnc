@@ -695,9 +695,79 @@ document.getElementById('accountManagementForm').addEventListener('submit', asyn
   }
 
   const submitButton = document.getElementById('accountManagementSubmit');
+  const nextUsername = managedUsername.value.trim();
+  const nextPassword = managedPassword.value;
   accountManagementStatus.textContent = '';
   accountManagementStatus.className = 'form-status';
   submitButton.disabled = true;
+
+  /* Web chạy trên GitHub Pages không có máy chủ Flask, nên phải cập nhật thẳng
+     bảng "users" trên Supabase (giống form cộng/trừ số dư bên dưới). */
+  if (typeof supabase !== 'undefined' && supabase) {
+    try {
+      if (nextUsername !== account.username) {
+        const { data: existing, error: lookupError } = await supabase
+          .from('users')
+          .select('username')
+          .eq('username', nextUsername)
+          .maybeSingle();
+        if (lookupError) throw lookupError;
+        if (existing) {
+          accountManagementStatus.textContent = 'Username này đã được sử dụng.';
+          accountManagementStatus.className = 'form-status err';
+          return;
+        }
+      }
+
+      const changes = {};
+      if (nextUsername !== account.username) changes.username = nextUsername;
+      if (nextPassword) changes.password = nextPassword;
+
+      if (Object.keys(changes).length) {
+        const { error: updateError } = await supabase
+          .from('users')
+          .update(changes)
+          .eq('username', account.username);
+        if (updateError) throw updateError;
+      }
+
+      let historySynced = true;
+      if (changes.username) {
+        /* Đơn nạp và lịch sử mua hàng trỏ tới thành viên bằng username, nên phải
+           đổi theo để lịch sử không bị tách khỏi tài khoản. */
+        for (const table of ['orders', 'purchases']) {
+          const { error: cascadeError } = await supabase
+            .from(table)
+            .update({ username: nextUsername })
+            .eq('username', account.username);
+          if (cascadeError) {
+            historySynced = false;
+            console.warn(`Could not move ${table} rows to the new username:`, cascadeError);
+          }
+        }
+      }
+
+      await renderUsers();
+      managedAccount.value = nextUsername;
+      managedUsername.value = nextUsername;
+      managedPassword.value = '';
+      accountManagementStatus.textContent = [
+        changes.username ? `Đã đổi username thành ${nextUsername}.` : 'Username được giữ nguyên.',
+        changes.password ? 'Đã đặt mật khẩu mới.' : 'Mật khẩu được giữ nguyên.',
+        changes.username ? 'Thành viên cần đăng nhập lại bằng username mới.' : '',
+        historySynced ? '' : 'Lưu ý: chưa đổi được username trong đơn nạp / lịch sử mua hàng.',
+      ].filter(Boolean).join(' ');
+      accountManagementStatus.className = historySynced ? 'form-status ok' : 'form-status err';
+    } catch (error) {
+      console.error('Could not update member account in Supabase:', error);
+      accountManagementStatus.textContent = error.message || 'Không thể cập nhật tài khoản.';
+      accountManagementStatus.className = 'form-status err';
+    } finally {
+      submitButton.disabled = false;
+    }
+    return;
+  }
+
   try {
     const response = await fetch(`${API_BASE}/api/admin/users/${encodeURIComponent(account.username)}/account`, {
       method: 'POST',

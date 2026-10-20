@@ -375,7 +375,7 @@
 
   function syncAurora() {
     const wanted = state.level === 'ultra' ||
-      (state.level === 'high' && !weakDevice && (!state.mobile || forced));
+      (state.level === 'high' && (!state.mobile || forced));
     if (!wanted) {
       if (aurora) {
         aurora.remove();
