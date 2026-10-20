@@ -322,20 +322,31 @@
     state.memory = navigator.deviceMemory || 4;
   } catch { /* môi trường không hỗ trợ matchMedia */ }
 
-  /* Máy 2 lõi / 2GB thì không bao giờ leo lên mức cao nhất. */
-  const weakDevice = state.cores <= 2 || state.memory <= 2;
+  /* Máy 2GB RAM (hoặc máy cảm ứng 2 lõi) bị chặn trần ở mức "high" — vẫn cho
+     chạy thử mức cao, nếu không giữ nổi khung hình thì bộ đo FPS tự hạ xuống. */
+  const weakDevice = state.memory <= 2 || (state.mobile && state.cores <= 2);
   state.ceiling = prefersReduced ? 'off' : (weakDevice ? 'high' : 'ultra');
 
+  /* Ép mức bằng tay khi muốn xem bản đầy đủ:
+     localStorage.setItem('cn_perf', 'ultra') rồi tải lại trang.
+     Khi đã ép thì bộ đo FPS ngừng tự đổi mức. */
+  let forced = null;
+  try {
+    const saved = localStorage.getItem('cn_perf');
+    if (LEVELS.includes(saved)) forced = saved;
+  } catch { /* chế độ riêng tư chặn localStorage */ }
+  if (forced) state.ceiling = forced;
+
   /* Lớp cực quang xoay chậm phía sau nội dung — điểm nhấn rõ nhất của mức cao.
-     Chỉ được dựng khi máy đủ khỏe (mức "high" trên máy tính, "ultra" trên mọi
-     thiết bị) nên máy yếu không phải vẽ thêm lớp nào. */
+     Máy tính dựng ở cả mức "high" lẫn "ultra"; thiết bị cảm ứng chỉ dựng ở mức
+     "ultra" để không kéo tụt khung hình của điện thoại. */
   const AURORA_STYLE = `
 .cn-aurora {
   position: fixed;
-  left: -30%;
-  top: -30%;
-  width: 160%;
-  height: 160%;
+  left: -15%;
+  top: -15%;
+  width: 130%;
+  height: 130%;
   z-index: -2;
   pointer-events: none;
   opacity: 0;
@@ -363,7 +374,8 @@
   let aurora = null;
 
   function syncAurora() {
-    const wanted = state.level === 'ultra' || (state.level === 'high' && !state.mobile);
+    const wanted = state.level === 'ultra' ||
+      (state.level === 'high' && (!state.mobile || forced));
     if (!wanted) {
       if (aurora) {
         aurora.remove();
@@ -383,7 +395,7 @@
       aurora.setAttribute('aria-hidden', 'true');
       (document.body || document.documentElement).appendChild(aurora);
     }
-    aurora.style.opacity = state.level === 'ultra' ? '0.85' : '0.32';
+    aurora.style.opacity = state.level === 'ultra' ? '0.85' : '0.45';
   }
 
   function setLevel(level) {
@@ -396,9 +408,10 @@
     });
   }
 
-  /* Mức khởi đầu theo cấu hình máy, sau đó bộ đo FPS mới nâng lên "ultra"
-     nếu máy thật sự đủ khỏe để giữ mức đó. */
-  state.level = prefersReduced ? 'off' : (weakDevice ? 'low' : 'high');
+  /* Mọi máy bắt đầu ở mức "high" (trừ khi hệ điều hành bật "giảm chuyển động"),
+     rồi bộ đo FPS mới hạ xuống nếu thiết bị thật sự không giữ nổi khung hình.
+     Nhờ vậy máy tầm trung vẫn được thấy đầy đủ hiệu ứng ngay từ đầu. */
+  state.level = forced || (prefersReduced ? 'off' : 'high');
   root.setAttribute('data-perf', state.level);
   syncAurora();
 
@@ -412,6 +425,9 @@
       try { fn(state.level, state); } catch { /* bỏ qua */ }
     }
   };
+
+  /* Người dùng đã ép mức bằng tay thì bộ đo FPS không được tự đổi nữa. */
+  if (forced) return;
 
   let history = [];
   let goodStreak = 0;
@@ -472,14 +488,15 @@
       const recent = history.slice(-4);
       const avg = recent.reduce((sum, value) => sum + value, 0) / recent.length;
       const index = LEVELS.indexOf(state.level);
-      const lowIndex = LEVELS.indexOf('low');
 
       /* Mức mục tiêu khi máy không giữ nổi khung hình: càng lag càng lùi sâu.
-         null nghĩa là mức hiện tại đã phù hợp, không cần đổi. */
+         Khoảng 40-52fps vẫn coi là dùng được nên giữ nguyên mức hiện tại —
+         tránh chuyện máy tầm trung bị kẹt vĩnh viễn ở mức thấp. null nghĩa là
+         mức hiện tại đã phù hợp, không cần đổi. */
       let target = null;
-      if (avg < 26) target = 'off';
+      if (avg < 24) target = 'off';
       else if (avg < 40) target = 'low';
-      else if (avg < 54 && index > lowIndex) target = LEVELS[index - 1];
+      else if (state.level === 'ultra' && avg < 52) target = 'high';
 
       if (target !== null && target !== state.level) {
         /* Mỗi lần phải hạ mức, siết thêm điều kiện nâng lại để tránh dao động. */
