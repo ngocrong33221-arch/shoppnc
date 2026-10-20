@@ -559,6 +559,26 @@ async function fetchBalance(username) {
   return 0;
 }
 
+/* ── 9b. Thưởng nạp tiền (dùng chung cho wallet.js và admin.js) ── */
+/* Từ 200.000đ tặng thêm 20.000đ, từ 500.000đ tặng thêm 50.000đ.
+   Dưới 200.000đ không thưởng. Xếp giảm dần để lấy mức cao nhất khớp trước. */
+const TOPUP_BONUS_TIERS = [
+  { min: 200000, bonus: 20000 },
+  { min: 500000, bonus: 50000 },
+].sort((a, b) => b.min - a.min);
+
+function topupBonus(amount) {
+  const value = Number(amount) || 0;
+  const tier = TOPUP_BONUS_TIERS.find(item => value >= item.min);
+  return tier ? tier.bonus : 0;
+}
+
+/* Số dư thực nhận khi nạp: tiền nạp + thưởng. */
+function topupCredit(amount) {
+  const value = Number(amount) || 0;
+  return value + topupBonus(value);
+}
+
 /* ── 10. Product Catalog (dùng chung cho store.html và product.html) ── */
 const PRODUCT_CATEGORY_LABELS = {
   web: 'Web template',

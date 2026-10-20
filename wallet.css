@@ -182,6 +182,45 @@
   border-color: rgba(245, 158, 11, 0.35);
 }
 
+/* Nhãn thưởng nạp (+20K / +50K) đặt cạnh mệnh giá. */
+.amt-value {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.amt-bonus {
+  font-size: 10px;
+  font-family: var(--sans);
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  padding: 2px 7px;
+  border-radius: 999px;
+  color: #047857;
+  background: rgba(16, 185, 129, 0.14);
+  border: 1px solid rgba(16, 185, 129, 0.38);
+  white-space: nowrap;
+}
+
+/* Ghi chú ưu đãi dưới ô chọn mệnh giá. */
+.topup-promo {
+  margin: -10px 0 20px;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px dashed rgba(16, 185, 129, 0.4);
+  background: rgba(16, 185, 129, 0.07);
+  color: #047857;
+  font-size: 12px;
+  line-height: 1.6;
+  text-align: center;
+}
+
+/* Dòng thưởng nạp trong thẻ chuyển khoản. */
+.bonus-value {
+  color: #047857;
+  font-family: var(--mono);
+  font-weight: 700;
+}
+
 .topup-btn {
   margin-bottom: 12px;
 }
@@ -231,6 +270,10 @@
 .detail-row:last-child {
   border-bottom: 0;
   padding-bottom: 0;
+}
+/* Thẻ dùng display:flex nên cần ưu tiên hơn thuộc tính hidden mặc định. */
+.detail-row[hidden] {
+  display: none;
 }
 .detail-row strong {
   color: var(--ink);

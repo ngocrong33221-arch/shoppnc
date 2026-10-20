@@ -73,14 +73,15 @@
             <span class="amt-tag">PHỔ BIẾN</span>
           </button>
           <button class="amount-btn" data-amount="200000" type="button">
-            <span>200.000đ</span>
+            <span class="amt-value">200.000đ<span class="amt-bonus">+20K</span></span>
             <span class="amt-tag">KHUYÊN DÙNG</span>
           </button>
           <button class="amount-btn" data-amount="500000" type="button">
-            <span>500.000đ</span>
+            <span class="amt-value">500.000đ<span class="amt-bonus">+50K</span></span>
             <span class="amt-tag vip">VIP</span>
           </button>
         </div>
+        <p class="topup-promo">Nạp từ 200.000đ tặng thêm 20.000đ · Nạp từ 500.000đ tặng thêm 50.000đ</p>
         <button class="btn-primary topup-btn" id="topupButton" type="button">
           <span>Tạo mã QR chuyển khoản</span>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
@@ -123,6 +124,10 @@
                 <span>Chép</span>
               </button>
             </div>
+          </div>
+          <div class="detail-row" id="bonusRow" hidden>
+            <span>Thưởng nạp</span>
+            <strong class="bonus-value" id="transferBonus">+0đ</strong>
           </div>
           <div class="detail-row">
             <span>Nội dung chuyển khoản</span>

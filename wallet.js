@@ -11,6 +11,8 @@ const statusEl    = document.getElementById('walletStatus');
 const transferCard= document.getElementById('transferCard');
 const transferAmt = document.getElementById('transferAmount');
 const transferCt  = document.getElementById('transferContent');
+const bonusRow    = document.getElementById('bonusRow');
+const transferBonus = document.getElementById('transferBonus');
 const bankQr      = document.getElementById('bankQr');
 const countdownEl = document.getElementById('transferCountdown');
 const refreshBtn  = document.getElementById('refreshBalance');
@@ -133,6 +135,16 @@ document.getElementById('topupButton').addEventListener('click', async () => {
 function displayOrder(amount, content, expiresAt) {
   transferAmt.textContent = amount.toLocaleString('vi-VN') + 'đ';
   transferCt.textContent  = content;
+
+  /* Thưởng nạp theo ngưỡng: chỉ hiện khi đơn đủ điều kiện. */
+  const bonus = topupBonus(amount);
+  bonusRow.hidden = !bonus;
+  if (bonus) {
+    transferBonus.textContent = '+' + bonus.toLocaleString('vi-VN') + 'đ';
+    bonusRow.querySelector('span').textContent =
+      `Thưởng nạp · thực nhận ${topupCredit(amount).toLocaleString('vi-VN')}đ`;
+  }
+
   bankQr.src = `https://img.vietqr.io/image/MB-0832510710-compact2.png?amount=${amount}&addInfo=${encodeURIComponent(content)}&accountName=DO%20THANH%20TRUNG`;
   transferCard.hidden = false;
   transferCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
