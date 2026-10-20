@@ -64,9 +64,27 @@ input, textarea, select {
   --mono:         'JetBrains Mono', 'Fira Code', monospace;
   --sans:         'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --radius:       16px;
+  --radius-lg:    22px;
   --radius-sm:    10px;
   --radius-xs:    6px;
+  --ease:         cubic-bezier(0.16, 1, 0.3, 1);
   --trans:        all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Màu bôi đen bám theo màu nhấn để tổng thể đồng bộ. */
+::selection {
+  background: rgba(var(--gold-rgb), 0.24);
+  color: var(--ink);
+}
+
+/* Vòng focus dùng chung: rõ ràng khi điều hướng bằng bàn phím nhưng không gây nhiễu khi bấm chuột. */
+a:focus-visible,
+button:focus-visible,
+summary:focus-visible,
+[role="button"]:focus-visible {
+  outline: 2px solid var(--gold-bright);
+  outline-offset: 3px;
+  border-radius: var(--radius-xs);
 }
 
 /* Custom Scrollbar */
@@ -296,6 +314,17 @@ body::before {
   backdrop-filter: blur(24px) saturate(180%);
   -webkit-backdrop-filter: blur(24px) saturate(180%);
   box-shadow: 0 10px 30px -18px rgba(15, 23, 42, 0.22);
+}
+/* Đường sáng mảnh dưới thanh điều hướng: vẫn tạo phân cách rõ nhưng không nặng nề. */
+.topbar::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent 4%, var(--hairline) 24%, rgba(var(--gold-rgb), 0.5) 50%, var(--hairline) 76%, transparent 96%);
+  pointer-events: none;
 }
 .topbar-inner {
   display: flex;
@@ -698,6 +727,7 @@ body::before {
   letter-spacing: -0.05em;
   margin-bottom: 18px;
   color: var(--ink);
+  text-wrap: balance;
 }
 .page-h1 em {
   font-style: normal;
@@ -741,6 +771,7 @@ body::before {
   box-shadow: 0 10px 30px -18px rgba(0, 0, 0, 0.6);
 }
 .card:hover {
+  transform: translateY(-3px);
   border-color: var(--gold-border);
   box-shadow: 0 26px 64px -22px rgba(15, 23, 42, 0.24), 0 0 28px rgba(var(--gold-rgb), 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.85);
 }
@@ -806,6 +837,9 @@ body::before {
   padding: 14px 16px;
   resize: vertical;
 }
+.form-input:hover, .form-textarea:hover, .form-select:hover {
+  border-color: rgba(var(--gold-rgb), 0.34);
+}
 .form-input:focus, .form-textarea:focus, .form-select:focus {
   border-color: var(--gold-bright);
   background: var(--surface);
@@ -834,7 +868,9 @@ body::before {
   cursor: pointer;
   position: relative;
   overflow: hidden;
-  box-shadow: 0 8px 24px -4px var(--gold-glow), 0 2px 6px rgba(15, 23, 42, 0.14);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.34),
+              0 8px 24px -4px var(--gold-glow),
+              0 2px 6px rgba(15, 23, 42, 0.14);
   transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1),
               box-shadow 0.22s ease,
               background 0.22s ease;
@@ -971,9 +1007,22 @@ body::before {
     -webkit-backdrop-filter: blur(24px);
     box-shadow: 0 -8px 28px rgba(15, 23, 42, 0.14);
   }
+  /* Vạch sáng mảnh trên thanh điều hướng dưới cùng (ăn khớp với thanh trên). */
+  .mobile-nav::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(var(--gold-rgb), 0.5), transparent);
+    pointer-events: none;
+  }
   .mobile-nav-item {
+    position: relative;
     flex: 1 1 0;
     min-width: 0;
+    min-height: 50px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -987,6 +1036,17 @@ body::before {
     font-weight: 500;
     font-family: var(--sans);
     transition: var(--trans);
+  }
+  /* Chấm sáng nhỏ đánh dấu mục đang mở, dễ nhận ra trên màn hình nhỏ. */
+  .mobile-nav-item.active::before {
+    content: '';
+    position: absolute;
+    top: 2px;
+    width: 18px;
+    height: 2px;
+    border-radius: 999px;
+    background: var(--gold-bright);
+    box-shadow: 0 0 8px var(--gold-glow);
   }
   .mobile-nav-item span {
     max-width: 100%;
@@ -1019,9 +1079,12 @@ body::before {
   .topbar { padding: 0 16px; height: 64px; }
   .topbar-user { gap: 8px; }
   .user-badge { padding: 4px 10px 4px 6px; }
-  .logout-btn { padding: 7px 12px; font-size: 11px; }
+  .logout-btn { padding: 9px 14px; font-size: 11px; }
   .page-hero { padding: 32px 16px 24px; }
   .page-h1 { font-size: 34px; }
+  .page-desc { font-size: 14px; line-height: 1.7; }
+  /* Trên điện thoại nút cần cao hơn để bấm chính xác bằng ngón tay. */
+  .btn-primary, .btn-secondary { height: 52px; }
 }
 
 /* ====== ADAPTIVE PERFORMANCE ======
@@ -1055,4 +1118,19 @@ html[data-perf="off"] .toast,
 html[data-perf="off"] .theme-menu-dropdown {
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
+}
+
+/* Người dùng bật "giảm chuyển động" ở hệ điều hành: bỏ các hiệu ứng trang trí
+   nhưng vẫn giữ đầy đủ nội dung. */
+@media (prefers-reduced-motion: reduce) {
+  .page-glow,
+  .page-sweep,
+  .eyebrow::before,
+  .card::after {
+    animation: none;
+  }
+  .reveal {
+    opacity: 1;
+    transform: none;
+  }
 }
