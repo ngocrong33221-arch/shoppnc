@@ -1015,8 +1015,8 @@ html[data-perf="off"] .product-card:active {
    Thẻ sản phẩm được đẩy lên mức đẹp nhất: viền sáng quay nhanh hơn, hào quang
    đậm hơn và ảnh tự có vệt sáng lướt qua định kỳ dù không rê chuột. */
 html[data-perf="ultra"] .product-card::after {
-  opacity: 0.85;
-  animation-duration: 3s;
+  opacity: 1;
+  animation-duration: 2.6s;
 }
 html[data-perf="ultra"] .product-card:hover {
   box-shadow: 0 28px 58px -10px rgba(15, 23, 42, 0.2),

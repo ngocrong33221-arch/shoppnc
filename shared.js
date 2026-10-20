@@ -82,9 +82,9 @@ function navigate(url) {
     const mobile = window.innerWidth < 768;
     const area = window.innerWidth * window.innerHeight;
     if (quality === 'ultra') {
-      const cap = mobile ? 48 : 110;
-      const floor = mobile ? 28 : 52;
-      return Math.max(floor, Math.min(cap, Math.round(area / 17000)));
+      const cap = mobile ? 56 : 150;
+      const floor = mobile ? 32 : 72;
+      return Math.max(floor, Math.min(cap, Math.round(area / 12000)));
     }
     const cap = mobile ? 34 : 68;
     const base = Math.max(16, Math.min(cap, Math.round(area / 26000)));
@@ -136,11 +136,13 @@ function navigate(url) {
     const fallSpeed = isFast ? (Math.random() * 2.5 + 2.2) : (Math.random() * 1.5 + 0.9);
     const roll = Math.random();
     const particleColor = roll > 0.62 ? '#38bdf8' : (roll > 0.35 ? '#ffffff' : '#818cf8');
+    /* Mức "ultra" cho hạt to và sáng hơn để mật độ dày trông rõ. */
+    const sizeBoost = quality === 'ultra' ? 1.22 : 1;
 
     return {
       x: Math.random() * W,
       y: fromTop ? -15 - Math.random() * 45 : Math.random() * H,
-      radius: isStar ? (Math.random() * 2.2 + 1.8) : (Math.random() * 2.2 + 0.6),
+      radius: (isStar ? (Math.random() * 2.2 + 1.8) : (Math.random() * 2.2 + 0.6)) * sizeBoost,
       isStar: isStar,
       isEmber: isEmber,
       rotation: Math.random() * Math.PI * 2,

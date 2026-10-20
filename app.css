@@ -1168,8 +1168,8 @@ html[data-perf="off"] .code-float {
    Chỉ bật sau khi bộ đo FPS ở theme.js xác nhận thiết bị giữ được mức này:
    quầng sáng lớn hơn, viền sáng quay nhanh hơn, thẻ nổi khối hơn. */
 html[data-perf="ultra"] .glow {
-  filter: blur(155px);
-  opacity: 1.15;
+  filter: blur(150px) saturate(165%);
+  opacity: 1.35;
 }
 html[data-perf="ultra"] .glow-1 { animation-duration: 14s; }
 html[data-perf="ultra"] .glow-2 { animation-duration: 16s; }

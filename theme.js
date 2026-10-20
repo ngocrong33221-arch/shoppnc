@@ -326,10 +326,71 @@
   const weakDevice = state.cores <= 2 || state.memory <= 2;
   state.ceiling = prefersReduced ? 'off' : (weakDevice ? 'high' : 'ultra');
 
+  /* Lớp cực quang xoay chậm phía sau nội dung — điểm nhấn rõ nhất của mức cao.
+     Chỉ được dựng khi máy đủ khỏe (mức "high" trên máy tính, "ultra" trên mọi
+     thiết bị) nên máy yếu không phải vẽ thêm lớp nào. */
+  const AURORA_STYLE = `
+.cn-aurora {
+  position: fixed;
+  left: -30%;
+  top: -30%;
+  width: 160%;
+  height: 160%;
+  z-index: -2;
+  pointer-events: none;
+  opacity: 0;
+  background:
+    conic-gradient(from 0deg,
+      transparent 0deg,
+      rgba(var(--gold-light-rgb, 14, 165, 233), 0.34) 52deg,
+      transparent 132deg,
+      rgba(var(--gold-rgb, 2, 132, 199), 0.26) 208deg,
+      transparent 274deg,
+      rgba(129, 140, 248, 0.24) 332deg,
+      transparent 360deg),
+    radial-gradient(circle at 28% 30%, rgba(var(--gold-light-rgb, 14, 165, 233), 0.2), transparent 62%),
+    radial-gradient(circle at 74% 72%, rgba(129, 140, 248, 0.18), transparent 64%);
+  will-change: transform;
+  animation: cnAuroraSpin 40s linear infinite;
+  transition: opacity 1.4s ease;
+}
+@keyframes cnAuroraSpin {
+  to { transform: rotate(360deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .cn-aurora { animation: none; }
+}`;
+  let aurora = null;
+
+  function syncAurora() {
+    const wanted = state.level === 'ultra' || (state.level === 'high' && !state.mobile);
+    if (!wanted) {
+      if (aurora) {
+        aurora.remove();
+        aurora = null;
+      }
+      return;
+    }
+    if (!aurora) {
+      if (!document.getElementById('cn-aurora-style')) {
+        const style = document.createElement('style');
+        style.id = 'cn-aurora-style';
+        style.textContent = AURORA_STYLE;
+        document.head.appendChild(style);
+      }
+      aurora = document.createElement('div');
+      aurora.className = 'cn-aurora';
+      aurora.setAttribute('aria-hidden', 'true');
+      (document.body || document.documentElement).appendChild(aurora);
+    }
+    aurora.style.opacity = state.level === 'ultra' ? '0.85' : '0.32';
+  }
+
   function setLevel(level) {
     if (state.level === level) return;
     state.level = level;
     root.setAttribute('data-perf', level);
+    syncAurora();
     listeners.forEach(fn => {
       try { fn(level, state); } catch { /* bỏ qua lỗi từ bên đăng ký */ }
     });
@@ -339,6 +400,7 @@
      nếu máy thật sự đủ khỏe để giữ mức đó. */
   state.level = prefersReduced ? 'off' : (weakDevice ? 'low' : 'high');
   root.setAttribute('data-perf', state.level);
+  syncAurora();
 
   window.CN_PERF = {
     get level() { return state.level; },

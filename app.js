@@ -118,9 +118,9 @@ function particleCount() {
   const mobile = window.innerWidth < 768;
   const area = window.innerWidth * window.innerHeight;
   if (quality === 'ultra') {
-    const cap = mobile ? 90 : 220;
-    const floor = mobile ? 48 : 90;
-    return Math.max(floor, Math.min(cap, Math.round(area / 8000)));
+    const cap = mobile ? 110 : 250;
+    const floor = mobile ? 56 : 105;
+    return Math.max(floor, Math.min(cap, Math.round(area / 7000)));
   }
   const cap = mobile ? 60 : 145;
   const base = Math.max(30, Math.min(cap, Math.round(area / 12000)));
@@ -138,10 +138,12 @@ window.addEventListener('resize', resize);
 function createFallingParticle(fromTop = false) {
   const isStar = Math.random() < 0.25;
   const isEmber = Math.random() < 0.45;
+  /* Mức "ultra" cho hạt to hơn để mật độ dày trông rõ. */
+  const sizeBoost = quality === 'ultra' ? 1.22 : 1;
   return {
     x: Math.random() * W,
     y: fromTop ? -25 - Math.random() * 50 : Math.random() * H,
-    radius: isStar ? (Math.random() * 2.2 + 1.8) : (Math.random() * 2.0 + 0.6),
+    radius: (isStar ? (Math.random() * 2.2 + 1.8) : (Math.random() * 2.0 + 0.6)) * sizeBoost,
     isStar: isStar,
     isEmber: isEmber,
     rotation: Math.random() * Math.PI * 2,

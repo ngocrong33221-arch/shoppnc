@@ -1124,8 +1124,8 @@ html[data-perf="off"] .theme-menu-dropdown {
    Chỉ bật sau khi bộ đo FPS ở theme.js xác nhận thiết bị giữ được mức này,
    nên có thể dùng các hiệu ứng đắt hơn (blur lớn, vệt sáng quay nhanh hơn). */
 html[data-perf="ultra"] .page-glow {
-  filter: blur(150px);
-  opacity: 1.2;
+  filter: blur(150px) saturate(165%);
+  opacity: 1.4;
 }
 html[data-perf="ultra"] .page-glow-1 { animation-duration: 15s; }
 html[data-perf="ultra"] .page-glow-2 { animation-duration: 12s; }
@@ -1135,8 +1135,8 @@ html[data-perf="ultra"] .mobile-nav {
   -webkit-backdrop-filter: blur(30px) saturate(190%);
 }
 html[data-perf="ultra"] .card::after {
-  opacity: 0.95;
-  animation-duration: 4.5s;
+  opacity: 1;
+  animation-duration: 3.6s;
 }
 html[data-perf="ultra"] .card:hover {
   box-shadow: 0 30px 70px -20px rgba(15, 23, 42, 0.28),
