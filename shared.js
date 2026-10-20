@@ -75,12 +75,19 @@ function navigate(url) {
     '#818cf8': makeGlowSprite('rgba(129, 140, 248, 0.9)')
   };
 
-  /* Màn hình nhỏ dùng ít hạt hơn để giữ 60fps trên điện thoại. */
+  /* Số hạt theo mức hiệu ứng: máy khỏe (ultra) rải dày hơn, máy yếu (low) giảm
+     một nửa, màn hình nhỏ luôn ít hơn để giữ 60fps trên điện thoại. */
   function targetCount() {
     if (quality === 'off') return 0;
-    const cap = window.innerWidth < 768 ? 34 : 68;
-    const byArea = Math.round((window.innerWidth * window.innerHeight) / 26000);
-    const base = Math.max(16, Math.min(cap, byArea));
+    const mobile = window.innerWidth < 768;
+    const area = window.innerWidth * window.innerHeight;
+    if (quality === 'ultra') {
+      const cap = mobile ? 48 : 110;
+      const floor = mobile ? 28 : 52;
+      return Math.max(floor, Math.min(cap, Math.round(area / 17000)));
+    }
+    const cap = mobile ? 34 : 68;
+    const base = Math.max(16, Math.min(cap, Math.round(area / 26000)));
     return quality === 'low' ? Math.max(12, Math.round(base * 0.5)) : base;
   }
   let COUNT = targetCount();
@@ -221,10 +228,10 @@ function navigate(url) {
       }
 
       // Halo phát sáng được vẽ sẵn rồi drawImage — thay cho shadowBlur từng hạt (rất chậm).
-      // Mức "low" bỏ halo để giảm tải cho máy yếu.
-      if (quality === 'high') {
-        const haloSize = p.radius * 7 * scale;
-        ctx.globalAlpha = currentAlpha * 0.85;
+      // Mức "low"/"off" bỏ halo để giảm tải cho máy yếu.
+      if (quality === 'high' || quality === 'ultra') {
+        const haloSize = p.radius * (quality === 'ultra' ? 8 : 7) * scale;
+        ctx.globalAlpha = currentAlpha * (quality === 'ultra' ? 0.95 : 0.85);
         ctx.drawImage(p.sprite, p.x - haloSize / 2, p.y - haloSize / 2, haloSize, haloSize);
       }
 
@@ -389,11 +396,20 @@ function createClickRipple(x, y) {
   ripple.style.height = '24px';
   document.body.appendChild(ripple);
   setTimeout(() => ripple.remove(), 600);
+
+  /* Máy khỏe: bắn thêm vòng sóng thứ hai lan xa hơn cho hiệu ứng dày hơn. */
+  if (window.CN_PERF && window.CN_PERF.level === 'ultra') {
+    const echo = ripple.cloneNode();
+    echo.className = 'click-ripple click-ripple-echo';
+    document.body.appendChild(echo);
+    setTimeout(() => echo.remove(), 900);
+  }
 }
 
 function createClickBurst(x, y) {
-  // Mức "low" giảm số tia bắn ra để nhẹ hơn cho điện thoại.
-  const count = window.CN_PERF && window.CN_PERF.level === 'low' ? 7 : 14;
+  // Máy yếu bắn ít tia hơn, máy khỏe bắn dày hơn.
+  const level = window.CN_PERF && window.CN_PERF.level;
+  const count = level === 'low' ? 7 : (level === 'ultra' ? 22 : 14);
   for (let i = 0; i < count; i++) {
     const spark = document.createElement('div');
     spark.className = 'click-spark';

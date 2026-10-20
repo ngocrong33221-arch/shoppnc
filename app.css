@@ -263,6 +263,21 @@ body.page-out .page-sweep {
     opacity: 0;
   }
 }
+/* Vòng sóng thứ hai khi bấm — app.js chỉ tạo ở mức "ultra". */
+.click-ripple-echo {
+  border-color: var(--gold-light);
+  opacity: 0;
+  animation-name: rippleEcho;
+  animation-duration: 0.85s;
+  animation-delay: 0.12s;
+  animation-timing-function: cubic-bezier(0.1, 0.8, 0.3, 1);
+  animation-fill-mode: forwards;
+}
+@keyframes rippleEcho {
+  0%   { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+  35%  { opacity: 0.9; }
+  100% { transform: translate(-50%, -50%) scale(6); opacity: 0; }
+}
 
 /* ---------- Auth Layout ---------- */
 .auth-root {
@@ -1147,4 +1162,22 @@ html[data-perf="off"] .auth-card,
 html[data-perf="off"] .code-float {
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
+}
+
+/* ====== MÁY KHỎE: mức "ultra" ======
+   Chỉ bật sau khi bộ đo FPS ở theme.js xác nhận thiết bị giữ được mức này:
+   quầng sáng lớn hơn, viền sáng quay nhanh hơn, thẻ nổi khối hơn. */
+html[data-perf="ultra"] .glow {
+  filter: blur(155px);
+  opacity: 1.15;
+}
+html[data-perf="ultra"] .glow-1 { animation-duration: 14s; }
+html[data-perf="ultra"] .glow-2 { animation-duration: 16s; }
+html[data-perf="ultra"] .auth-card {
+  box-shadow: 0 40px 90px -22px rgba(15, 23, 42, 0.3),
+              0 0 64px rgba(var(--gold-light-rgb), 0.2),
+              inset 0 1px 0 rgba(255, 255, 255, 0.92);
+}
+html[data-perf="ultra"] .auth-card::after {
+  animation-duration: 4s;
 }

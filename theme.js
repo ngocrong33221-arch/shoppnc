@@ -298,20 +298,33 @@
     .catch(error => console.error('Could not load the saved site theme:', error));
 })();
 
-/* Đo FPS thực tế trên thiết bị nhỏ / cảm ứng. Nếu máy bị lag, tự hạ mức hiệu ứng
-   để giao diện mượt lại: "low" giảm hiệu ứng nặng, "off" tắt hẳn hiệu ứng nền.
+/* ====== Bộ điều phối hiệu ứng theo sức máy ======
+   Đo FPS thật của từng thiết bị (cả máy tính lẫn điện thoại) rồi tự chọn mức
+   đồ họa phù hợp và điều chỉnh được cả hai chiều:
+     ultra -> máy khỏe: hiệu ứng đầy đủ, thêm lớp ánh sáng
+     high  -> mức tiêu chuẩn
+     low   -> đã giảm bớt hiệu ứng nặng
+     off   -> tắt hẳn hiệu ứng nền để máy yếu chạy mượt
    Mức hiện tại nằm ở thuộc tính html[data-perf] và window.CN_PERF. */
 (function performanceGovernor() {
   const root = document.documentElement;
   const listeners = [];
-  const state = { level: 'high', fps: 60, mobile: false };
+  const LEVELS = ['off', 'low', 'high', 'ultra'];
+  const state = { level: 'high', ceiling: 'ultra', fps: 60, mobile: false, cores: 4, memory: 4 };
 
   let prefersReduced = false;
   try {
     prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     state.mobile = window.matchMedia('(max-width: 900px)').matches ||
       (navigator.maxTouchPoints > 0 && window.innerWidth < 1100);
+    state.cores = navigator.hardwareConcurrency || 4;
+    /* Safari/iOS không cung cấp deviceMemory nên mặc định 4GB. */
+    state.memory = navigator.deviceMemory || 4;
   } catch { /* môi trường không hỗ trợ matchMedia */ }
+
+  /* Máy 2 lõi / 2GB thì không bao giờ leo lên mức cao nhất. */
+  const weakDevice = state.cores <= 2 || state.memory <= 2;
+  state.ceiling = prefersReduced ? 'off' : (weakDevice ? 'high' : 'ultra');
 
   function setLevel(level) {
     if (state.level === level) return;
@@ -322,23 +335,29 @@
     });
   }
 
-  state.level = prefersReduced ? 'off' : 'high';
+  /* Mức khởi đầu theo cấu hình máy, sau đó bộ đo FPS mới nâng lên "ultra"
+     nếu máy thật sự đủ khỏe để giữ mức đó. */
+  state.level = prefersReduced ? 'off' : (weakDevice ? 'low' : 'high');
   root.setAttribute('data-perf', state.level);
 
   window.CN_PERF = {
     get level() { return state.level; },
     get mobile() { return state.mobile; },
     get fps() { return state.fps; },
+    get ceiling() { return state.ceiling; },
     onChange(fn) {
       listeners.push(fn);
       try { fn(state.level, state); } catch { /* bỏ qua */ }
     }
   };
 
-  // Chỉ đo trên thiết bị nhỏ / cảm ứng; máy để bàn gần như không lag.
-  if (prefersReduced || !state.mobile) return;
-
-  const history = [];
+  let history = [];
+  let goodStreak = 0;
+  /* Số nhịp đo đủ mượt liên tiếp mới được nâng một bậc. Mỗi lần phải hạ mức,
+     ngưỡng này tăng lên để tránh nâng/hạ qua lại liên tục. */
+  let requiredGood = 2;
+  let cooldownUntil = 0;
+  let lastDowngrade = 0;
   let frames = 0;
   let windowStart = 0;
 
@@ -347,6 +366,23 @@
     frames = 0;
     windowStart = 0;
   });
+
+  /* Người dùng đổi thiết lập "giảm chuyển động" trong lúc đang mở trang. */
+  try {
+    window.matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change', event => {
+      if (!event.matches) return;
+      state.ceiling = 'off';
+      setLevel('off');
+    });
+  } catch { /* trình duyệt cũ chưa hỗ trợ addEventListener trên MediaQueryList */ }
+
+  /* Đổi mức và tạm ngưng đo ít giây để giao diện ổn định rồi mới đánh giá lại. */
+  function settle(level, cooldown) {
+    setLevel(level);
+    history = [];
+    goodStreak = 0;
+    cooldownUntil = performance.now() + cooldown;
+  }
 
   function sample(now) {
     if (document.hidden) {
@@ -367,16 +403,39 @@
     windowStart = now;
     state.fps = Math.round(fps);
     history.push(fps);
-    if (history.length > 8) history.shift();
+    if (history.length > 6) history.shift();
 
     // Bỏ 2 mẫu đầu vì trang còn đang dựng layout / tải dữ liệu.
-    if (history.length < 3) return requestAnimationFrame(sample);
+    if (history.length >= 3 && now >= cooldownUntil) {
+      const recent = history.slice(-4);
+      const avg = recent.reduce((sum, value) => sum + value, 0) / recent.length;
+      const index = LEVELS.indexOf(state.level);
+      const lowIndex = LEVELS.indexOf('low');
 
-    const recent = history.slice(-4);
-    const avg = recent.reduce((sum, value) => sum + value, 0) / recent.length;
+      /* Mức mục tiêu khi máy không giữ nổi khung hình: càng lag càng lùi sâu.
+         null nghĩa là mức hiện tại đã phù hợp, không cần đổi. */
+      let target = null;
+      if (avg < 26) target = 'off';
+      else if (avg < 40) target = 'low';
+      else if (avg < 54 && index > lowIndex) target = LEVELS[index - 1];
 
-    if (avg < 28) { setLevel('off'); return; }
-    if (avg < 42) { setLevel('low'); return; }
+      if (target !== null && target !== state.level) {
+        /* Mỗi lần phải hạ mức, siết thêm điều kiện nâng lại để tránh dao động. */
+        requiredGood = Math.min(requiredGood + 1, 8);
+        lastDowngrade = now;
+        settle(target, target === 'off' ? 12000 : 8000);
+      } else if (target === null) {
+        goodStreak = avg >= 54 ? goodStreak + 1 : 0;
+
+        if (goodStreak >= requiredGood && index < LEVELS.indexOf(state.ceiling)) {
+          settle(LEVELS[index + 1], 6000);
+        } else if (now - lastDowngrade > 20000 && requiredGood > 2) {
+          /* Giữ mức mượt lâu dài thì nới dần điều kiện để dễ nâng lại. */
+          requiredGood -= 1;
+        }
+      }
+    }
+
     // Vẫn tiếp tục đo để xử lý trường hợp máy lag về sau (cuộn trang, dữ liệu nặng).
     requestAnimationFrame(sample);
   }

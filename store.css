@@ -1010,6 +1010,31 @@ html[data-perf="off"] .product-card:hover,
 html[data-perf="off"] .product-card:active {
   transform: none;
 }
+
+/* ====== MÁY KHỎE: mức "ultra" ======
+   Thẻ sản phẩm được đẩy lên mức đẹp nhất: viền sáng quay nhanh hơn, hào quang
+   đậm hơn và ảnh tự có vệt sáng lướt qua định kỳ dù không rê chuột. */
+html[data-perf="ultra"] .product-card::after {
+  opacity: 0.85;
+  animation-duration: 3s;
+}
+html[data-perf="ultra"] .product-card:hover {
+  box-shadow: 0 28px 58px -10px rgba(15, 23, 42, 0.2),
+              0 0 46px rgba(var(--gold-light-rgb), 0.3),
+              inset 0 1px 0 rgba(255, 255, 255, 0.75);
+}
+html[data-perf="ultra"] .detail-art::after {
+  animation-duration: 6s;
+}
+/* :not(:hover) để nhường chỗ cho vệt sáng khi rê chuột (artSheen). */
+html[data-perf="ultra"] .product-card:not(:hover) .product-art::after {
+  animation: artSheenIdle 7s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
+@keyframes artSheenIdle {
+  0%, 58%   { left: -55%; opacity: 0; }
+  63%       { opacity: 0.8; }
+  80%, 100% { left: 118%; opacity: 0; }
+}
 @media (prefers-reduced-motion: reduce) {
   .product-card { animation: none; opacity: 1; }
   .product-card:hover,

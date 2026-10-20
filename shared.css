@@ -1120,6 +1120,46 @@ html[data-perf="off"] .theme-menu-dropdown {
   -webkit-backdrop-filter: none;
 }
 
+/* ====== MÁY KHỎE: mức "ultra" ======
+   Chỉ bật sau khi bộ đo FPS ở theme.js xác nhận thiết bị giữ được mức này,
+   nên có thể dùng các hiệu ứng đắt hơn (blur lớn, vệt sáng quay nhanh hơn). */
+html[data-perf="ultra"] .page-glow {
+  filter: blur(150px);
+  opacity: 1.2;
+}
+html[data-perf="ultra"] .page-glow-1 { animation-duration: 15s; }
+html[data-perf="ultra"] .page-glow-2 { animation-duration: 12s; }
+html[data-perf="ultra"] .topbar,
+html[data-perf="ultra"] .mobile-nav {
+  backdrop-filter: blur(30px) saturate(190%);
+  -webkit-backdrop-filter: blur(30px) saturate(190%);
+}
+html[data-perf="ultra"] .card::after {
+  opacity: 0.95;
+  animation-duration: 4.5s;
+}
+html[data-perf="ultra"] .card:hover {
+  box-shadow: 0 30px 70px -20px rgba(15, 23, 42, 0.28),
+              0 0 42px rgba(var(--gold-rgb), 0.22),
+              inset 0 1px 0 rgba(255, 255, 255, 0.85);
+}
+
+/* Vòng sóng thứ hai khi bấm — chỉ được tạo ở mức "ultra". */
+.click-ripple-echo {
+  border-color: var(--gold-light);
+  opacity: 0;
+  animation-name: rippleEcho;
+  animation-duration: 0.85s;
+  animation-delay: 0.12s;
+  animation-timing-function: cubic-bezier(0.1, 0.8, 0.3, 1);
+  animation-fill-mode: forwards;
+}
+@keyframes rippleEcho {
+  0%   { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+  35%  { opacity: 0.9; }
+  100% { transform: translate(-50%, -50%) scale(6); opacity: 0; }
+}
+
 /* Người dùng bật "giảm chuyển động" ở hệ điều hành: bỏ các hiệu ứng trang trí
    nhưng vẫn giữ đầy đủ nội dung. */
 @media (prefers-reduced-motion: reduce) {

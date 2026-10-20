@@ -109,14 +109,21 @@ const pts = [];
 const mousePos = { x: -9999, y: -9999, prevX: -9999, prevY: -9999, vx: 0, vy: 0 };
 
 /* Mức hiệu ứng do performance governor (theme.js) quyết định theo FPS thực tế:
-   high = đầy đủ, low = bớt hiệu ứng nặng, off = tắt hẳn. */
+   ultra = rải dày hơn cho máy khỏe, high = đầy đủ, low = bớt hiệu ứng nặng,
+   off = tắt hẳn. */
 let quality = (window.CN_PERF && window.CN_PERF.level) || 'high';
 
 function particleCount() {
   if (quality === 'off') return 0;
-  const cap = window.innerWidth < 768 ? 60 : 145;
-  const byArea = Math.round((window.innerWidth * window.innerHeight) / 12000);
-  const base = Math.max(30, Math.min(cap, byArea));
+  const mobile = window.innerWidth < 768;
+  const area = window.innerWidth * window.innerHeight;
+  if (quality === 'ultra') {
+    const cap = mobile ? 90 : 220;
+    const floor = mobile ? 48 : 90;
+    return Math.max(floor, Math.min(cap, Math.round(area / 8000)));
+  }
+  const cap = mobile ? 60 : 145;
+  const base = Math.max(30, Math.min(cap, Math.round(area / 12000)));
   return quality === 'low' ? Math.max(20, Math.round(base * 0.45)) : base;
 }
 
@@ -201,9 +208,9 @@ function animateParticles() {
   mousePos.vx *= 0.88;
   mousePos.vy *= 0.88;
 
-  // Tia nối tới con trỏ và chỉ nối giữa các hạt: chỉ vẽ ở mức "high"
+  // Tia nối tới con trỏ và chỉ nối giữa các hạt: chỉ vẽ từ mức "high" trở lên
   // vì đây là phần tốn kém nhất (đặc biệt vòng lặp nối hạt O(n²)).
-  if (quality === 'high') {
+  if (quality === 'high' || quality === 'ultra') {
     // Draw connecting gold laser/lightning beams to cursor when particles are near mouse
     for (let i = 0; i < pts.length; i++) {
       const p = pts[i];
@@ -277,10 +284,10 @@ function animateParticles() {
       currentGlow += (1 - mDist / 135) * 14;
     }
 
-    // Ở mức "high" mới dùng shadowBlur (rất tốn GPU) cho hiệu ứng phát sáng.
+    // Ở mức "high" trở lên mới dùng shadowBlur (rất tốn GPU) cho hiệu ứng phát sáng.
     ctx.save();
-    if (quality === 'high') {
-      ctx.shadowBlur = currentGlow;
+    if (quality === 'high' || quality === 'ultra') {
+      ctx.shadowBlur = quality === 'ultra' ? currentGlow * 1.4 : currentGlow;
       ctx.shadowColor = '#ffd700';
     }
     ctx.fillStyle = p.color;
@@ -451,11 +458,20 @@ function createClickRipple(x, y) {
   ripple.style.height = '24px';
   document.body.appendChild(ripple);
   setTimeout(() => ripple.remove(), 600);
+
+  /* Máy khỏe: bắn thêm vòng sóng thứ hai lan xa hơn cho hiệu ứng dày hơn. */
+  if (window.CN_PERF && window.CN_PERF.level === 'ultra') {
+    const echo = ripple.cloneNode();
+    echo.className = 'click-ripple click-ripple-echo';
+    document.body.appendChild(echo);
+    setTimeout(() => echo.remove(), 900);
+  }
 }
 
 function createClickBurst(x, y) {
-  // Mức "low" giảm số tia bắn ra để nhẹ hơn cho điện thoại.
-  const count = window.CN_PERF && window.CN_PERF.level === 'low' ? 7 : 14;
+  // Máy yếu bắn ít tia hơn, máy khỏe bắn dày hơn.
+  const level = window.CN_PERF && window.CN_PERF.level;
+  const count = level === 'low' ? 7 : (level === 'ultra' ? 22 : 14);
   for (let i = 0; i < count; i++) {
     const spark = document.createElement('div');
     spark.className = 'click-spark';
