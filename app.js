@@ -6,7 +6,7 @@
 /* ── 0. Load Background Music Player ── */
 (function loadMusic() {
   const s = document.createElement('script');
-  s.src = 'web-effects.js?v=20261027a';
+  s.src = 'web-effects.js?v=20261027b';
   document.body.append(s);
 })();
 
@@ -516,7 +516,8 @@ function navigate(url) {
 }
 
 /* ── 5. Authentication & Form Management ── */
-const SESSION_KEY = 'cn_session';
+/* SESSION_KEY do shared.js khai báo (được nạp trước app.js). Không khai báo lại
+   bằng const ở đây: trùng tên ở phạm vi toàn cục sẽ làm cả file này không chạy. */
 const ACCOUNTS_KEY = 'cn_accounts';
 const ADMIN = { username: 'ADM', password: 'CodeNest@2026', role: 'admin' };
 

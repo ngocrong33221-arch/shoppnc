@@ -6,15 +6,20 @@
 /* ── 0. Load Background Music Player ── */
 (function loadMusic() {
   const s = document.createElement('script');
-  s.src = 'web-effects.js?v=20261027a';
+  s.src = 'web-effects.js?v=20261027b';
   document.body.append(s);
 })();
 
 /* ── 1. Session Guard ── */
 const SESSION_KEY  = 'cn_session';
 
+/* Trang đăng nhập phải chạy được khi chưa có phiên. Nếu không loại trừ nó,
+   index.html tự chuyển hướng về chính nó và gây vòng lặp tải lại vô hạn. */
+const _isAuthPage = /(?:^|\/)index\.html$/.test(window.location.pathname) ||
+                    /(?:^|\/)$/.test(window.location.pathname);
+
 const _session = JSON.parse(sessionStorage.getItem(SESSION_KEY) || 'null');
-if (!_session) {
+if (!_session && !_isAuthPage) {
   window.location.href = 'index.html';
 }
 
@@ -34,6 +39,10 @@ function navigate(url) {
 
 /* ── 3. Golden Falling Particle Rain & Interactive Mouse Physics Engine ── */
 (function initGoldenParticles() {
+  /* Trang đăng nhập đã có engine hạt riêng trong app.js; chạy thêm ở đây sẽ khiến
+     hai engine cùng vẽ lên một canvas (nhấp nháy, tốn CPU). */
+  if (_isAuthPage) return;
+
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   /* Mức hiệu ứng do performance governor (theme.js) điều khiển:
      high = đầy đủ, low = bớt hiệu ứng, off = tắt hẳn. */
@@ -287,6 +296,8 @@ function navigate(url) {
 
 /* ── 4. Luxury Custom Cursor & Mouse Move Trail ── */
 (function initLuxuryCursor() {
+  /* Trang đăng nhập đã có engine con trỏ riêng trong app.js. */
+  if (_isAuthPage) return;
   /* Trên thiết bị cảm ứng, con trỏ tùy biến bị ẩn bằng CSS và không có chuột,
      nên bỏ hẳn engine để khỏi tốn một vòng requestAnimationFrame liên tục. */
   if (window.matchMedia('(pointer: coarse)').matches) return;
@@ -377,6 +388,8 @@ function navigate(url) {
 
 /* ── 5. Click Burst & Ripple Shockwave ── */
 document.addEventListener('mousedown', e => {
+  /* app.js đã tự xử lý hiệu ứng click trên trang đăng nhập. */
+  if (_isAuthPage) return;
   // Máy yếu ở mức "off" thì bỏ hẳn hiệu ứng click cho đỡ giật.
   if (window.CN_PERF && window.CN_PERF.level === 'off') return;
   const cursor = document.getElementById('cursor');
