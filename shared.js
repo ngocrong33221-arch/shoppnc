@@ -629,14 +629,25 @@ function commissionTier(level) {
   return COMMISSION_TIERS[level - 1] || null;
 }
 
-/* Mã giới thiệu: 4 ký tự đầu của tên đăng nhập + 4 ký tự ngẫu nhiên. */
-function makeReferralCode(username) {
-  const base = String(username || '')
-    .toUpperCase()
-    .replace(/[^A-Z0-9]/g, '')
-    .slice(0, 4)
-    .padEnd(4, 'X');
-  return `${base}${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
+/* Mã giới thiệu: chuỗi ngẫu nhiên gồm chữ in hoa, số và ký tự đặc biệt.
+   Ví dụ: DNJKJH%YVYV */
+const REFERRAL_CODE_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789%#@$&*';
+const REFERRAL_CODE_LENGTH = 11;
+
+function makeReferralCode() {
+  const bytes = new Uint32Array(REFERRAL_CODE_LENGTH);
+  if (window.crypto && window.crypto.getRandomValues) {
+    window.crypto.getRandomValues(bytes);
+  } else {
+    for (let i = 0; i < REFERRAL_CODE_LENGTH; i++) {
+      bytes[i] = Math.floor(Math.random() * 4294967296);
+    }
+  }
+  let code = '';
+  for (let i = 0; i < REFERRAL_CODE_LENGTH; i++) {
+    code += REFERRAL_CODE_CHARS[bytes[i] % REFERRAL_CODE_CHARS.length];
+  }
+  return code;
 }
 
 /* Lấy mã giới thiệu của thành viên, tạo mới nếu chưa có. */
@@ -651,7 +662,7 @@ async function ensureReferralCode(username) {
   if (data && data.referral_code) return data.referral_code;
 
   for (let attempt = 0; attempt < 5; attempt++) {
-    const code = makeReferralCode(username);
+    const code = makeReferralCode();
     const { data: clash } = await supabase
       .from('users')
       .select('username')

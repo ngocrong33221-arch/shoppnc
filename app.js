@@ -895,13 +895,13 @@ document.getElementById('loginForm').addEventListener('submit', async e => {
         referredBy = inviter.username;
       }
 
-      // Create new user with own referral code
+      // Create new user (referral code generated afterwards so a rare
+      // duplicate can be retried instead of failing the whole signup)
       const newUser = {
         username: user,
         password: pass,
         role: 'user',
         balance: 0,
-        referral_code: makeReferralCode(user),
       };
       if (referredBy) newUser.referred_by = referredBy;
 
@@ -910,6 +910,8 @@ document.getElementById('loginForm').addEventListener('submit', async e => {
         .insert([newUser]);
 
       if (signupError) throw signupError;
+
+      await ensureReferralCode(user);
 
       sessionStorage.setItem(SESSION_KEY, JSON.stringify({ username: user, role: 'user' }));
       showStatus('✨ Tạo tài khoản thành công! Đang chuyển vào hệ thống...', true);
