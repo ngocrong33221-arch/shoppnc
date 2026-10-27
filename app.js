@@ -6,7 +6,7 @@
 /* ── 0. Load Background Music Player ── */
 (function loadMusic() {
   const s = document.createElement('script');
-  s.src = 'web-effects.js';
+  s.src = 'web-effects.js?v=20261027a';
   document.body.append(s);
 })();
 
