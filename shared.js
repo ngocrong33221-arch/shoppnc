@@ -658,7 +658,10 @@ async function ensureReferralCode(username) {
     .select('referral_code')
     .eq('username', username)
     .maybeSingle();
-  if (error) return '';
+  if (error) {
+    console.warn('Không đọc được mã giới thiệu (kiểm tra cột users.referral_code):', error.message);
+    return '';
+  }
   if (data && data.referral_code) return data.referral_code;
 
   for (let attempt = 0; attempt < 5; attempt++) {
