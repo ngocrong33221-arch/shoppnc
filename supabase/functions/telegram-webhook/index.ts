@@ -78,6 +78,37 @@ function topupBonus(amount: unknown): number {
   return tier ? tier.bonus : 0;
 }
 
+// Hoa hồng 5% cho người mời trực tiếp khi người được mời nạp tiền.
+// Tiền khách nhận vẫn giữ nguyên; khoản 5% là thưởng thêm cho người giới thiệu.
+const REFERRAL_TOPUP_RATE = 0.05;
+
+async function payoutTopupCommission(buyer: string, amount: unknown): Promise<void> {
+  const base = Number(amount) || 0;
+  const bonus = Math.round(base * REFERRAL_TOPUP_RATE);
+  if (base <= 0 || bonus <= 0) return;
+
+  const lookup = await db(`users?select=referred_by&username=eq.${encodeURIComponent(buyer)}`);
+  if (!lookup.ok) return;
+  const rows = (await lookup.json()) as { referred_by?: string | null }[];
+  const inviter = rows[0]?.referred_by;
+  if (!inviter) return;
+
+  await db('commissions', {
+    method: 'POST',
+    headers: { Prefer: 'return=minimal' },
+    body: JSON.stringify([{
+      username: inviter,
+      source_username: buyer,
+      kind: 'topup',
+      level: 1,
+      rate: REFERRAL_TOPUP_RATE,
+      amount: bonus,
+      base_amount: base,
+      detail: `Hoa hồng 5% từ lượt nạp của ${buyer}`,
+    }]),
+  });
+}
+
 async function approveOrder(order: Order): Promise<number> {
   const filter = `username=eq.${encodeURIComponent(order.username)}`;
   const userResponse = await db(`users?select=balance&${filter}`);
@@ -94,6 +125,8 @@ async function approveOrder(order: Order): Promise<number> {
     method: 'PATCH',
     body: JSON.stringify({ status: 'approved' }),
   });
+
+  await payoutTopupCommission(order.username, order.amount);
 
   return newBalance;
 }

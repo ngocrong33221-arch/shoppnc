@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CodeNest | Hoa hồng & Giới thiệu</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="shared.css">
+  <link rel="stylesheet" href="referral.css">
+</head>
+<body>
+  <div class="page-glow page-glow-1" aria-hidden="true"></div>
+  <div class="page-glow page-glow-2" aria-hidden="true"></div>
+  <div class="cursor" id="cursor" aria-hidden="true"></div>
+
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a class="brand" href="store.html">
+        <div class="brand-icon">&lt;/&gt;</div>
+        <span class="brand-name">code<span class="accent">nest</span></span>
+      </a>
+      <nav class="topbar-nav">
+        <a href="store.html">Kho code</a>
+        <a href="wallet.html">Ví tiền</a>
+        <a href="account.html">Tài khoản</a>
+        <a href="referral.html" class="active">Hoa hồng</a>
+        <a href="support.html">Hỗ trợ</a>
+        <a href="admin.html" id="adminLink" style="display:none">Quản trị</a>
+      </nav>
+      <div class="topbar-user">
+        <div class="user-badge">
+          <div class="user-avatar" id="userAvatar">U</div>
+          <span id="userBadge">USER</span>
+        </div>
+        <button class="logout-btn" id="logoutButton">Đăng xuất</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="page-fade">
+    <section class="page-hero">
+      <div class="reveal">
+        <p class="eyebrow">Referral Center</p>
+        <h1 class="page-h1">Giới thiệu<br><em>nhận hoa hồng.</em></h1>
+        <p class="page-desc">Chia sẻ mã giới thiệu của bạn. Khi người được mời mua hàng hoặc nạp tiền, bạn nhận hoa hồng tự động.</p>
+      </div>
+    </section>
+
+    <section class="referral-grid">
+      <!-- Referral code card -->
+      <div class="card referral-code-card reveal">
+        <span class="card-label">MÃ GIỚI THIỆU</span>
+        <h2 class="card-section-title">Mã của bạn</h2>
+        <p class="card-copy">Gửi mã hoặc liên kết này cho bạn bè. Người đăng ký bằng mã của bạn sẽ được gắn vào tuyến giới thiệu.</p>
+
+        <div class="code-box">
+          <span class="code-value" id="referralCode">—</span>
+          <button class="code-copy" id="copyCode" type="button">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="11" height="11" rx="2.2"/><path d="M5 15V5.8A1.8 1.8 0 0 1 6.8 4H15"/></svg>
+            <span>Sao chép</span>
+          </button>
+        </div>
+
+        <label class="form-label" for="inviteLink">Liên kết mời</label>
+        <div class="invite-row">
+          <input class="form-input" id="inviteLink" type="text" readonly value="">
+          <button class="btn-primary invite-copy" id="copyLink" type="button">
+            <span>Copy link</span>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10 13a5 5 0 0 0 7.1 0l2.4-2.4a5 5 0 0 0-7.1-7.1L11 4.9"/><path d="M14 11a5 5 0 0 0-7.1 0l-2.4 2.4a5 5 0 0 0 7.1 7.1L13 19.1"/></svg>
+          </button>
+        </div>
+
+        <div class="rate-list">
+          <div class="rate-item">
+            <span class="rate-tag">CTV</span>
+            <span class="rate-desc">Hoa hồng 17% mỗi đơn hàng</span>
+          </div>
+          <div class="rate-item">
+            <span class="rate-tag">Đối tác</span>
+            <span class="rate-desc">Hoa hồng 46% mỗi đơn hàng</span>
+          </div>
+          <div class="rate-item">
+            <span class="rate-tag">Quản lí</span>
+            <span class="rate-desc">Hoa hồng 37% mỗi đơn hàng</span>
+          </div>
+          <div class="rate-item">
+            <span class="rate-tag">Nạp tiền</span>
+            <span class="rate-desc">Nhận 5% giá trị mỗi lượt nạp của người được mời</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Commission summary card -->
+      <div class="card referral-summary-card reveal">
+        <span class="card-label">HOA HỒNG</span>
+        <h2 class="card-section-title">Tổng thu nhập</h2>
+        <p class="card-copy">Hoa hồng được cộng tự động vào tài khoản khi đơn hàng hoàn tất.</p>
+
+        <div class="total-box">
+          <span class="total-label">Tổng hoa hồng</span>
+          <strong class="total-value" id="totalCommission">0đ</strong>
+        </div>
+
+        <div class="profile-details">
+          <div class="detail-row">
+            <span>Hoa hồng mua hàng</span>
+            <strong class="commission-val" id="purchaseCommission">0đ</strong>
+          </div>
+          <div class="detail-row">
+            <span>Hoa hồng nạp tiền</span>
+            <strong class="commission-val" id="topupCommission">0đ</strong>
+          </div>
+          <div class="detail-row">
+            <span>Vai trò hiện tại</span>
+            <strong id="currentRole">Thành viên</strong>
+          </div>
+          <div class="detail-row">
+            <span>Số dư ví</span>
+            <strong class="commission-val" id="walletBalance">0đ</strong>
+          </div>
+        </div>
+      </div>
+
+      <!-- Commission history -->
+      <div class="card referral-history-card reveal">
+        <span class="card-label">LỊCH SỬ</span>
+        <h2 class="card-section-title">Chi tiết hoa hồng</h2>
+        <p class="card-copy">Mọi khoản hoa hồng bạn đã nhận.</p>
+        <div id="commissionList">
+          <p class="form-status" id="commissionStatus" role="status">Đang tải hoa hồng...</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div class="toast" id="toast" role="status">
+    <span class="toast-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg></span>
+    <span id="toastMsg"></span>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-client.js"></script>
+  <script src="theme.js"></script>
+  <script src="shared.js"></script>
+  <script src="referral.js"></script>
+</body>
+</html>

@@ -355,7 +355,7 @@
 }
 .account-management-form {
   display: grid;
-  grid-template-columns: 1.2fr 1fr 1fr auto;
+  grid-template-columns: 1.2fr 1fr 1fr 1fr auto;
   align-items: end;
   gap: 14px;
   padding: 22px;
@@ -372,6 +372,60 @@
   grid-column: 1 / -1;
   margin: 0;
 }
+.discount-form {
+  display: grid;
+  grid-template-columns: 1fr .9fr .8fr 1.3fr auto;
+  align-items: end;
+  gap: 14px;
+  padding: 22px;
+  margin-bottom: 14px;
+}
+.discount-form .form-field {
+  margin: 0;
+}
+.discount-form .form-select[multiple] {
+  min-height: 48px;
+  max-height: 120px;
+  padding: 6px;
+}
+.discount-form .btn-primary {
+  min-height: 48px;
+  white-space: nowrap;
+}
+.discount-form .form-status {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+.discount-tag {
+  display: inline-block;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--gold-subtle);
+  color: var(--gold-bright);
+  font: 700 11px var(--mono);
+  letter-spacing: 0.04em;
+}
+.discount-toggle,
+.discount-remove {
+  padding: 6px 12px;
+  border: 1px solid var(--gold-border);
+  border-radius: var(--radius-sm);
+  background: var(--gold-subtle);
+  color: var(--gold-bright);
+  font: 600 11.5px var(--sans);
+  cursor: pointer;
+  transition: var(--trans);
+}
+.discount-toggle + .discount-remove {
+  margin-left: 8px;
+}
+.discount-remove {
+  border-color: rgba(220, 38, 38, 0.4);
+  color: #ef4444;
+  background: rgba(220, 38, 38, 0.08);
+}
+.discount-toggle:hover { border-color: var(--gold); }
+.discount-remove:hover { border-color: #ef4444; }
 .member-list {
   display: grid;
   gap: 10px;
@@ -630,6 +684,9 @@
     grid-template-columns: 1fr;
   }
   .account-management-form {
+    grid-template-columns: 1fr;
+  }
+  .discount-form {
     grid-template-columns: 1fr;
   }
   .activity-controls {

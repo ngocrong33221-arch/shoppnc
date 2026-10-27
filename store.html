@@ -25,6 +25,7 @@
         <a href="store.html" class="active">Kho code</a>
         <a href="wallet.html">Ví tiền</a>
         <a href="account.html">Tài khoản</a>
+        <a href="referral.html">Hoa hồng</a>
         <a href="support.html">Hỗ trợ</a>
         <a href="admin.html" id="adminLink" style="display:none">Quản trị</a>
       </nav>
@@ -88,8 +89,16 @@
       <p class="payment-file" id="paymentFile"></p>
       <div class="payment-summary">
         <div><span>Giá sản phẩm</span><strong id="paymentPrice">0đ</strong></div>
+        <div class="payment-discount-line" id="paymentDiscountRow" style="display:none"><span>Giảm giá</span><strong id="paymentDiscount">-0đ</strong></div>
         <div><span>Số dư hiện tại</span><strong id="paymentBalance">Đang kiểm tra...</strong></div>
         <div class="payment-after"><span>Số dư sau khi mua</span><strong id="paymentAfter">--</strong></div>
+      </div>
+      <div class="payment-discount">
+        <div class="discount-row">
+          <input class="form-input discount-input" id="discountInput" type="text" placeholder="Nhập mã giảm giá" autocomplete="off" maxlength="32">
+          <button class="discount-apply" type="button" id="applyDiscount">Áp dụng</button>
+        </div>
+        <p class="discount-note" id="discountNote"></p>
       </div>
       <p class="payment-status" id="paymentStatus" role="status"></p>
       <div class="payment-actions">

@@ -25,6 +25,7 @@
         <a href="store.html">Kho code</a>
         <a href="wallet.html">Ví tiền</a>
         <a href="account.html">Tài khoản</a>
+        <a href="referral.html">Hoa hồng</a>
         <a href="support.html">Hỗ trợ</a>
         <a href="admin.html" id="adminLink" class="active">Quản trị</a>
       </nav>
@@ -95,6 +96,15 @@
         <div class="form-field">
           <label class="form-label" for="managedPassword">Mật khẩu mới</label>
           <input class="form-input" id="managedPassword" type="password" minlength="6" maxlength="128" autocomplete="new-password" placeholder="Để trống nếu không đổi">
+        </div>
+        <div class="form-field">
+          <label class="form-label" for="managedRole">Vai trò</label>
+          <select class="form-input form-select" id="managedRole">
+            <option value="user">Thành viên</option>
+            <option value="ctv">CTV · 17%</option>
+            <option value="partner">Đối tác · 46%</option>
+            <option value="manager">Quản lí · 37%</option>
+          </select>
         </div>
         <button class="btn-primary" type="submit" id="accountManagementSubmit">Lưu tài khoản</button>
         <p class="form-status" id="accountManagementStatus" role="status">Mật khẩu cũ không thể xem lại; nhập mật khẩu mới nếu muốn đặt lại.</p>
@@ -316,6 +326,62 @@
         <span class="inv-count" id="productCount">0 sản phẩm</span>
       </div>
       <div class="inventory-list" id="productInventory"></div>
+    </section>
+
+    <!-- Discount codes -->
+    <section class="admin-management reveal" aria-labelledby="discountTitle">
+      <div class="management-header">
+        <div>
+          <span class="card-label">05 / DISCOUNT CODES</span>
+          <h2 class="inv-title" id="discountTitle">Mã giảm giá</h2>
+          <p class="management-copy">Tạo mã giảm theo % hoặc theo số tiền. Để trống danh sách sản phẩm nghĩa là mã áp dụng cho mọi mặt hàng.</p>
+        </div>
+        <div class="management-tools">
+          <span class="inv-count" id="discountCount">0 mã</span>
+          <button class="admin-secondary-btn" id="refreshDiscounts" type="button">Làm mới</button>
+        </div>
+      </div>
+
+      <form class="card discount-form" id="discountForm">
+        <div class="form-field">
+          <label class="form-label" for="discountCodeInput">Mã giảm giá</label>
+          <input class="form-input" id="discountCodeInput" type="text" maxlength="32" placeholder="VD: TET2027" autocomplete="off" required>
+        </div>
+        <div class="form-field">
+          <label class="form-label" for="discountType">Kiểu giảm</label>
+          <select class="form-input form-select" id="discountType">
+            <option value="percent">Giảm theo %</option>
+            <option value="amount">Giảm số tiền (VNĐ)</option>
+          </select>
+        </div>
+        <div class="form-field">
+          <label class="form-label" for="discountValue">Giá trị</label>
+          <input class="form-input" id="discountValue" type="number" min="1" step="1" placeholder="10 hoặc 20000" required>
+        </div>
+        <div class="form-field">
+          <label class="form-label" for="discountScope">Sản phẩm áp dụng</label>
+          <select class="form-input form-select" id="discountScope" multiple size="4"></select>
+        </div>
+        <button class="btn-primary" type="submit" id="discountSubmit">Tạo mã giảm giá</button>
+        <p class="form-status" id="discountStatus" role="status">Để trống danh sách sản phẩm = áp dụng cho mọi mặt hàng.</p>
+      </form>
+
+      <div class="activity-table-wrap">
+        <table class="activity-table">
+          <thead>
+            <tr>
+              <th>Mã</th>
+              <th>Giảm</th>
+              <th>Áp dụng</th>
+              <th>Trạng thái</th>
+              <th>Thao tác</th>
+            </tr>
+          </thead>
+          <tbody id="discountRows">
+            <tr><td class="activity-empty" colspan="5">Chưa có mã giảm giá nào.</td></tr>
+          </tbody>
+        </table>
+      </div>
     </section>
   </main>
 

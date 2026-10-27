@@ -372,8 +372,20 @@ const activityStatus = document.getElementById('activityStatus');
 const activityRows = document.getElementById('activityRows');
 const managedUsername = document.getElementById('managedUsername');
 const managedPassword = document.getElementById('managedPassword');
+const managedRole = document.getElementById('managedRole');
 const accountManagementStatus = document.getElementById('accountManagementStatus');
 let memberAccounts = [];
+
+/* Thành viên thường và các vai trò cộng tác (CTV / Đối tác / Quản lí) đều
+   nằm chung danh sách quản lý; chỉ tài khoản admin bị loại khỏi form này. */
+function isManagedRole(role) {
+  return role !== 'admin';
+}
+
+function roleText(role) {
+  if (typeof ROLE_LABELS !== 'undefined' && ROLE_LABELS[role]) return ROLE_LABELS[role];
+  return role === 'admin' ? 'Quản trị viên' : 'Thành viên';
+}
 
 function formatAdminMoney(value) {
   return `${Number(value || 0).toLocaleString('vi-VN')}đ`;
@@ -443,15 +455,15 @@ async function renderUsers() {
     const previousActivityUsername = activityMember.value;
     managedAccount.replaceChildren(new Option('Chọn thành viên', ''));
     activityMember.replaceChildren(new Option('Chọn thành viên', ''));
-    memberAccounts.filter(user => user.role === 'user').forEach(user => {
+    memberAccounts.filter(user => isManagedRole(user.role)).forEach(user => {
       managedAccount.add(new Option(`${user.displayName || user.username} · ${user.username}`, user.username));
       activityMember.add(new Option(`${user.displayName || user.username} · ${user.username}`, user.username));
     });
     activityMember.value = memberAccounts.some(user =>
-      user.username === previousActivityUsername && user.role === 'user'
+      user.username === previousActivityUsername && isManagedRole(user.role)
     ) ? previousActivityUsername : '';
     if (!activityMember.value) clearMemberActivity();
-    if (memberAccounts.some(user => user.username === previousManagedUsername && user.role === 'user')) {
+    if (memberAccounts.some(user => user.username === previousManagedUsername && isManagedRole(user.role))) {
       managedAccount.value = previousManagedUsername;
     } else {
       managedUsername.value = '';
@@ -498,9 +510,9 @@ async function renderUsers() {
       });
       const meta = document.createElement('span');
       meta.className = 'member-meta';
-      meta.textContent = `${user.username} · ${user.role === 'admin' ? 'Quản trị viên' : user.authProvider || 'Thành viên'}`;
+      meta.textContent = `${user.username} · ${roleText(user.role)}`;
       primary.append(name, meta);
-      if (user.role === 'user') {
+      if (isManagedRole(user.role)) {
         const manageButton = document.createElement('button');
         manageButton.className = 'member-manage-button';
         manageButton.type = 'button';
@@ -510,6 +522,7 @@ async function renderUsers() {
           managedAccount.value = user.username;
           managedUsername.value = user.username;
           managedPassword.value = '';
+          if (managedRole) managedRole.value = user.role || 'user';
           accountManagementStatus.textContent = 'Mật khẩu cũ không thể xem lại; nhập mật khẩu mới nếu muốn đặt lại.';
           accountManagementStatus.className = 'form-status';
           managedUsername.focus();
@@ -680,14 +693,15 @@ document.getElementById('activityForm').addEventListener('submit', async event =
 });
 
 managedAccount.addEventListener('change', () => {
-  const account = memberAccounts.find(user => user.username === managedAccount.value && user.role === 'user');
+  const account = memberAccounts.find(user => user.username === managedAccount.value && isManagedRole(user.role));
   managedUsername.value = account?.username || '';
   managedPassword.value = '';
+  if (managedRole) managedRole.value = account?.role || 'user';
 });
 
 document.getElementById('accountManagementForm').addEventListener('submit', async event => {
   event.preventDefault();
-  const account = memberAccounts.find(user => user.username === managedAccount.value && user.role === 'user');
+  const account = memberAccounts.find(user => user.username === managedAccount.value && isManagedRole(user.role));
   if (!account) {
     accountManagementStatus.textContent = 'Hãy chọn tài khoản thành viên cần quản lý.';
     accountManagementStatus.className = 'form-status err';
@@ -697,6 +711,7 @@ document.getElementById('accountManagementForm').addEventListener('submit', asyn
   const submitButton = document.getElementById('accountManagementSubmit');
   const nextUsername = managedUsername.value.trim();
   const nextPassword = managedPassword.value;
+  const nextRole = managedRole ? managedRole.value : (account.role || 'user');
   accountManagementStatus.textContent = '';
   accountManagementStatus.className = 'form-status';
   submitButton.disabled = true;
@@ -732,6 +747,7 @@ document.getElementById('accountManagementForm').addEventListener('submit', asyn
       const changes = {};
       if (nextUsername !== account.username) changes.username = nextUsername;
       if (nextPassword) changes.password = nextPassword;
+      if (nextRole !== account.role) changes.role = nextRole;
 
       if (Object.keys(changes).length) {
         const { error: updateError } = await supabase
@@ -761,9 +777,11 @@ document.getElementById('accountManagementForm').addEventListener('submit', asyn
       managedAccount.value = nextUsername;
       managedUsername.value = nextUsername;
       managedPassword.value = '';
+      if (managedRole) managedRole.value = nextRole;
       accountManagementStatus.textContent = [
         changes.username ? `Đã đổi username thành ${nextUsername}.` : 'Username được giữ nguyên.',
         changes.password ? 'Đã đặt mật khẩu mới.' : 'Mật khẩu được giữ nguyên.',
+        changes.role ? `Vai trò mới: ${roleText(nextRole)}.` : '',
         changes.username ? 'Thành viên cần đăng nhập lại bằng username mới.' : '',
         historySynced ? '' : 'Lưu ý: chưa đổi được username trong đơn nạp / lịch sử mua hàng.',
       ].filter(Boolean).join(' ');
@@ -1234,7 +1252,14 @@ async function applyOrderApproval(order) {
         .from('orders')
         .update({ status: 'approved' })
         .eq('id', order.id);
-      
+
+      // 4. Hoa hồng 5% cho người mời trực tiếp của người nạp
+      try {
+        await payoutTopupCommission({ buyer: order.username, amount: order.amount });
+      } catch (commissionError) {
+        console.warn('Không chia được hoa hồng nạp:', commissionError);
+      }
+
       return newBalance;
     }
   } catch (error) {
@@ -1450,3 +1475,196 @@ async function telegramPollLoop() {
 }
 
 telegramPollLoop();
+
+/* ── Mã giảm giá ── */
+const discountForm = document.getElementById('discountForm');
+const discountCodeInput = document.getElementById('discountCodeInput');
+const discountType = document.getElementById('discountType');
+const discountValue = document.getElementById('discountValue');
+const discountScope = document.getElementById('discountScope');
+const discountStatus = document.getElementById('discountStatus');
+const discountRows = document.getElementById('discountRows');
+const discountCount = document.getElementById('discountCount');
+
+let discountProductNames = new Map();
+
+function discountLabel(row) {
+  if (row.type === 'percent') return `-${Number(row.value) || 0}%`;
+  return `-${formatAdminMoney(row.value)}`;
+}
+
+function discountScopeText(row, total) {
+  const ids = Array.isArray(row.product_ids) ? row.product_ids : [];
+  if (!ids.length) return 'Mọi mặt hàng';
+  if (ids.length >= total) return 'Mọi mặt hàng';
+  return ids.map(id => discountProductNames.get(String(id)) || `#${id}`).join(', ');
+}
+
+function renderDiscountRows(rows) {
+  discountCount.textContent = `${rows.length} mã`;
+  discountRows.replaceChildren();
+
+  if (!rows.length) {
+    const tr = document.createElement('tr');
+    const td = document.createElement('td');
+    td.className = 'activity-empty';
+    td.colSpan = 5;
+    td.textContent = 'Chưa có mã giảm giá nào.';
+    tr.append(td);
+    discountRows.append(tr);
+    return;
+  }
+
+  const total = discountProductNames.size;
+  rows.forEach(row => {
+    const tr = document.createElement('tr');
+
+    const code = document.createElement('td');
+    const tag = document.createElement('span');
+    tag.className = 'discount-tag';
+    tag.textContent = row.code;
+    code.append(tag);
+
+    const value = document.createElement('td');
+    value.textContent = discountLabel(row);
+
+    const scope = document.createElement('td');
+    scope.textContent = discountScopeText(row, total);
+
+    const state = document.createElement('td');
+    state.textContent = row.active ? 'Đang bật' : 'Đã tắt';
+    state.className = `activity-status activity-status-${row.active ? 'approved' : 'pending'}`;
+
+    const actions = document.createElement('td');
+    const toggle = document.createElement('button');
+    toggle.type = 'button';
+    toggle.className = 'discount-toggle';
+    toggle.textContent = row.active ? 'Tắt' : 'Bật';
+    toggle.addEventListener('click', async () => {
+      toggle.disabled = true;
+      const { error } = await supabase
+        .from('discount_codes')
+        .update({ active: !row.active })
+        .eq('id', row.id);
+      if (error) {
+        console.warn('Không đổi được trạng thái mã giảm giá:', error);
+        showToast('Không đổi được trạng thái mã giảm giá.');
+      }
+      loadDiscounts();
+    });
+
+    const remove = document.createElement('button');
+    remove.type = 'button';
+    remove.className = 'discount-remove';
+    remove.textContent = 'Xoá';
+    remove.addEventListener('click', async () => {
+      remove.disabled = true;
+      const { error } = await supabase.from('discount_codes').delete().eq('id', row.id);
+      if (error) {
+        console.warn('Không xoá được mã giảm giá:', error);
+        showToast('Không xoá được mã giảm giá.');
+      }
+      loadDiscounts();
+    });
+
+    actions.append(toggle, remove);
+    tr.append(code, value, scope, state, actions);
+    discountRows.append(tr);
+  });
+}
+
+async function populateDiscountScope() {
+  const catalog = await loadProductCatalog();
+  discountScope.replaceChildren();
+  discountProductNames = new Map();
+  (catalog || []).forEach(product => {
+    discountProductNames.set(String(product.id), product.name);
+    discountScope.add(new Option(product.name, String(product.id)));
+  });
+}
+
+async function loadDiscounts() {
+  if (typeof supabase === 'undefined' || !supabase) {
+    discountStatus.textContent = 'Chưa nạp được Supabase. Hãy tải lại trang.';
+    discountStatus.className = 'form-status err';
+    return;
+  }
+  discountStatus.textContent = 'Đang tải mã giảm giá...';
+  discountStatus.className = 'form-status';
+
+  try {
+    await populateDiscountScope();
+    const { data, error } = await supabase
+      .from('discount_codes')
+      .select('*')
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+    renderDiscountRows(data || []);
+    discountStatus.textContent = 'Để trống danh sách sản phẩm = áp dụng cho mọi mặt hàng.';
+    discountStatus.className = 'form-status';
+  } catch (error) {
+    console.error('Could not load discount codes:', error);
+    discountStatus.textContent = error.message || 'Không tải được mã giảm giá.';
+    discountStatus.className = 'form-status err';
+  }
+}
+
+discountForm.addEventListener('submit', async event => {
+  event.preventDefault();
+  const code = discountCodeInput.value.trim().toUpperCase();
+  const value = Number(discountValue.value);
+
+  if (!code) {
+    discountStatus.textContent = 'Vui lòng nhập mã giảm giá.';
+    discountStatus.className = 'form-status err';
+    return;
+  }
+  if (!(value > 0)) {
+    discountStatus.textContent = 'Giá trị giảm phải lớn hơn 0.';
+    discountStatus.className = 'form-status err';
+    return;
+  }
+  if (discountType.value === 'percent' && value > 100) {
+    discountStatus.textContent = 'Phần trăm giảm tối đa là 100%.';
+    discountStatus.className = 'form-status err';
+    return;
+  }
+
+  const selected = Array.from(discountScope.selectedOptions).map(option => option.value);
+  const submitButton = document.getElementById('discountSubmit');
+  submitButton.disabled = true;
+  discountStatus.textContent = 'Đang tạo mã giảm giá...';
+  discountStatus.className = 'form-status';
+
+  try {
+    const { error } = await supabase.from('discount_codes').insert([{
+      code,
+      type: discountType.value,
+      value,
+      product_ids: selected,
+      active: true
+    }]);
+    if (error) {
+      if (error.code === '23505') {
+        discountStatus.textContent = 'Mã này đã tồn tại.';
+      } else {
+        discountStatus.textContent = error.message || 'Không tạo được mã giảm giá.';
+      }
+      discountStatus.className = 'form-status err';
+      return;
+    }
+    discountForm.reset();
+    showToast(`Đã tạo mã giảm giá ${code}.`);
+    loadDiscounts();
+  } catch (error) {
+    console.error('Could not create discount code:', error);
+    discountStatus.textContent = error.message || 'Không tạo được mã giảm giá.';
+    discountStatus.className = 'form-status err';
+  } finally {
+    submitButton.disabled = false;
+  }
+});
+
+document.getElementById('refreshDiscounts').addEventListener('click', loadDiscounts);
+
+loadDiscounts();

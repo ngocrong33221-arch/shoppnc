@@ -550,6 +550,7 @@ const cardTitle    = document.getElementById('cardTitle');
 const cardSub      = document.getElementById('cardSub');
 const emailLabel   = document.getElementById('emailLabel');
 const fieldConfirm = document.getElementById('fieldConfirm');
+const fieldReferral = document.getElementById('fieldReferral');
 const rememberRow  = document.getElementById('rememberRow');
 const submitLabel  = document.getElementById('submitLabel');
 const toggleMode   = document.getElementById('toggleMode');
@@ -568,6 +569,8 @@ const toggleConfirmPw = document.getElementById('toggleConfirmPw');
 const emailErr    = document.getElementById('emailErr');
 const passwordErr = document.getElementById('passwordErr');
 const confirmErr  = document.getElementById('confirmErr');
+const referralInput = document.getElementById('referralInput');
+const referralErr   = document.getElementById('referralErr');
 
 /* Social sign-in needs the backend, so hide it when the site runs as static files. */
 (function hideOAuthOnStaticHost() {
@@ -578,6 +581,7 @@ const confirmErr  = document.getElementById('confirmErr');
 })();
 
 let isSignup = false;
+let pendingReferralCode = '';
 
 function createPasswordParticles(fieldWrap, visible) {
   const bounds = fieldWrap.getBoundingClientRect();
@@ -645,6 +649,7 @@ function setMode(signup) {
     emailInput.type         = signup ? 'email' : 'text';
     emailInput.placeholder  = signup ? 'you@example.com' : 'you@example.com';
     fieldConfirm.style.display = signup ? '' : 'none';
+    fieldReferral.style.display = signup ? '' : 'none';
     rememberRow.style.display  = signup ? 'none' : '';
     submitLabel.textContent = signup ? 'Tạo tài khoản' : 'Đăng nhập';
     toggleMode.innerHTML = signup
@@ -660,6 +665,8 @@ function setMode(signup) {
     emailInput.value = '';
     passwordInput.value = '';
     confirmInput.value = '';
+    referralInput.value = pendingReferralCode;
+    pendingReferralCode = '';
     resetPasswordVisibility();
     card.classList.remove('flip-out');
     card.classList.add('flip-in');
@@ -682,6 +689,7 @@ function clearErrors() {
   emailErr.textContent = '';
   passwordErr.textContent = '';
   confirmErr.textContent = '';
+  if (referralErr) referralErr.textContent = '';
   formStatus.textContent = '';
   formStatus.className = 'form-status';
   document.querySelectorAll('.field-wrap.error').forEach(el => el.classList.remove('error'));
@@ -746,6 +754,13 @@ const savedUsername = localStorage.getItem('cn_remember');
 if (savedUsername) {
   emailInput.value = savedUsername;
   rememberCheck.checked = true;
+}
+
+// Invite link (?ref=CODE) opens the signup form with the referral code filled in
+const inviteCode = new URLSearchParams(window.location.search).get('ref');
+if (inviteCode && referralInput) {
+  pendingReferralCode = inviteCode.trim().toUpperCase().slice(0, 24);
+  setMode(true);
 }
 
 // Form Submit
@@ -865,10 +880,34 @@ document.getElementById('loginForm').addEventListener('submit', async e => {
         return;
       }
 
-      // Create new user
+      // Resolve optional referral code entered at signup
+      let referredBy = null;
+      const referralCode = (referralInput.value || '').trim();
+      if (referralCode) {
+        const inviter = await findUserByReferralCode(referralCode);
+        if (!inviter) {
+          if (referralErr) referralErr.textContent = 'Mã giới thiệu không tồn tại.';
+          shakeField(referralInput);
+          submitBtn.classList.remove('loading');
+          if (arrowSvg) arrowSvg.style.display = '';
+          return;
+        }
+        referredBy = inviter.username;
+      }
+
+      // Create new user with own referral code
+      const newUser = {
+        username: user,
+        password: pass,
+        role: 'user',
+        balance: 0,
+        referral_code: makeReferralCode(user),
+      };
+      if (referredBy) newUser.referred_by = referredBy;
+
       const { error: signupError } = await supabase
         .from('users')
-        .insert([{ username: user, password: pass, role: 'user', balance: 0 }]);
+        .insert([newUser]);
 
       if (signupError) throw signupError;
 
@@ -920,7 +959,7 @@ document.getElementById('loginForm').addEventListener('submit', async e => {
   }
 });
 
-[emailInput, passwordInput, confirmInput].forEach(inp => {
+[emailInput, passwordInput, confirmInput, referralInput].forEach(inp => {
   inp.addEventListener('input', () => {
     inp.closest('.field-wrap')?.classList.remove('error');
     formStatus.textContent = '';

@@ -114,6 +114,18 @@
             <p class="field-err" id="confirmErr" role="alert"></p>
           </div>
 
+          <!-- Referral code (signup only, optional) -->
+          <div class="field-group" id="fieldReferral" style="display:none;">
+            <label class="field-label" for="referralInput">Mã giới thiệu (không bắt buộc)</label>
+            <div class="field-wrap">
+              <span class="field-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3.4" y="8.6" width="17.2" height="11.6" rx="2.4"/><path d="M3.4 12.6h17.2"/><path d="M12 8.6v11.6"/><path d="M12 8.6c-1.1-3-2.5-4.4-4.2-4.4a2.3 2.3 0 0 0 0 4.6H12Zm0 0c1.1-3 2.5-4.4 4.2-4.4a2.3 2.3 0 0 1 0 4.6H12Z"/></svg>
+              </span>
+              <input id="referralInput" class="field-input" type="text" placeholder="Nhập mã của người mời bạn" maxlength="24" autocomplete="off">
+            </div>
+            <p class="field-err" id="referralErr" role="alert"></p>
+          </div>
+
           <!-- Remember me (login only) -->
           <label class="remember-row" id="rememberRow">
             <input type="checkbox" id="rememberCheck" class="check-input">

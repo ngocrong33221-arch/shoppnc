@@ -8,7 +8,9 @@ const API_BASE = window.location.protocol === 'file:' ? 'http://127.0.0.1:5000' 
 document.getElementById('avatar').textContent = (session?.username || '?').charAt(0).toUpperCase();
 document.getElementById('accountName').textContent = session?.displayName || session?.username || 'Khách';
 document.getElementById('accountEmail').textContent = session?.username || '—';
-document.getElementById('accountRole').textContent = session?.role === 'admin' ? 'Quản trị viên' : 'Thành viên';
+document.getElementById('accountRole').textContent = typeof ROLE_LABELS !== 'undefined'
+  ? (ROLE_LABELS[session?.role] || 'Thành viên')
+  : (session?.role === 'admin' ? 'Quản trị viên' : 'Thành viên');
 
 async function loadProfile() {
   if (!session) return;

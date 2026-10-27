@@ -487,6 +487,7 @@ function createClickBurst(x, y) {
     'store.html':   '<path d="M4 7.5h16l-1.2 11a2 2 0 0 1-2 1.75H7.2a2 2 0 0 1-2-1.75L4 7.5Z"/><path d="M9 7.5V5.8a3 3 0 0 1 6 0v1.7"/>',
     'wallet.html':  '<rect x="3" y="6" width="18" height="12.5" rx="2.6"/><path d="M3 10.2h18"/><path d="M16.2 14.2h1.6"/>',
     'account.html': '<circle cx="12" cy="8.4" r="3.4"/><path d="M5.2 19.6a6.8 6.8 0 0 1 13.6 0"/>',
+    'referral.html': '<rect x="3.4" y="8.6" width="17.2" height="11.6" rx="2.4"/><path d="M3.4 12.6h17.2"/><path d="M12 8.6v11.6"/><path d="M12 8.6c-1.1-3-2.5-4.4-4.2-4.4a2.3 2.3 0 0 0 0 4.6H12Zm0 0c1.1-3 2.5-4.4 4.2-4.4a2.3 2.3 0 0 1 0 4.6H12Z"/>',
     'support.html': '<circle cx="12" cy="12" r="8.4"/><path d="M9.7 9.6a2.5 2.5 0 1 1 3.4 2.3c-.8.4-1.1.9-1.1 1.7"/><path d="M12 16.4h.01"/>',
     'admin.html':   '<path d="M12 3.4 5.2 6.4v4.9c0 4.1 2.8 7.5 6.8 8.9 4-1.4 6.8-4.8 6.8-8.9V6.4L12 3.4Z"/><path d="m9.3 11.9 2 2 3.5-3.7"/>'
   };
@@ -595,6 +596,179 @@ function topupBonus(amount) {
 function topupCredit(amount) {
   const value = Number(amount) || 0;
   return value + topupBonus(value);
+}
+
+/* ── 9c. Vai trò thành viên & hoa hồng ── */
+const ROLE_LABELS = {
+  user: 'Thành viên',
+  ctv: 'CTV',
+  partner: 'Đối tác',
+  manager: 'Quản lí',
+  admin: 'Quản trị viên'
+};
+
+const ROLE_RATES = {
+  ctv: 0.17,
+  partner: 0.46,
+  manager: 0.37
+};
+
+/* Hoa hồng khi có khách mua hàng được chia theo 3 tầng tuyến giới thiệu:
+   tầng 1 (CTV) 17%, tầng 2 (Đối tác) 46%, tầng 3 (Quản lí) phần còn lại 37%. */
+const COMMISSION_TIERS = [
+  { level: 1, role: 'ctv', rate: ROLE_RATES.ctv },
+  { level: 2, role: 'partner', rate: ROLE_RATES.partner },
+  { level: 3, role: 'manager', rate: ROLE_RATES.manager },
+];
+
+/* Người được mời nạp tiền: người mời trực tiếp nhận 5% giá trị nạp,
+   tiền khách nhận vào ví vẫn giữ nguyên. */
+const REFERRAL_TOPUP_RATE = 0.05;
+
+function commissionTier(level) {
+  return COMMISSION_TIERS[level - 1] || null;
+}
+
+/* Mã giới thiệu: 4 ký tự đầu của tên đăng nhập + 4 ký tự ngẫu nhiên. */
+function makeReferralCode(username) {
+  const base = String(username || '')
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, '')
+    .slice(0, 4)
+    .padEnd(4, 'X');
+  return `${base}${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
+}
+
+/* Lấy mã giới thiệu của thành viên, tạo mới nếu chưa có. */
+async function ensureReferralCode(username) {
+  if (!username || typeof supabase === 'undefined' || !supabase) return '';
+  const { data, error } = await supabase
+    .from('users')
+    .select('referral_code')
+    .eq('username', username)
+    .maybeSingle();
+  if (error) return '';
+  if (data && data.referral_code) return data.referral_code;
+
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const code = makeReferralCode(username);
+    const { data: clash } = await supabase
+      .from('users')
+      .select('username')
+      .eq('referral_code', code)
+      .maybeSingle();
+    if (clash) continue;
+    const { error: saveError } = await supabase
+      .from('users')
+      .update({ referral_code: code })
+      .eq('username', username);
+    if (!saveError) return code;
+  }
+  return '';
+}
+
+/* Tìm tài khoản sở hữu mã giới thiệu (không phân biệt hoa thường). */
+async function findUserByReferralCode(code) {
+  const target = String(code || '').trim().toUpperCase();
+  if (!target || typeof supabase === 'undefined' || !supabase) return null;
+  const { data, error } = await supabase
+    .from('users')
+    .select('username, referral_code')
+    .eq('referral_code', target)
+    .maybeSingle();
+  return error ? null : (data || null);
+}
+
+/* Chuỗi người giới thiệu: tầng 1 là người mời trực tiếp, tầng 2 là người mời tầng 1... */
+async function resolveReferralChain(username, levels = COMMISSION_TIERS.length) {
+  const chain = [];
+  if (typeof supabase === 'undefined' || !supabase) return chain;
+  let current = username;
+  for (let level = 0; level < levels; level++) {
+    const { data, error } = await supabase
+      .from('users')
+      .select('referred_by')
+      .eq('username', current)
+      .maybeSingle();
+    if (error || !data || !data.referred_by) break;
+    chain.push(data.referred_by);
+    current = data.referred_by;
+  }
+  return chain;
+}
+
+/* Ghi hoa hồng mua hàng cho các tầng phía trên người mua. */
+async function payoutPurchaseCommission({ buyer, baseAmount, productName }) {
+  const base = Number(baseAmount) || 0;
+  if (base <= 0 || typeof supabase === 'undefined' || !supabase) return [];
+  const chain = await resolveReferralChain(buyer);
+  const entries = [];
+  chain.forEach((receiver, index) => {
+    const tier = commissionTier(index + 1);
+    if (!tier) return;
+    const amount = Math.round(base * tier.rate);
+    if (amount <= 0) return;
+    entries.push({
+      username: receiver,
+      source_username: buyer,
+      kind: 'purchase',
+      level: tier.level,
+      rate: tier.rate,
+      amount,
+      base_amount: base,
+      detail: `Hoa hồng tầng ${tier.level} · ${productName || 'sản phẩm'}`
+    });
+  });
+  if (entries.length) {
+    const { error } = await supabase.from('commissions').insert(entries);
+    if (error) console.warn('Không ghi được hoa hồng mua hàng:', error);
+    else return entries;
+  }
+  return [];
+}
+
+/* Hoa hồng 5% cho người mời khi người được mời nạp tiền. */
+async function payoutTopupCommission({ buyer, amount }) {
+  const base = Number(amount) || 0;
+  const bonus = Math.round(base * REFERRAL_TOPUP_RATE);
+  if (base <= 0 || bonus <= 0 || typeof supabase === 'undefined' || !supabase) return 0;
+  const chain = await resolveReferralChain(buyer, 1);
+  if (!chain.length) return 0;
+  const { error } = await supabase.from('commissions').insert([{
+    username: chain[0],
+    source_username: buyer,
+    kind: 'topup',
+    level: 1,
+    rate: REFERRAL_TOPUP_RATE,
+    amount: bonus,
+    base_amount: base,
+    detail: `Hoa hồng 5% từ lượt nạp của ${buyer}`
+  }]);
+  if (error) {
+    console.warn('Không ghi được hoa hồng nạp:', error);
+    return 0;
+  }
+  return bonus;
+}
+
+/* Tổng hoa hồng và lịch sử hoa hồng của một tài khoản. */
+async function fetchCommissionSummary(username) {
+  const summary = { total: 0, purchase: 0, topup: 0, entries: [] };
+  if (!username || typeof supabase === 'undefined' || !supabase) return summary;
+  const { data, error } = await supabase
+    .from('commissions')
+    .select('*')
+    .eq('username', username)
+    .order('created_at', { ascending: false });
+  if (error || !data) return summary;
+  data.forEach(row => {
+    const amount = Number(row.amount) || 0;
+    summary.total += amount;
+    if (row.kind === 'topup') summary.topup += amount;
+    else summary.purchase += amount;
+  });
+  summary.entries = data;
+  return summary;
 }
 
 /* ── 10. Product Catalog (dùng chung cho store.html và product.html) ── */

@@ -24,8 +24,16 @@ function ensurePaymentModal() {
         <p class="payment-file" id="paymentFile"></p>
         <div class="payment-summary">
           <div><span>Giá sản phẩm</span><strong id="paymentPrice">0đ</strong></div>
+          <div class="payment-discount-line" id="paymentDiscountRow" style="display:none"><span>Giảm giá</span><strong id="paymentDiscount">-0đ</strong></div>
           <div><span>Số dư hiện tại</span><strong id="paymentBalance">Đang kiểm tra...</strong></div>
           <div class="payment-after"><span>Số dư sau khi mua</span><strong id="paymentAfter">--</strong></div>
+        </div>
+        <div class="payment-discount">
+          <div class="discount-row">
+            <input class="form-input discount-input" id="discountInput" type="text" placeholder="Nhập mã giảm giá" autocomplete="off" maxlength="32">
+            <button class="discount-apply" type="button" id="applyDiscount">Áp dụng</button>
+          </div>
+          <p class="discount-note" id="discountNote"></p>
         </div>
         <p class="payment-status" id="paymentStatus" role="status"></p>
         <div class="payment-actions">
@@ -42,34 +50,145 @@ ensurePaymentModal();
 const paymentModal = document.getElementById('paymentModal');
 const paymentFile = document.getElementById('paymentFile');
 const paymentPrice = document.getElementById('paymentPrice');
+const paymentDiscountRow = document.getElementById('paymentDiscountRow');
+const paymentDiscount = document.getElementById('paymentDiscount');
 const paymentBalance = document.getElementById('paymentBalance');
 const paymentAfter = document.getElementById('paymentAfter');
 const paymentStatus = document.getElementById('paymentStatus');
 const confirmPayment = document.getElementById('confirmPayment');
+const discountInput = document.getElementById('discountInput');
+const applyDiscount = document.getElementById('applyDiscount');
+const discountNote = document.getElementById('discountNote');
+
+let paymentBalanceValue = 0;
+let appliedDiscount = null;
+
+/* Số tiền phải trả sau khi áp mã giảm giá (không âm). */
+function payableAmount(product) {
+  const price = Number(product?.price) || 0;
+  const cut = appliedDiscount ? Math.min(appliedDiscount.amount, price) : 0;
+  return Math.max(0, price - cut);
+}
+
+/* Vẽ lại giá, giảm giá, số dư còn lại và trạng thái nút xác nhận. */
+function syncPaymentTotals() {
+  const product = purchaseProduct;
+  if (!product) return;
+  const price = Number(product.price) || 0;
+  const final = payableAmount(product);
+
+  paymentPrice.textContent = purchaseMoney(price);
+
+  if (appliedDiscount && appliedDiscount.amount > 0) {
+    paymentDiscountRow.style.display = '';
+    paymentDiscount.textContent = `-${purchaseMoney(Math.min(appliedDiscount.amount, price))}`;
+  } else {
+    paymentDiscountRow.style.display = 'none';
+  }
+
+  const enough = paymentBalanceValue >= final;
+  paymentAfter.textContent = enough ? purchaseMoney(paymentBalanceValue - final) : 'Không đủ số dư';
+  confirmPayment.disabled = !enough;
+
+  if (!enough) {
+    paymentStatus.textContent = `Bạn cần nạp thêm ${purchaseMoney(final - paymentBalanceValue)} để mua file này.`;
+    paymentStatus.className = 'payment-status err';
+  } else if (appliedDiscount) {
+    paymentStatus.textContent = `Đã áp dụng mã "${appliedDiscount.code}".`;
+    paymentStatus.className = 'payment-status ok';
+  } else {
+    paymentStatus.textContent = '';
+    paymentStatus.className = 'payment-status';
+  }
+}
+
+/* Tìm mã giảm giá đang hoạt động trong Supabase. */
+async function loadDiscountCode(code) {
+  if (typeof supabase === 'undefined' || !supabase) return null;
+  const { data, error } = await supabase
+    .from('discount_codes')
+    .select('*')
+    .eq('code', code)
+    .eq('active', true)
+    .maybeSingle();
+  return error ? null : (data || null);
+}
+
+async function applyDiscountCode() {
+  const product = purchaseProduct;
+  if (!product) return;
+  const code = discountInput.value.trim().toUpperCase();
+  discountNote.className = 'discount-note';
+
+  if (!code) {
+    appliedDiscount = null;
+    discountNote.textContent = 'Vui lòng nhập mã giảm giá.';
+    discountNote.classList.add('err');
+    syncPaymentTotals();
+    return;
+  }
+
+  const row = await loadDiscountCode(code);
+  if (!row) {
+    appliedDiscount = null;
+    discountNote.textContent = 'Mã giảm giá không hợp lệ hoặc đã hết hiệu lực.';
+    discountNote.classList.add('err');
+    syncPaymentTotals();
+    return;
+  }
+
+  const scope = row.product_ids;
+  if (Array.isArray(scope) && scope.length && !scope.map(String).includes(String(product.id))) {
+    appliedDiscount = null;
+    discountNote.textContent = 'Mã này không áp dụng cho sản phẩm này.';
+    discountNote.classList.add('err');
+    syncPaymentTotals();
+    return;
+  }
+
+  const price = Number(product.price) || 0;
+  let amount = row.type === 'percent'
+    ? Math.round(price * (Number(row.value) || 0) / 100)
+    : Math.round(Number(row.value) || 0);
+  amount = Math.min(Math.max(amount, 0), price);
+
+  if (amount <= 0) {
+    appliedDiscount = null;
+    discountNote.textContent = 'Mã này không giảm được cho đơn hàng này.';
+    discountNote.classList.add('err');
+    syncPaymentTotals();
+    return;
+  }
+
+  appliedDiscount = { code: row.code, amount, type: row.type, value: row.value };
+  discountNote.textContent = `✓ Đã giảm ${purchaseMoney(amount)} cho đơn hàng.`;
+  discountNote.classList.add('ok');
+  syncPaymentTotals();
+}
 
 async function openPayment(product) {
   const session = JSON.parse(sessionStorage.getItem('cn_session') || 'null');
   if (!session?.username) { showToast('Vui lòng đăng nhập để mua file.'); return; }
   purchaseProduct = product;
+  appliedDiscount = null;
+  paymentBalanceValue = 0;
   paymentFile.textContent = `${product.name} · ${product.fileName || product.file_name || 'file sản phẩm'}`;
   paymentPrice.textContent = purchaseMoney(product.price);
+  paymentDiscountRow.style.display = 'none';
   paymentBalance.textContent = 'Đang kiểm tra...';
   paymentAfter.textContent = '--';
   paymentStatus.textContent = '';
   paymentStatus.className = 'payment-status';
+  if (discountInput) discountInput.value = '';
+  if (discountNote) { discountNote.textContent = ''; discountNote.className = 'discount-note'; }
   confirmPayment.disabled = true;
   paymentModal.classList.add('show');
   paymentModal.setAttribute('aria-hidden', 'false');
 
   try {
-    const balance = await fetchBalance(session.username);
-    paymentBalance.textContent = purchaseMoney(balance);
-    paymentAfter.textContent = balance >= product.price ? purchaseMoney(balance - product.price) : 'Không đủ số dư';
-    confirmPayment.disabled = balance < product.price;
-    if (balance < product.price) {
-      paymentStatus.textContent = `Bạn cần nạp thêm ${purchaseMoney(product.price - balance)} để mua file này.`;
-      paymentStatus.classList.add('err');
-    }
+    paymentBalanceValue = await fetchBalance(session.username);
+    paymentBalance.textContent = purchaseMoney(paymentBalanceValue);
+    syncPaymentTotals();
   } catch {
     paymentBalance.textContent = 'Không kiểm tra được';
     paymentStatus.textContent = 'Không thể kiểm tra số dư. Hãy thử lại.';
@@ -123,15 +242,19 @@ async function confirmSelectedPurchase() {
   }
 
   // Local purchase fallback (GitHub Pages & Offline mode)
+  const amount = payableAmount(product);
+  const discountAmount = Math.max(0, (Number(product.price) || 0) - amount);
+  const usedCode = appliedDiscount ? appliedDiscount.code : null;
+
   const balance = await fetchBalance(session.username);
-  if (balance < product.price) {
-    paymentStatus.textContent = `Số dư không đủ. Hãy nạp thêm ${purchaseMoney(product.price - balance)}.`;
+  if (balance < amount) {
+    paymentStatus.textContent = `Số dư không đủ. Hãy nạp thêm ${purchaseMoney(amount - balance)}.`;
     paymentStatus.classList.add('err');
     confirmPayment.disabled = false;
     return;
   }
 
-  const newBalance = balance - product.price;
+  const newBalance = balance - amount;
   localStorage.setItem(`cn_balance_${session.username}`, newBalance);
 
   if (typeof supabase !== 'undefined' && supabase) {
@@ -146,16 +269,29 @@ async function confirmSelectedPurchase() {
       console.error('Không cập nhật được số dư lên Supabase:', error);
     }
 
-    // Ghi lịch sử mua
+    // Ghi lịch sử mua (kèm mã giảm giá nếu có)
     try {
       const { error } = await supabase.from('purchases').insert([{
         username: session.username,
         product_name: product.name,
-        amount: product.price
+        amount,
+        discount_code: usedCode,
+        discount_amount: discountAmount
       }]);
       if (error) console.error('Không ghi được lịch sử mua:', error);
     } catch (error) {
       console.error('Không ghi được lịch sử mua:', error);
+    }
+
+    // Chia hoa hồng cho tuyến người giới thiệu của người mua
+    try {
+      await payoutPurchaseCommission({
+        buyer: session.username,
+        baseAmount: amount,
+        productName: product.name
+      });
+    } catch (error) {
+      console.warn('Không chia được hoa hồng:', error);
     }
   }
 
@@ -206,6 +342,14 @@ confirmPayment.addEventListener('click', () => {
     confirmPayment.disabled = false;
   });
 });
+if (applyDiscount) {
+  applyDiscount.addEventListener('click', () => { applyDiscountCode(); });
+}
+if (discountInput) {
+  discountInput.addEventListener('keydown', event => {
+    if (event.key === 'Enter') { event.preventDefault(); applyDiscountCode(); }
+  });
+}
 document.getElementById('closePayment').addEventListener('click', closePayment);
 paymentModal.querySelector('[data-close-payment]').addEventListener('click', closePayment);
 document.addEventListener('keydown', event => { if (event.key === 'Escape') closePayment(); });
