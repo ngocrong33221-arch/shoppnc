@@ -629,10 +629,10 @@ function commissionTier(level) {
   return COMMISSION_TIERS[level - 1] || null;
 }
 
-/* Mã giới thiệu: chuỗi ngẫu nhiên gồm chữ in hoa, số và ký tự đặc biệt.
-   Ví dụ: DNJKJH%YVYV */
-const REFERRAL_CODE_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789%#@$&*';
-const REFERRAL_CODE_LENGTH = 11;
+/* Mã giới thiệu: chuỗi ngẫu nhiên gồm chữ thường, số và ký tự đặc biệt.
+   Ví dụ: k7#m2@qp9!x */
+const REFERRAL_CODE_CHARS = 'abcdefghijklmnopqrstuvwxyz0123456789@#$%^&*()_.,!';
+const REFERRAL_CODE_LENGTH = 10;
 
 function makeReferralCode() {
   const bytes = new Uint32Array(REFERRAL_CODE_LENGTH);
@@ -681,9 +681,9 @@ async function ensureReferralCode(username) {
   return '';
 }
 
-/* Tìm tài khoản sở hữu mã giới thiệu (không phân biệt hoa thường). */
+/* Tìm tài khoản sở hữu mã giới thiệu (mã chỉ gồm chữ thường nên nhập hoa cũng khớp). */
 async function findUserByReferralCode(code) {
-  const target = String(code || '').trim().toUpperCase();
+  const target = String(code || '').trim().toLowerCase();
   if (!target || typeof supabase === 'undefined' || !supabase) return null;
   const { data, error } = await supabase
     .from('users')

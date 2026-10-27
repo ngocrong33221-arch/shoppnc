@@ -759,7 +759,7 @@ if (savedUsername) {
 // Invite link (?ref=CODE) opens the signup form with the referral code filled in
 const inviteCode = new URLSearchParams(window.location.search).get('ref');
 if (inviteCode && referralInput) {
-  pendingReferralCode = inviteCode.trim().toUpperCase().slice(0, 24);
+  pendingReferralCode = inviteCode.trim().toLowerCase().slice(0, 24);
   setMode(true);
 }
 
