@@ -785,6 +785,20 @@ async function fetchCommissionSummary(username) {
   return summary;
 }
 
+/* Đếm số lượng người đã được tài khoản này giới thiệu. */
+async function countReferredUsers(username) {
+  if (!username || typeof supabase === 'undefined' || !supabase) return 0;
+  const { count, error } = await supabase
+    .from('users')
+    .select('*', { count: 'exact', head: true })
+    .eq('referred_by', username);
+  if (error) {
+    console.warn('Không đếm được số người giới thiệu:', error.message);
+    return 0;
+  }
+  return count || 0;
+}
+
 /* ── 10. Product Catalog (dùng chung cho store.html và product.html) ── */
 const PRODUCT_CATEGORY_LABELS = {
   web: 'Web template',

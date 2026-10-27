@@ -81,6 +81,7 @@ async function loadSummary() {
   document.getElementById('currentRole').textContent = roleLabel(refSession.role);
 
   document.getElementById('walletBalance').textContent = money(await fetchBalance(refSession.username));
+  document.getElementById('referredCount').textContent = await countReferredUsers(refSession.username);
 
   const summary = await fetchCommissionSummary(refSession.username);
   document.getElementById('totalCommission').textContent = money(summary.total);
