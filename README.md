@@ -9,6 +9,7 @@
 
 - Dat `ADMIN_USERNAME` va mot `ADMIN_PASSWORD` manh trong `.env` truoc khi khoi dong backend. Khong dung lai mat khau mau hoac chia se gia tri nay.
 - Tai khoan dang ky duoc luu trong SQLite; mat khau chi duoc luu dang bam va khong the xem lai. Admin co the doi username va dat mat khau moi cho thanh vien trong trang Quan tri. Tai khoan cu chi duoc luu trong localStorage cua trinh duyet khong duoc tu dong chuyen sang; thanh vien can dang ky lai.
+- Admin co the gan vai tro Thanh vien, CTV (17%), Doi tac (46%) hoac Quan li (37%) va xem muc hoa hong ngay trong danh sach tai khoan. Xoa san pham se go san pham khoi cua hang va thu xoa file trong Supabase Storage.
 - Trang Quan tri hien thi ngay tao, lan dang nhap gan nhat, phuong thuc dang nhap va so du. Lich su cong/tru tien duoc luu; khong the tru de so du am.
 - Mau nen va mau nhan duoc luu tren may chu va ap dung tren toan trang. Nen chi chon mau nen toi de dam bao do tuong phan.
 
