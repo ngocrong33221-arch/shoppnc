@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="shared.css?v=20261027b">
-  <link rel="stylesheet" href="admin.css?v=20261027b">
+  <link rel="stylesheet" href="admin.css?v=20261105a">
 </head>
 <body>
   <div class="page-glow page-glow-1" aria-hidden="true"></div>
@@ -105,6 +105,7 @@
             <option value="partner">Đối tác · 46%</option>
             <option value="manager">Quản lí · 37%</option>
           </select>
+          <small class="role-summary" id="managedRoleSummary">Thành viên không nhận hoa hồng giới thiệu.</small>
         </div>
         <button class="btn-primary" type="submit" id="accountManagementSubmit">Lưu tài khoản</button>
         <p class="form-status" id="accountManagementStatus" role="status">Mật khẩu cũ không thể xem lại; nhập mật khẩu mới nếu muốn đặt lại.</p>
@@ -359,6 +360,10 @@
           <input class="form-input" id="discountValue" type="number" min="1" step="1" placeholder="10 hoặc 20000" required>
         </div>
         <div class="form-field">
+          <label class="form-label" for="discountMaxUses">Số người dùng tối đa</label>
+          <input class="form-input" id="discountMaxUses" type="number" min="0" step="1" placeholder="Để trống = không giới hạn">
+        </div>
+        <div class="form-field">
           <label class="form-label" for="discountScope">Sản phẩm áp dụng</label>
           <select class="form-input form-select" id="discountScope" multiple size="4"></select>
         </div>
@@ -373,12 +378,13 @@
               <th>Mã</th>
               <th>Giảm</th>
               <th>Áp dụng</th>
+              <th>Đã dùng</th>
               <th>Trạng thái</th>
               <th>Thao tác</th>
             </tr>
           </thead>
           <tbody id="discountRows">
-            <tr><td class="activity-empty" colspan="5">Chưa có mã giảm giá nào.</td></tr>
+            <tr><td class="activity-empty" colspan="6">Chưa có mã giảm giá nào.</td></tr>
           </tbody>
         </table>
       </div>
@@ -396,6 +402,6 @@
   <script src="theme.js?v=20261027b"></script>
   <script src="shared.js?v=20261027b"></script>
   <script src="telegram-config.js?v=20261027b"></script>
-  <script src="admin.js?v=20261027b"></script>
+  <script src="admin.js?v=20261105a"></script>
 </body>
 </html>
