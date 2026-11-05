@@ -833,6 +833,7 @@ def update_admin_user_account(username):
     data = request.get_json(silent=True) or {}
     new_username = data.get('newUsername')
     new_password = data.get('newPassword', '')
+    new_role = data.get('newRole')
     if (
         not isinstance(new_username, str)
         or not new_username.strip()
@@ -842,6 +843,8 @@ def update_admin_user_account(username):
         return jsonify({'error': 'a username of 1 to 254 non-space characters is required'}), 400
     if not isinstance(new_password, str) or (new_password and not 6 <= len(new_password) <= 128):
         return jsonify({'error': 'new password must be empty or 6 to 128 characters'}), 400
+    if new_role is not None and new_role not in ('user', 'ctv', 'partner', 'manager'):
+        return jsonify({'error': 'new role must be user, ctv, partner or manager'}), 400
 
     new_username = new_username.strip()
     if new_username.casefold() == ADMIN_USERNAME.casefold():
@@ -855,11 +858,14 @@ def update_admin_user_account(username):
                 'WHERE username = ? COLLATE NOCASE',
                 (username,),
             ).fetchone()
-            if not target or target['role'] != 'user':
+            if not target or target['role'] == 'admin':
                 return jsonify({'error': 'member account not found'}), 404
 
             current_username = target['username']
-            if new_username.casefold() != current_username.casefold():
+            username_changed = new_username.casefold() != current_username.casefold()
+            next_username = new_username if username_changed else current_username
+            next_role = new_role if new_role is not None else target['role']
+            if username_changed:
                 existing_user = connection.execute(
                     'SELECT 1 FROM users WHERE username = ? COLLATE NOCASE',
                     (new_username,),
@@ -920,15 +926,22 @@ def update_admin_user_account(username):
             if password_hash:
                 connection.execute(
                     'UPDATE users SET password_hash = ? WHERE username = ? COLLATE NOCASE',
-                    (password_hash, new_username if new_username.casefold() != current_username.casefold() else current_username),
+                    (password_hash, next_username),
+                )
+            if next_role != target['role']:
+                connection.execute(
+                    'UPDATE users SET role = ? WHERE username = ? COLLATE NOCASE',
+                    (next_role, next_username),
                 )
     except sqlite3.IntegrityError:
         return jsonify({'error': 'username already exists'}), 409
 
     return jsonify({
-        'username': new_username if new_username.casefold() != current_username.casefold() else current_username,
-        'usernameChanged': new_username.casefold() != current_username.casefold(),
+        'username': next_username,
+        'usernameChanged': username_changed,
         'passwordChanged': bool(password_hash),
+        'role': next_role,
+        'roleChanged': next_role != target['role'],
     })
 
 
